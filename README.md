@@ -4,6 +4,15 @@
 
 ## Development
 
+Create an empty postgreSQL database. \
+Copy `.env.template` and rename it to `.env`. \
+Adjust `DATABASE_URL` in `.env` to match you settings.
+
+Install dependencies:
+
+```shellscript
+npm run install
+```
 Run the dev server:
 
 ```shellscript
