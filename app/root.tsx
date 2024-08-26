@@ -5,7 +5,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { Theme } from "@radix-ui/themes";
+import "./tailwind.css";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,9 +26,5 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return (
-    <Theme accentColor="teal" grayColor="slate">
-      <Outlet />
-    </Theme>
-  );
+  return <Outlet />;
 }
