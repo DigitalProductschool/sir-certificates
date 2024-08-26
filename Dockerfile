@@ -46,6 +46,7 @@ COPY --from=production-deps /app-certificates/node_modules /app-certificates/nod
 
 COPY --from=build /app-certificates/build /app-certificates/build
 COPY --from=build /app-certificates/public /app-certificates/public
+COPY --from=build /app-certificates/prisma /app-certificates/prisma
 COPY --from=build /app-certificates/package.json /app-certificates/package.json
 
 RUN npx prisma generate
