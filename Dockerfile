@@ -48,5 +48,5 @@ COPY --from=build /app-certificates/build /app-certificates/build
 COPY --from=build /app-certificates/public /app-certificates/public
 COPY --from=build /app-certificates/package.json /app-certificates/package.json
 
-CMD [ "npx", "prisma", "generate"]
+RUN npx prisma generate
 CMD [ "npm", "run", "start" ]
