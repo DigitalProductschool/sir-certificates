@@ -13,6 +13,13 @@ Install dependencies:
 ```shellscript
 npm run install
 ```
+
+Run database migrations:
+
+```shellscript
+npx prisma db push
+```
+
 Run the dev server:
 
 ```shellscript
