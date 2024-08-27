@@ -14,11 +14,58 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt  
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
+  id            Int       @id @default(autoincrement())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt  
+  email         String    @unique
+  password      String
+  firstName     String
+  lastName      String
+}
+
+model Organisation {
+  id            Int       @id @default(autoincrement())
+  name          String
+}
+
+model Program {
+  id            Int       @id @default(autoincrement())
+  name          String
+//templates     Template[]
+
+}
+
+model Batch {
+  id            Int       @id @default(autoincrement())
+  name          String  
+  startDate     DateTime 
+  endDate       DateTime
+  participants  Participant[]
+
+}
+
+model Participant {
+  id            Int       @id @default(autoincrement())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt  
+  email         String    @unique
+  password      String
+  firstName     String
+  lastName      String
+  batches       Batch[]
+//team          Team      @relation(fields: [teamId], references: [id])
+  teamId        Int  
+}
+
+model Team {
+  id            Int       @id @default(autoincrement())
+  name          String
+//participants  Participant[]
+}
+
+model Template {
+  id            Int       @id @default(autoincrement())
+  name          String
+//program       Program   @relation(fields: [programId], references: [id])  
+  programId     Int
 }

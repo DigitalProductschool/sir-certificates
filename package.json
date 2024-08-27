@@ -17,6 +17,9 @@
       "bash -c tsc --noEmit"
     ]
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "dependencies": {
     "@prisma/client": "^5.18.0",
     "@radix-ui/react-label": "^2.1.0",
