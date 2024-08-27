@@ -17,11 +17,15 @@ export const loader: LoaderFunction = async ({ request }) => {
   await requireUserId(request);
   const user = await getUser(request);
 
-  const org = await prisma.organisation.findUnique({
+  let org = await prisma.organisation.findUnique({
     where: {
       id: 1,
     },
   });
+
+  if (!org) {
+    org = { id: 1, name: "Unknown Organisation" };
+  }
 
   return json({ user, org });
 };
