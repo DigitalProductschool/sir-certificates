@@ -33,6 +33,26 @@ jobs:
           review_app_name: pre-${{ github.event.pull_request.number }}
           ssh_private_key: ${{ secrets.SSH_KEY_SIR }}
 
+      - name: Run database migrations
+        # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/preview.key
+          chmod 600 ~/.ssh/preview.key
+          cat >>~/.ssh/config <<END
+          Host preview
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/preview.key
+            StrictHostKeyChecking no
+          END
+          ssh -t preview "run $REVIEW_APP_NAME npx prisma migrate deploy"
+        env:
+          SSH_USER: dokku
+          SSH_KEY: ${{ secrets.SSH_KEY_SIR }}
+          SSH_HOST: 167.235.152.70
+          REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
+
       - name: Enable LetsEncrypt
         if: github.event_name == 'pull_request' && ( github.event.action == 'opened' || github.event.action == 'reopened' )
         # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
