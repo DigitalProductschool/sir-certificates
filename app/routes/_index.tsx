@@ -3,7 +3,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Layout } from "~/components/layout";
 import { Button } from "~/components/ui/button";
-import { requireUserId, getUser, logout } from "~/lib/auth.server";
+import { requireUserId, getUser } from "~/lib/auth.server";
 
 export const meta: MetaFunction = () => {
   return [
@@ -24,6 +24,8 @@ export default function Index() {
   return (
     <Layout>
       <h1 className="text-3xl">Welcome {user?.firstName}</h1>
+
+      <p>Happy to have you back</p>
 
       <br />
 
