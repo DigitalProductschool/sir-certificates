@@ -28,5 +28,6 @@ jobs:
           branch: 'main'
           # git_push_flags: '-vvv'
           git_remote_url: 'ssh://dokku@167.235.152.70:22/certificates'
+          git_push_flags: --force
           ssh_private_key: ${{ secrets.SSH_KEY_SIR }}
           # trace: '1'
