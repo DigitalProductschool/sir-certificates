@@ -31,3 +31,23 @@ jobs:
           git_push_flags: --force
           ssh_private_key: ${{ secrets.SSH_KEY_SIR }}
           # trace: '1'
+
+      - name: Run database migrations
+        # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/preview.key
+          chmod 600 ~/.ssh/preview.key
+          cat >>~/.ssh/config <<END
+          Host preview
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/preview.key
+            StrictHostKeyChecking no
+          END
+          ssh -t preview "run $REVIEW_APP_NAME npx prisma migrate deploy"
+        env:
+          SSH_USER: dokku
+          SSH_KEY: ${{ secrets.SSH_KEY_SIR }}
+          SSH_HOST: 167.235.152.70
+          REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}          
