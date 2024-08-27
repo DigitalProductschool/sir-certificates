@@ -47,6 +47,7 @@ jobs:
             IdentityFile ~/.ssh/preview.key
             StrictHostKeyChecking no
           END
+          ssh -t preview "domains:set $REVIEW_APP_NAME $REVIEW_APP_NAME.utum-certificates.dpschool.app"
           ssh -t preview "letsencrypt:set $REVIEW_APP_NAME email $REVIEW_APP_EMAIL"
           ssh -t preview "letsencrypt:enable $REVIEW_APP_NAME"
         env:
