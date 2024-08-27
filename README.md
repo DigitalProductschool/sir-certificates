@@ -45,7 +45,7 @@ npm start
 
 The repo is set up for automatic deployments to a Dokku host.
 
-When pushing changes to `main`, they will automatically deployed.
+When pushing changes to `main`, they will be automatically deployed.
 
 When opening a Pull Request from a different branch, a preview deployment will be automatically set up. The preview deployment will run the code from the current branch on a different URL.
 
