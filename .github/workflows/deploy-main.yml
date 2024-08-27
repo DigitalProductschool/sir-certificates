@@ -1,0 +1,32 @@
+---
+name: 'deploy-main'
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: 
+      name: production
+      url: https://certificates.unternehmertum.de  
+    concurrency: production    
+    steps:
+      - name: Cloning repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to dokku
+        uses: dokku/github-action@master
+        #env:
+        #  GIT_SSH_COMMAND: 'ssh -vvv'
+        with:
+          branch: 'main'
+          # git_push_flags: '-vvv'
+          git_remote_url: 'ssh://dokku@167.235.152.70:22/certificates'
+          ssh_private_key: ${{ secrets.SSH_KEY_SIR }}
+          # trace: '1'
