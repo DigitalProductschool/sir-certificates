@@ -1,4 +1,5 @@
 import type { LinksFunction } from "@remix-run/node";
+import type { ErrorResponse } from "@remix-run/react";
 
 import {
   Links,
@@ -6,6 +7,8 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  isRouteErrorResponse,
+  useRouteError,
 } from "@remix-run/react";
 
 import styles from "./tailwind.css?url";
@@ -32,4 +35,47 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return <Outlet />;
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  console.error(error);
+  let errorInfo;
+
+  if (isRouteErrorResponse(error)) {
+    const response = error as ErrorResponse;
+    errorInfo = (
+      <div>
+        <h1>
+          {response.status} {response.statusText}
+        </h1>
+        <p>{response.data}</p>
+      </div>
+    );
+  } else if (error instanceof Error) {
+    errorInfo = (
+      <div>
+        <h1>Error</h1>
+        <p>{error.message}</p>
+        <p>The stack trace is:</p>
+        <pre>{error.stack}</pre>
+      </div>
+    );
+  } else {
+    errorInfo = <h1>Unknown Error</h1>;
+  }
+
+  return (
+    <html lang="en">
+      <head>
+        <title>Oh no!</title>
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        {errorInfo}
+        <Scripts />
+      </body>
+    </html>
+  );
 }
