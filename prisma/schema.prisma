@@ -21,18 +21,26 @@ model User {
   password      String
   firstName     String
   lastName      String
+  isAdmin       Boolean   @default(false)
+
+  @@map("user")  
 }
 
 model Organisation {
   id            Int       @id @default(autoincrement())
   name          String
+
+  @@map("organisation")  
 }
 
 model Program {
   id            Int       @id @default(autoincrement())
   name          String
 //templates     Template[]
+  certificates  Certificate[]
+  batches       Batch[]
 
+  @@map("programs")
 }
 
 model Batch {
@@ -41,7 +49,27 @@ model Batch {
   startDate     DateTime 
   endDate       DateTime
   participants  Participant[]
+  program       Program @relation(fields: [programId], references: [id])
+  programId     Int  
 
+  @@map("batches")
+}
+
+model Certificate {
+  id            Int       @id @default(autoincrement())
+  name          String  
+//startDate     DateTime 
+//endDate       DateTime
+//batch         Batch @relation(fields: [batchId], references: [id])
+  batchId       Int
+//participant   Participant @relation(fields: [participantId], references: [id])
+  participantId Int
+  program       Program @relation(fields: [programId], references: [id])
+  programId     Int
+//team          Team @relation(fields: [teamId], references: [id])
+  teamId        Int
+
+  @@map("certifcates")  
 }
 
 model Participant {
@@ -54,13 +82,17 @@ model Participant {
   lastName      String
   batches       Batch[]
 //team          Team      @relation(fields: [teamId], references: [id])
-  teamId        Int  
+  teamId        Int
+
+  @@map("participants")
 }
 
 model Team {
   id            Int       @id @default(autoincrement())
   name          String
 //participants  Participant[]
+
+  @@map("teams")
 }
 
 model Template {
@@ -68,4 +100,6 @@ model Template {
   name          String
 //program       Program   @relation(fields: [programId], references: [id])  
   programId     Int
+
+  @@map("templates")  
 }

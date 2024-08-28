@@ -2,6 +2,8 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Sample data for UnternehmerTUM
+
   const org = await prisma.organisation.upsert({
     where: { id: 1 },
     update: {},
@@ -9,7 +11,69 @@ async function main() {
       name: "UnternehmerTUM",
     },
   });
-  console.log(org);
+  console.log("Organisation:", org);
+
+  // Sample programs
+
+  const program1 = await prisma.program.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      name: "Digital Product School",
+    },
+  });
+
+  const program2 = await prisma.program.upsert({
+    where: { id: 2 },
+    update: {},
+    create: {
+      name: "Manage and More",
+    },
+  });
+
+  const program3 = await prisma.program.upsert({
+    where: { id: 3 },
+    update: {},
+    create: {
+      name: "Innovation Sprint",
+    },
+  });
+
+  const program4 = await prisma.program.upsert({
+    where: { id: 4 },
+    update: {},
+    create: {
+      name: "Innovative Entrepreneurs",
+    },
+  });
+
+  const program5 = await prisma.program.upsert({
+    where: { id: 5 },
+    update: {},
+    create: {
+      name: "XPLORE",
+    },
+  });
+
+  console.log("Programs:", program1, program2, program3, program4, program5);
+
+  // Sample batches
+
+  for (let i = 1; i < 22; i++) {
+    const batch = await prisma.batch.upsert({
+      where: { id: i },
+      update: {},
+      create: {
+        name: `Batch ${i}`,
+        startDate: new Date(),
+        endDate: new Date(),
+        program: {
+          connect: { id: 1 },
+        },
+      },
+    });
+    console.log("Batch", i, batch);
+  }
 }
 
 main()

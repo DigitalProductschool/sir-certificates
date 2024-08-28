@@ -11,7 +11,6 @@ import {
 	CardContent,
 	CardDescription,
 	CardHeader,
-	CardFooter,
 	CardTitle,
 } from "~/components/ui/card";
 import { login, register, getUser } from "~/lib/auth.server";
@@ -88,8 +87,8 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
 	// If there's already a user in the session, redirect to the home page
-	// return (await getUser(request)) ? redirect("/") : null;
-	return json({});
+	return (await getUser(request)) ? redirect("/") : null;
+	//return json({});
 };
 
 export default function Login() {
@@ -128,7 +127,7 @@ export default function Login() {
 	*/
 
 	return (
-		<Layout>
+		<Layout type="modal">
 			<Card className="mx-auto max-w-sm">
 				<CardHeader>
 					<CardTitle className="text-2xl">
