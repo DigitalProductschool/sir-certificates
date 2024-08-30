@@ -37,7 +37,6 @@ model Program {
   id            Int       @id @default(autoincrement())
   name          String
 //templates     Template[]
-  certificates  Certificate[]
   batches       Batch[]
 
   @@map("programs")
@@ -48,7 +47,8 @@ model Batch {
   name          String  
   startDate     DateTime 
   endDate       DateTime
-  participants  Participant[]
+  certificates  Certificate[]
+  teams         Team[]
   program       Program @relation(fields: [programId], references: [id])
   programId     Int  
 
@@ -57,40 +57,24 @@ model Batch {
 
 model Certificate {
   id            Int       @id @default(autoincrement())
-  name          String  
-//startDate     DateTime 
-//endDate       DateTime
-//batch         Batch @relation(fields: [batchId], references: [id])
-  batchId       Int
-//participant   Participant @relation(fields: [participantId], references: [id])
-  participantId Int
-  program       Program @relation(fields: [programId], references: [id])
-  programId     Int
-//team          Team @relation(fields: [teamId], references: [id])
-  teamId        Int
-
-  @@map("certifcates")  
-}
-
-model Participant {
-  id            Int       @id @default(autoincrement())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt  
-  email         String    @unique
-  password      String
-  firstName     String
+  firstName     String  
   lastName      String
-  batches       Batch[]
-//team          Team      @relation(fields: [teamId], references: [id])
-  teamId        Int
+  email         String
+  batch         Batch @relation(fields: [batchId], references: [id])
+  batchId       Int
+  team          Team? @relation(fields: [teamId], references: [id])
+  teamId        Int?
 
-  @@map("participants")
+  @@unique(name: "certId", [batchId, email])
+  @@map("certificates")  
 }
 
 model Team {
   id            Int       @id @default(autoincrement())
   name          String
-//participants  Participant[]
+  batch         Batch @relation(fields: [batchId], references: [id])
+  batchId       Int  
+  certificates  Certificate[]
 
   @@map("teams")
 }
