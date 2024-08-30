@@ -26,7 +26,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   return json({ programs });
 };
 
-export default function Index() {
+export default function OrgIndex() {
   const { programs } = useLoaderData<typeof loader>();
 
   return (
