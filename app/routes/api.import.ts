@@ -38,7 +38,5 @@ export const action: ActionFunction = async ({ request }) => {
 
 	// @todo error handling for Prisma create
 
-	console.log("Created", certificate);
-
 	return json({ certificate });
 };

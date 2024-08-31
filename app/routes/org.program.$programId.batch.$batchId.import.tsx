@@ -139,13 +139,11 @@ export default function ImportPage() {
           });
         }
       })
-      .then((certificate) => {
-        console.log("Created certificate", certificate);
+      .then((/*certificate*/) => {
         setRowStatus(index, "done");
       })
       .catch((error) => {
         setRowStatus(index, "error", error.message);
-        console.log("Caught", error, error.cause);
       });
   };
 
