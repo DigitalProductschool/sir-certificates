@@ -16,6 +16,7 @@ import { CSVDropZone } from "~/components/csv-drop-zone";
 import { TaskRunner } from "~/components/task-runner";
 
 import { Badge } from "~/components/ui/badge";
+
 import {
   Table,
   TableBody,
@@ -73,11 +74,11 @@ export const handle = {
 function StatusIndicator({ status, error }: { status: string; error: string }) {
   switch (status) {
     case "todo":
-      return <CircleFadingPlus />;
+      return <CircleFadingPlus color="hsl(var(--muted-foreground))" />;
     case "pending":
       return <CircleFadingArrowUp />;
     case "done":
-      return <CircleCheckBig />;
+      return <CircleCheckBig color="green" />;
     case "error":
       return (
         <Tooltip>
@@ -164,7 +165,8 @@ export default function ImportPage() {
         items={rows}
         itemLabel="participants"
         startLabel="Start Import"
-        confirmLabel="Are you sure?"
+        confirmTitle="Start the import?"
+        confirmDescription="The participants from the CSV file will be added to the selected batch. If a provided email is already in this batch, the name and other information will be updated to prevent duplicates."
         onRunTask={handleImport}
         onReset={handleReset}
       />

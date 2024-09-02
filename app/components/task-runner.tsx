@@ -3,11 +3,21 @@ import { useState, useEffect } from "react";
 import { Play, Pause, ListRestart } from "lucide-react";
 import { Button } from "~/components/ui/button";
 
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogFooter,
+	DialogTitle,
+} from "~/components/ui/dialog";
+
 type TaskRunnerProps = {
 	items: Array<unknown>;
 	itemLabel: string;
 	startLabel: string;
-	confirmLabel: string;
+	confirmTitle: string;
+	confirmDescription: string;
 	onRunTask: (item: any, index: number) => Promise<unknown>;
 	onFinish?: () => void;
 	onReset?: () => void;
@@ -20,7 +30,8 @@ export function TaskRunner({
 	items,
 	itemLabel,
 	startLabel,
-	confirmLabel,
+	confirmTitle,
+	confirmDescription,
 	onRunTask,
 	onFinish = () => {},
 	onReset = () => {},
@@ -32,16 +43,19 @@ export function TaskRunner({
 	const [done, setDone] = useState(0);
 	const [pending, setPending] = useState(0);
 	const [isRunning, setIsRunning] = useState(false);
+	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	const onPlayPause = () => {
 		if (!isRunning) {
-			// @todo replace window.confirm with a nice UI or modal
-			if (window.confirm(confirmLabel)) {
-				setIsRunning(true);
-			}
+			setConfirmOpen(true);
 		} else {
 			setIsRunning(false);
 		}
+	};
+
+	const onConfirmPlay = () => {
+		setConfirmOpen(false);
+		setIsRunning(true);
 	};
 
 	const handleReset = () => {
@@ -90,7 +104,10 @@ export function TaskRunner({
 
 	return (
 		<div className="flex gap-2 items-center">
-			<Button onClick={onPlayPause} disabled={items.length === 0}>
+			<Button
+				onClick={onPlayPause}
+				disabled={items.length === 0 || done === items.length}
+			>
 				{isRunning ? (
 					<>
 						<Pause className="mr-2 h-4 w-4" />
@@ -110,6 +127,22 @@ export function TaskRunner({
 			<div className="text-sm">
 				{items && `${done} of ${items.length} ${itemLabel} done`}{" "}
 			</div>
+
+			<Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>{confirmTitle}</DialogTitle>
+						<DialogDescription>
+							{confirmDescription}
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button onClick={onConfirmPlay}>
+							Import Participants
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
