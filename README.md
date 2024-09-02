@@ -14,6 +14,10 @@ Install dependencies:
 npm run install
 ```
 
+> If npm install produces a node-gyp error while installing the canvas dependency, try the `--build-from-source` option and install the dependencies first
+> https://github.com/Automattic/node-canvas?tab=readme-ov-file#compiling
+
+
 Run database migrations:
 
 ```shellscript
