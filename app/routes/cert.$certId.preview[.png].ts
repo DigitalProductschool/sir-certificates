@@ -1,0 +1,35 @@
+import type { LoaderFunction } from "@remix-run/node";
+
+import { prisma } from "~/lib/prisma.server";
+import { /* generateCertificate,*/ generatePdfPreview } from "~/lib/pdf.server";
+
+export const loader: LoaderFunction = async ({ params }) => {
+	// @todo is auth necessary or always public?
+
+	const certificate = await prisma.certificate.findUnique({
+		where: {
+			id: Number(params.certId),
+		},
+		include: {
+			batch: true,
+		},
+	});
+
+	if (!certificate) {
+		throw new Response(null, {
+			status: 404,
+			statusText: "Not Found",
+		});
+	}
+
+	const skipIfExists = true;
+	//await generateCertificate(certificate, certificate.batch, skipIfExists);
+	const preview = await generatePdfPreview(certificate, skipIfExists);
+
+	return new Response(preview, {
+		status: 200,
+		headers: {
+			"Content-Type": "image/png",
+		},
+	});
+};

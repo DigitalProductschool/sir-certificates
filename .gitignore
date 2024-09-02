@@ -2,6 +2,7 @@ node_modules
 
 /.cache
 /build
+/storage
 .env
 
 .DS_Store
