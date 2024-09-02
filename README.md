@@ -1,6 +1,6 @@
 # Welcome to Remix!
 
-- 📖 [Remix docs](https://remix.run/docs)
+-   📖 [Remix docs](https://remix.run/docs)
 
 ## Development
 
@@ -42,7 +42,6 @@ npm start
 
 ### Automatic deployments
 
-
 The repo is set up for automatic deployments to a Dokku host.
 
 When pushing changes to `main`, they will be automatically deployed.
@@ -51,9 +50,7 @@ When opening a Pull Request from a different branch, a preview deployment will b
 
 Caveats:
 
-- preview deployments currently interact with the production database, so be careful
-
-
+-   preview deployments currently interact with the production database, so be careful
 
 ### DIY
 
@@ -61,9 +58,15 @@ If you're familiar with deploying Node applications, the built-in Remix app serv
 
 Make sure to deploy the output of `npm run build`
 
-- `build/server`
-- `build/client`
+-   `build/server`
+-   `build/client`
 
 ## Styling
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+We use [Tailwind CSS](https://tailwindcss.com/) and [ShadCn UI](https://ui.shadcn.com/docs).
+
+The UI components are located in `/app/components/ui`.
+
+To add a UI component, run `npx shadcn-ui@0.8.0 add dialog` (we're currently on version 0.8.0)
+
+See the Remix.run and [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information on how to use custom css.

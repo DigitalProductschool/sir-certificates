@@ -11,15 +11,13 @@ export const action: ActionFunction = async ({ request }) => {
 	const formData = await request.formData();
 	const inputs = Object.fromEntries(formData);
 
-	// @todo validate inputs? (or rely on Prisma internal validation?)
-
 	// If this email exists already for this batch, update instead of create
 	const certificate = await prisma.certificate
 		.upsert({
 			where: {
 				certId: {
 					email: inputs.email,
-					batchId: 0, // Number(inputs.batchId),
+					batchId: Number(inputs.batchId),
 				},
 			},
 			update: {
