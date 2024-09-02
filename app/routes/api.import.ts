@@ -2,6 +2,7 @@ import type { ActionFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
 import { requireUserId } from "~/lib/auth.server";
+import { generateCertificate } from "~/lib/pdf.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -33,10 +34,18 @@ export const action: ActionFunction = async ({ request }) => {
 					connect: { id: Number(inputs.batchId) },
 				},
 			},
+			include: {
+				batch: true,
+			},
 		})
 		.catch((error) => {
 			throwErrorResponse(error, "Could not import certificate");
 		});
+
+	if (certificate) {
+		const skipIfExists = false;
+		await generateCertificate(certificate, certificate.batch, skipIfExists);
+	}
 
 	return json({ certificate });
 };
