@@ -134,7 +134,7 @@ export default function ImportPage() {
         if (response.ok) {
           return response.json();
         } else {
-          throw new Error(`${response.status} ${response.statusText}`, {
+          throw new Error(`${response.statusText}`, {
             cause: response,
           });
         }
