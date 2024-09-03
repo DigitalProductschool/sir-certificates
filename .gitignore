@@ -2,7 +2,9 @@ node_modules
 
 /.cache
 /build
-/storage
 .env
+
+/storage/*
+!/storage/.gitkeep
 
 .DS_Store
