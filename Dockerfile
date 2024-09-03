@@ -4,6 +4,15 @@ FROM node:20-alpine as base
 # Set for base and all layer that inherit from it
 ENV NODE_ENV production
 
+RUN apk add --no-cache \
+	build-base \
+	cairo-dev \
+	libpng-dev \
+	g++ \
+	pango-dev \
+	python3 \
+	;
+
 # Install openssl
 # RUN apt-get update && apt-get install -y openssl
 
@@ -13,6 +22,7 @@ FROM base as deps
 WORKDIR /app-certificates
 
 ADD package.json ./
+RUN npm install canvas --build-from-source
 RUN npm install --include=dev
 
 # Setup production node_modules
