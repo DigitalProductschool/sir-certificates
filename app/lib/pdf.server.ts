@@ -1,16 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { mkdir, writeFile, readFile } from "fs/promises";
-// import * as url from "url";
+import * as path from "node:path";
+import * as url from "node:url";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
+
 import { pdf } from "pdf-to-img";
 import { PDFDocument, PDFPage, PDFFont, Color, rgb, grayscale } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import type { Batch, Certificate } from "@prisma/client";
 
-// const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
-const dir = "./storage";
-const certDir = "./storage/certificates";
-const previewDir = "./storage/previews";
+const dir = path.resolve(__dirname, "../../storage");
+const certDir = path.resolve(__dirname, "../../storage/certificates");
+const previewDir = path.resolve(__dirname, "../../storage/previews");
 
 type Line = {
 	text: string;
