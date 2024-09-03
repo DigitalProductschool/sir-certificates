@@ -5,7 +5,7 @@ FROM node:20-alpine as base
 ENV NODE_ENV production
 
 RUN apk add --no-cache \
-	bash
+	bash \
 	build-base \
 	cairo-dev \
 	libpng-dev \
