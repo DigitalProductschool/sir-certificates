@@ -61,12 +61,12 @@ jobs:
         env:
           REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
 
-      - name: Run database migrations
-        # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
-        run: |
-          ssh -t preview "run $REVIEW_APP_NAME npx prisma migrate deploy"
-        env:
-          REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
+      #- name: Run database migrations
+      #  # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
+      #  run: |
+      #    ssh -t preview "run $REVIEW_APP_NAME npx prisma migrate deploy"
+      #  env:
+      #    REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
 
       - name: Enable LetsEncrypt
         if: github.event_name == 'pull_request' && ( github.event.action == 'opened' || github.event.action == 'reopened' )
