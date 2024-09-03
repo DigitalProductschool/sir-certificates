@@ -33,8 +33,7 @@ jobs:
           review_app_name: pre-${{ github.event.pull_request.number }}
           ssh_private_key: ${{ secrets.SSH_KEY_SIR }}
 
-      - name: Clone database
-        if: github.event_name == 'pull_request' && ( github.event.action == 'opened' || github.event.action == 'reopened' )      
+      - name: Configure SSH
         # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
         run: |
           mkdir -p ~/.ssh/
@@ -47,55 +46,35 @@ jobs:
             IdentityFile ~/.ssh/preview.key
             StrictHostKeyChecking no
           END
-          ssh -t preview "postgres:clone certificates-db ${REVIEW_APP_NAME}-db"
-          ssh -t preview "postgres:link ${REVIEW_APP_NAME}-db $REVIEW_APP_NAME"
-          ssh -t preview "postgres:promote ${REVIEW_APP_NAME}-db $REVIEW_APP_NAME"
         env:
           SSH_USER: dokku
           SSH_KEY: ${{ secrets.SSH_KEY_SIR }}
           SSH_HOST: 167.235.152.70
+
+      - name: Clone database
+        if: github.event_name == 'pull_request' && ( github.event.action == 'opened' || github.event.action == 'reopened' )      
+        # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
+        run: |
+          ssh -t preview "postgres:clone certificates-db ${REVIEW_APP_NAME}-db"
+          ssh -t preview "postgres:link ${REVIEW_APP_NAME}-db $REVIEW_APP_NAME"
+          ssh -t preview "postgres:promote ${REVIEW_APP_NAME}-db $REVIEW_APP_NAME"
+        env:
           REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
 
       - name: Run database migrations
         # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
         run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/preview.key
-          chmod 600 ~/.ssh/preview.key
-          cat >>~/.ssh/config <<END
-          Host preview
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/preview.key
-            StrictHostKeyChecking no
-          END
           ssh -t preview "run $REVIEW_APP_NAME npx prisma migrate deploy"
         env:
-          SSH_USER: dokku
-          SSH_KEY: ${{ secrets.SSH_KEY_SIR }}
-          SSH_HOST: 167.235.152.70
           REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
 
       - name: Enable LetsEncrypt
         if: github.event_name == 'pull_request' && ( github.event.action == 'opened' || github.event.action == 'reopened' )
         # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
         run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/preview.key
-          chmod 600 ~/.ssh/preview.key
-          cat >>~/.ssh/config <<END
-          Host preview
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/preview.key
-            StrictHostKeyChecking no
-          END
           ssh -t preview "domains:set $REVIEW_APP_NAME $REVIEW_APP_NAME.utum-certs.dpschool.app"
           ssh -t preview "letsencrypt:set $REVIEW_APP_NAME email $REVIEW_APP_EMAIL"
           ssh -t preview "letsencrypt:enable $REVIEW_APP_NAME"
         env:
-          SSH_USER: dokku
-          SSH_KEY: ${{ secrets.SSH_KEY_SIR }}
-          SSH_HOST: 167.235.152.70
           REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
           REVIEW_APP_EMAIL: marcus@dpschool.io
