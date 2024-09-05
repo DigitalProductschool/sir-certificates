@@ -1,5 +1,3 @@
-/* eslint-disable no-var */
-
 import { PrismaClient, Prisma } from "@prisma/client";
 const PrismaClientKnownRequestError = Prisma.PrismaClientKnownRequestError;
 const PrismaClientUnknownRequestError = Prisma.PrismaClientUnknownRequestError;
@@ -10,7 +8,8 @@ const PrismaClientRustPanicError = Prisma.PrismaClientRustPanicError;
 // Create and export global PrismaClient
 let prisma: PrismaClient;
 declare global {
-  var __db: PrismaClient | undefined;
+	// eslint-disable-next-line no-var
+	var __db: PrismaClient | undefined;
 }
 
 if (process.env.NODE_ENV === "production") {
