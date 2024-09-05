@@ -55,6 +55,7 @@ When opening a Pull Request from a different branch, a preview deployment will b
 Caveats:
 
 -   preview deployments currently interact with the production database, so be careful
+- 	storage: `dokku storage:ensure-directory --chown root [app]`, `dokku storage:mount [app] host-path:container-path`, `dokku ps:restart app-name`
 
 ### DIY
 
