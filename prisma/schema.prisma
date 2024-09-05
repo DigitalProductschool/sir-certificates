@@ -36,8 +36,8 @@ model Organisation {
 model Program {
   id            Int       @id @default(autoincrement())
   name          String
-//templates     Template[]
   batches       Batch[]
+  templates     Template[]
 
   @@map("programs")
 }
@@ -82,7 +82,7 @@ model Team {
 model Template {
   id            Int       @id @default(autoincrement())
   name          String
-//program       Program   @relation(fields: [programId], references: [id])  
+  program       Program   @relation(fields: [programId], references: [id])  
   programId     Int
 
   @@map("templates")  
