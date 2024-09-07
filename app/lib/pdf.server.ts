@@ -6,13 +6,14 @@ import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { pdf } from "pdf-to-img";
 import { PDFDocument, PDFPage, PDFFont, Color, rgb, grayscale } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import type { Batch, Certificate } from "@prisma/client";
+import type { Batch, Certificate, Template } from "@prisma/client";
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 const dir = path.resolve(__dirname, "../../storage");
 const certDir = path.resolve(__dirname, "../../storage/certificates");
 const previewDir = path.resolve(__dirname, "../../storage/previews");
+const templateDir = path.resolve(__dirname, "../../storage/templates");
 
 type Line = {
 	text: string;
@@ -95,7 +96,7 @@ export async function generateCertificate(
 	}
 
 	// Generate certificate PDF
-	const layout = testLayout;
+	const layout = sampleSettings;
 
 	const templatePath = `${dir}/templates/xplore-market-prioneer.pdf`;
 	const pdfTemplate = await readFile(templatePath);
@@ -188,12 +189,124 @@ export async function generateCertificate(
 	return pdfBuffer;
 }
 
-export async function generatePdfPreview(
+export async function generateTemplateSample(template: Template) {
+	const pdfFilePath = `${templateDir}/${template.id}.sample.pdf`;
+
+	const folderCreated = await ensureFolderExists(templateDir);
+	if (!folderCreated) {
+		throw new Error("Could not create certificate storage folder");
+	}
+
+	// Generate certificate PDF
+	const layout = sampleSettings;
+	layout.texts = template.layout;
+
+	const templatePath = `${templateDir}/${template.id}.pdf`;
+	const pdfTemplate = await readFile(templatePath);
+
+	// Get PDF template
+	const pdf = await PDFDocument.load(pdfTemplate);
+
+	// Load custom fonts
+	pdf.registerFontkit(fontkit);
+	const fontRegular = await pdf.embedFont(
+		await readFile(`${dir}/fonts/${layout.fonts.regular}.ttf`),
+		{ subset: true },
+	);
+	const fontExtraBold = await pdf.embedFont(
+		await readFile(`${dir}/fonts/${layout.fonts.bold}.ttf`),
+		{ subset: true },
+	);
+
+	// Modify page
+	const page = pdf.getPages()[0];
+	const startDate = new Date().toLocaleString(layout.language, {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	});
+	const endDate = new Date().toLocaleString(layout.language, {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	});
+	const signatureDate = new Date().toLocaleString(layout.language, {
+		year: "numeric",
+		month: "numeric",
+		day: "numeric",
+	});
+
+	layout.texts.forEach((text: TextOptions) => {
+		const lines = text.lines.map((line: Line) => {
+			let replacements = line.text;
+
+			replacements = replacements.replace(
+				"{fullname}",
+				"Firstname Lastname",
+			);
+			replacements = replacements.replace(
+				"{fullnameCaps}",
+				"FIRSTNAME LASTNAME",
+			);
+			replacements = replacements.replace("{firstname}", "Firstname");
+			replacements = replacements.replace("{firstnameCaps}", "FIRSTNAME");
+			replacements = replacements.replace("{startDate}", startDate);
+			replacements = replacements.replace("{endDate}", endDate);
+			replacements = replacements.replace(
+				"{signatureDate}",
+				signatureDate,
+			);
+
+			// @todo add team
+			replacements = replacements.replace("{team}", "");
+
+			return {
+				text: replacements,
+				font: line.font === "regular" ? fontRegular : fontExtraBold,
+				split: line.split,
+			};
+		});
+
+		drawTextBox(page, lines, {
+			size: text.size,
+			lineHeight: text.lineHeight,
+			x: text.x,
+			y: text.y,
+			maxWidth: text.maxWidth,
+			color: text.color ? rgb(...text.color) : grayscale(0.0),
+		});
+	});
+
+	// Wrap up and return as buffer
+	const pdfBytes = await pdf.save();
+	const pdfBuffer = Buffer.from(pdfBytes);
+
+	await writeFile(pdfFilePath, pdfBuffer);
+
+	return pdfBuffer;
+}
+
+export async function generatePreviewOfCertificate(
 	certificate: Certificate,
 	skipIfExists = true,
 ) {
 	const previewFilePath = `${previewDir}/${certificate.id}.png`;
+	const pdfFilePath = `${certDir}/${certificate.id}.pdf`;
+	return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
+}
 
+export async function generatePreviewOfTemplate(template: Template) {
+	const previewFilePath = `${previewDir}/tpl-${template.id}.png`;
+	const pdfFilePath = `${templateDir}/${template.id}.sample.pdf`;
+	// @todo implement a caching strategy based on last updated at timestamp
+	return await generatePdfPreview(pdfFilePath, previewFilePath, false);
+}
+
+export async function generatePdfPreview(
+	pdfFilePath: string,
+	previewFilePath: string,
+	skipIfExists = true,
+) {
 	const folderCreated = await ensureFolderExists(previewDir);
 	if (!folderCreated) {
 		throw new Error("Could not create preview storage folder");
@@ -209,12 +322,12 @@ export async function generatePdfPreview(
 	// @todo make sure that the PDF file exists
 
 	// Generate PDF preview PNG
-	const document = await pdf(`${certDir}/${certificate.id}.pdf`, {
+	const document = await pdf(pdfFilePath, {
 		scale: 2,
 	});
 
 	for await (const page of document) {
-		await writeFile(`${previewDir}/${certificate.id}.png`, page);
+		await writeFile(previewFilePath, page);
 		return page;
 	}
 }
@@ -262,53 +375,68 @@ export function drawTextBox(
 	});
 }
 
-const testLayout = {
+export async function saveUploadedTemplate(
+	template: Template,
+	templatePDF: File,
+) {
+	const folderCreated = await ensureFolderExists(templateDir);
+	if (!folderCreated) {
+		throw new Error("Could not create templates storage folder");
+	}
+
+	const buffer = Buffer.from(await templatePDF.arrayBuffer());
+	return await writeFile(`${templateDir}/${template.id}.pdf`, buffer);
+}
+
+export const sampleLayout: any = [
+	{
+		lines: [{ text: "{fullname}", font: "bold" }],
+		size: 16,
+		x: 74,
+		y: 579,
+	},
+	{
+		lines: [
+			{
+				text: "for successfully completing our interdisciplinary program from  ",
+				font: "regular",
+			},
+			{ text: "{startDate} – {endDate}", font: "bold", split: "X" },
+			{ text: " as an ", font: "regular" },
+			{ text: "Interaction Designer", font: "bold" },
+			{ text: " of team ", font: "regular" },
+			{ text: "{team}", font: "bold" },
+			{ text: ".", font: "regular" },
+		],
+		size: 12,
+		lineHeight: 18,
+		x: 55,
+		y: 541,
+		maxWidth: 485,
+	},
+	{
+		lines: [
+			{
+				text: "{firstname} developed competencies in the following fields",
+				font: "bold",
+			},
+		],
+		size: 12,
+		lineHeight: 18,
+		x: 319,
+		y: 467,
+		maxWidth: 222,
+	},
+	{
+		lines: [{ text: "Munich, {signatureDate}", font: "regular" }],
+		size: 8,
+		x: 413,
+		y: 765,
+	},
+];
+
+const sampleSettings = {
 	fonts: { regular: "SharpSans-Medium", bold: "SharpSans-Extrabold" },
 	language: "en-GB",
-	texts: [
-		{
-			lines: [{ text: "{fullname}", font: "bold" }],
-			size: 16,
-			x: 74,
-			y: 579,
-		},
-		{
-			lines: [
-				{
-					text: "for successfully completing our interdisciplinary program from  ",
-					font: "regular",
-				},
-				{ text: "{startDate} – {endDate}", font: "bold", split: "X" },
-				{ text: " as an ", font: "regular" },
-				{ text: "Interaction Designer", font: "bold" },
-				{ text: " of team ", font: "regular" },
-				{ text: "{team}", font: "bold" },
-				{ text: ".", font: "regular" },
-			],
-			size: 12,
-			lineHeight: 18,
-			x: 55,
-			y: 541,
-			maxWidth: 485,
-		},
-		{
-			lines: [
-				{
-					text: "{firstname} developed competencies in the following fields",
-					font: "bold",
-				},
-			],
-			size: 12,
-			lineHeight: 18,
-			x: 319,
-			y: 467,
-			maxWidth: 222,
-		},
-		{
-			lines: [{ text: "Munich, {signatureDate}", font: "regular" }],
-			size: 8,
-			x: 413,
-			y: 765,
-		},
-	],
+	texts: sampleLayout,
 };

@@ -1,9 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
   // Sample data for UnternehmerTUM
-
   const org = await prisma.organisation.upsert({
     where: { id: 1 },
     update: {},
@@ -12,6 +12,23 @@ async function main() {
     },
   });
   console.log("Organisation:", org);
+
+  // Sample user
+  const passwordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 10);
+  const admin = await prisma.user.upsert({
+    where: {
+      id: 1,
+    },
+    update: {},
+    create: {
+      email: process.env.SEED_ADMIN_EMAIL,
+      password: passwordHash,
+      firstName: process.env.SEED_ADMIN_FIRSTNAME,
+      lastName: process.env.SEED_ADMIN_LASTNAME,
+      isAdmin: true,
+    },
+  });
+  console.log("Admin:", admin);
 
   // Sample programs
 
