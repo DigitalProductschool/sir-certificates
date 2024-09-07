@@ -6,12 +6,12 @@ ENV NODE_ENV production
 
 RUN apk add --no-cache \
 	bash \
-#	build-base \
-#	cairo-dev \
-#	libpng-dev \
-#	g++ \
-#	pango-dev \
-#	python3 \
+	build-base \
+	cairo-dev \
+	libpng-dev \
+	g++ \
+	pango-dev \
+	python3 \
 	;
 
 # Install openssl
