@@ -70,6 +70,7 @@ export const handle = {
 export default function ProgramPage() {
   const { program } = useLoaderData<typeof loader>();
   const [templateName, setTemplateName] = useState("");
+  const [openAddDialog, setOpenAddDialog] = useState(false);
 
   const params = useParams();
   const navigate = useNavigate();
@@ -90,6 +91,10 @@ export default function ProgramPage() {
       });
     }
   }, [program.id, matches, firstTemplate, navigate]);
+
+  // @todo reset form inputs after adding a new template, see https://www.youtube.com/watch?v=bMLej7bg5Zo&list=PLXoynULbYuEDG2wBFSZ66b85EIspy3fy6
+
+  // @todo reduce layout shifts by setting a size (or aspect ratio?) for the preview image and/or the layout
 
   return (
     <div className="flex flex-col gap-4">
@@ -114,12 +119,19 @@ export default function ProgramPage() {
         ) : (
           <p>No templates created yet</p>
         )}
-        <Dialog>
+        <Dialog open={openAddDialog} onOpenChange={setOpenAddDialog}>
           <DialogTrigger asChild>
             <Button variant="outline">Add Template</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
-            <Form action="create" method="POST" encType="multipart/form-data">
+            <Form
+              action="create"
+              method="POST"
+              encType="multipart/form-data"
+              onSubmit={() => {
+                setOpenAddDialog(false);
+              }}
+            >
               <DialogHeader>
                 <DialogTitle>Add template</DialogTitle>
                 <DialogDescription>
@@ -135,7 +147,14 @@ export default function ProgramPage() {
                   type="file"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
-                      setTemplateName(e.target.files[0].name);
+                      let filename = e.target.files[0].name;
+                      if (filename.lastIndexOf(".") > 0) {
+                        filename = filename.substring(
+                          0,
+                          filename.lastIndexOf("."),
+                        );
+                      }
+                      setTemplateName(filename);
                     }
                   }}
                 />
