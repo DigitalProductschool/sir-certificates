@@ -3,7 +3,7 @@ import * as path from "node:path";
 import * as url from "node:url";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 
-import { pdf } from "pdf-to-img";
+import { convert } from "pdf-img-convert";
 import { PDFDocument, PDFPage, PDFFont, Color, rgb, grayscale } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import type { Batch, Certificate, Template } from "@prisma/client";
@@ -322,7 +322,7 @@ export async function generatePdfPreview(
 	// @todo make sure that the PDF file exists
 
 	// Generate PDF preview PNG
-	const document = await pdf(pdfFilePath, {
+	const document = await convert(pdfFilePath, {
 		scale: 2,
 	});
 

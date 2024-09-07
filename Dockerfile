@@ -6,12 +6,12 @@ ENV NODE_ENV production
 
 RUN apk add --no-cache \
 	bash \
-	build-base \
-	cairo-dev \
-	libpng-dev \
-	g++ \
-	pango-dev \
-	python3 \
+#	build-base \
+#	cairo-dev \
+#	libpng-dev \
+#	g++ \
+#	pango-dev \
+#	python3 \
 	;
 
 # Install openssl
@@ -23,7 +23,7 @@ FROM base as deps
 WORKDIR /app-certificates
 
 ADD package.json ./
-RUN npm install canvas --build-from-source
+# RUN npm install canvas --build-from-source
 RUN npm install --include=dev
 
 # Setup production node_modules
