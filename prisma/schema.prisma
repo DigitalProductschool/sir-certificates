@@ -82,6 +82,8 @@ model Team {
 model Template {
   id            Int       @id @default(autoincrement())
   name          String
+  layout        Json      
+  locale        String    @default("de-DE")
   program       Program   @relation(fields: [programId], references: [id])  
   programId     Int
 

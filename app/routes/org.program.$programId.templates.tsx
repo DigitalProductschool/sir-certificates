@@ -1,7 +1,16 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Template } from "@prisma/client";
+import { useState, useEffect } from "react";
 import { json } from "@remix-run/node";
-import { Link, Outlet, useLoaderData, useNavigate } from "@remix-run/react";
+import {
+  Form,
+  Link,
+  Outlet,
+  useLoaderData,
+  useNavigate,
+  useParams,
+  useMatches,
+} from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -15,14 +24,14 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
@@ -60,67 +69,101 @@ export const handle = {
 
 export default function ProgramPage() {
   const { program } = useLoaderData<typeof loader>();
+  const [templateName, setTemplateName] = useState("");
+
+  const params = useParams();
   const navigate = useNavigate();
+  const matches = useMatches();
+
+  const firstTemplate =
+    program.templates.length > 0 ? program.templates[0] : undefined;
+
+  const handleTemplateSelect = (value: string) => {
+    navigate(`/org/program/${program.id}/templates/${value}`);
+  };
+
+  useEffect(() => {
+    // IF at least one template exists AND we're on program level THEN navigate to the first template
+    if (firstTemplate && matches.length === 4) {
+      navigate(`/org/program/${program.id}/templates/${firstTemplate.id}`, {
+        replace: true,
+      });
+    }
+  }, [program.id, matches, firstTemplate, navigate]);
 
   return (
     <div className="flex flex-col gap-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {program.templates.map((template: Template) => (
-            <TableRow
-              key={template.id}
-              onClick={() => navigate(`${template.id}`)}
-              className="cursor-pointer"
-            >
-              <TableCell>{template.name}</TableCell>
-              <TableCell>
-                <Button variant="outline" asChild>
-                  <Link to={`${template.id}`}>Show</Link>
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-          {program.templates.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={5}>No templates created yet</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline">Add Template</Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add template</DialogTitle>
-            <DialogDescription>
-              Upload a new certificate template for this program, then configure the layout options in the next step.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name">
-                Select PDF
-              </Label>
-              <Input
-                id="pdf"
-                type="file"
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit">Upload PDF</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <div className="flex items-center gap-4">
+        {program.templates.length > 0 ? (
+          <Select
+            key={params.templateId}
+            defaultValue={params.templateId}
+            onValueChange={handleTemplateSelect}
+          >
+            <SelectTrigger className="w-[280px]">
+              <SelectValue placeholder="Select a template" />
+            </SelectTrigger>
+            <SelectContent>
+              {program.templates.map((template: Template) => (
+                <SelectItem key={template.id} value={template.id.toString()}>
+                  {template.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <p>No templates created yet</p>
+        )}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">Add Template</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <Form action="create" method="POST" encType="multipart/form-data">
+              <DialogHeader>
+                <DialogTitle>Add template</DialogTitle>
+                <DialogDescription>
+                  Upload a new certificate template for this program, then
+                  configure the layout options in the next step.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <Label htmlFor="pdf">Select a PDF file</Label>
+                <Input
+                  id="pdf"
+                  name="pdf"
+                  type="file"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setTemplateName(e.target.files[0].name);
+                    }
+                  }}
+                />
+                <Label htmlFor="name">Template name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                />
+                <Label htmlFor="locale">Date format</Label>
+                <Select name="locale" defaultValue="de-DE">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a date format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="de-DE">German</SelectItem>
+                    <SelectItem value="en-GB">English UK</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button type="submit">Upload PDF</Button>
+              </DialogFooter>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
       <Outlet />
     </div>
   );
