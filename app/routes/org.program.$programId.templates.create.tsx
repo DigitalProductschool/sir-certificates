@@ -13,6 +13,7 @@ import {
   saveUploadedTemplate,
   sampleLayout,
   generateTemplateSample,
+  generatePreviewOfTemplate,
 } from "~/lib/pdf.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -68,6 +69,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   if (template) {
     await saveUploadedTemplate(template, templatePDF);
     await generateTemplateSample(template);
+    await generatePreviewOfTemplate(template);
     return redirect(`../${template.id}`);
   }
 

@@ -84,6 +84,7 @@ model Template {
   name          String
   layout        Json      
   locale        String    @default("de-DE")
+  updatedAt     DateTime  @updatedAt    
   program       Program   @relation(fields: [programId], references: [id])  
   programId     Int
 

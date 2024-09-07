@@ -20,9 +20,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       statusText: "Not Found",
     });
   }
-
-  const preview = await generatePreviewOfTemplate(template);
-
+  
+  const preview = await generatePreviewOfTemplate(template, true);
   return new Response(preview, {
     status: 200,
     headers: {

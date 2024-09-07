@@ -7,7 +7,10 @@ import { json } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import { requireUserId } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
-import { generateTemplateSample } from "~/lib/pdf.server";
+import {
+  generateTemplateSample,
+  generatePreviewOfTemplate,
+} from "~/lib/pdf.server";
 
 import { Button } from "~/components/ui/button";
 
@@ -60,6 +63,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   if (template) {
     await generateTemplateSample(template);
+    await generatePreviewOfTemplate(template, false);
   }
 
   return json({ template });
@@ -117,7 +121,7 @@ export default function ProgramPage() {
 
           <img
             className="drop-shadow-xl self-center"
-            src={`${template.id}/preview.png`}
+            src={`${template.id}/preview.png?t=${template.updatedAt}`}
             alt="Preview of the template"
           />
         </div>
