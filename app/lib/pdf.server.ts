@@ -258,7 +258,7 @@ export async function generateTemplateSample(template: Template) {
 			);
 
 			// @todo add team
-			replacements = replacements.replace("{team}", "");
+			replacements = replacements.replace("{team}", "Team");
 
 			return {
 				text: replacements,
@@ -295,11 +295,13 @@ export async function generatePreviewOfCertificate(
 	return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
 }
 
-export async function generatePreviewOfTemplate(template: Template) {
+export async function generatePreviewOfTemplate(
+	template: Template,
+	skipIfExists = true,
+) {
 	const previewFilePath = `${previewDir}/tpl-${template.id}.png`;
 	const pdfFilePath = `${templateDir}/${template.id}.sample.pdf`;
-	// @todo implement a caching strategy based on last updated at timestamp
-	return await generatePdfPreview(pdfFilePath, previewFilePath, false);
+	return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
 }
 
 export async function generatePdfPreview(
@@ -351,7 +353,7 @@ export function drawTextBox(
 		line.text.split(line.split || " ").forEach((word: string) => {
 			if (
 				x + line.font.widthOfTextAtSize(word, lineOptions.size) >
-				options.x + (options.maxWidth || 0)
+				options.x + (options.maxWidth || 1000)
 			) {
 				x = options.x;
 				y -= options.lineHeight || 0;

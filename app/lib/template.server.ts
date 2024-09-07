@@ -1,12 +1,12 @@
-import * as path from "node:path";
-import * as url from "node:url";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { unlink } from "node:fs/promises";
 import { prisma, throwErrorResponse } from "./prisma.server";
 
-const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
-const previewDir = path.resolve(__dirname, "../../storage/previews");
-const templateDir = path.resolve(__dirname, "../../storage/templates");
+const previewDir = resolve(__dirname, "../../storage/previews");
+const templateDir = resolve(__dirname, "../../storage/templates");
 
 export async function deleteTemplatePreview(templateId: number) {
 	return await unlink(`${previewDir}/tpl-${templateId}.png`);
