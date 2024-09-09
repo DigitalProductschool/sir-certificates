@@ -9,3 +9,5 @@ export type LoginForm = {
   email: string
   password: string
 }
+
+// @todo add types for other forms

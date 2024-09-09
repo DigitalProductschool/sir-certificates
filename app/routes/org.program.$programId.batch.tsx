@@ -4,12 +4,15 @@ import { useEffect } from "react";
 import { json } from "@remix-run/node";
 import {
   NavLink,
+  Link,
   Outlet,
   useLoaderData,
   useNavigate,
   useMatches,
   useParams,
 } from "@remix-run/react";
+
+import { Button } from "~/components/ui/button";
 
 import {
   Select,
@@ -60,6 +63,11 @@ export default function ProgramPage() {
       ? program.batches[program.batches.length - 1]
       : undefined;
 
+  const currentBatch = program.batches.find(
+    (batch: Batch) =>
+      Number(params.batchId) > 0 && batch.id === Number(params.batchId),
+  );
+
   const handleBatchSelect = (value: string) => {
     navigate(`/org/program/${program.id}/batch/${value}/certificates`);
   };
@@ -84,17 +92,43 @@ export default function ProgramPage() {
               defaultValue={params.batchId}
               onValueChange={handleBatchSelect}
             >
-              <SelectTrigger className="w-[280px]">
-                <SelectValue placeholder="Select a Batch" />
+              <SelectTrigger className="w-[280px] [&>span]:line-clamp-none">
+                <SelectValue placeholder="Select a Batch" asChild>
+                  <div className="flex gap-2 text-left items-center">
+                    {currentBatch?.name}
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(currentBatch?.startDate).toLocaleDateString()}–{" "}
+                      {new Date(currentBatch?.endDate).toLocaleDateString()}
+                    </div>
+                  </div>
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {program.batches.toReversed().map((batch: Batch) => (
-                  <SelectItem key={batch.id} value={batch.id.toString()}>
-                    {batch.name}
-                  </SelectItem>
-                ))}
+                {program.batches.toReversed().map((batch: Batch) => {
+                  // batch is still a JSON object, not an actual Batch
+                  // @todo check if https://www.prisma.io/docs/orm/prisma-client/type-safety#what-are-generated-types can help here to operate on the correct type
+                  const startDate = new Date(batch.startDate);
+                  const endDate = new Date(batch.endDate);
+                  return (
+                    <SelectItem
+                      key={batch.id}
+                      value={batch.id.toString()}
+                      textValue={batch.name}
+                    >
+                      {batch.name}
+                      <div className="text-xs text-muted-foreground">
+                        {startDate.toLocaleDateString()}–{" "}
+                        {endDate.toLocaleDateString()}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
+
+            <Button asChild>
+              <Link to={`${latestBatch.id}/edit`}>Edit</Link>
+            </Button>
 
             {matches.length > 3 && (
               <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
