@@ -64,6 +64,9 @@ model Certificate {
   batchId       Int
   team          Team? @relation(fields: [teamId], references: [id])
   teamId        Int?
+  template      Template @relation(fields: [templateId], references: [id])
+  templateId    Int
+  updatedAt     DateTime  @updatedAt  
 
   @@unique(name: "certId", [batchId, email])
   @@map("certificates")  
@@ -85,6 +88,7 @@ model Template {
   layout        Json      
   locale        String    @default("de-DE")
   updatedAt     DateTime  @updatedAt    
+  certificates  Certificate[]
   program       Program   @relation(fields: [programId], references: [id])  
   programId     Int
 

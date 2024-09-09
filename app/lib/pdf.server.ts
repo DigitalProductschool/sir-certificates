@@ -98,7 +98,7 @@ export async function generateCertificate(
 	// Generate certificate PDF
 	const layout = sampleSettings;
 
-	const templatePath = `${dir}/templates/xplore-market-prioneer.pdf`;
+	const templatePath = `${dir}/templates/${certificate.templateId}.pdf`;
 	const pdfTemplate = await readFile(templatePath);
 
 	// Get PDF template

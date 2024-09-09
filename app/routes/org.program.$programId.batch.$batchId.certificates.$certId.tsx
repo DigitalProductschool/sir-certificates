@@ -77,7 +77,7 @@ export default function CertificatePage() {
 
       <img
         className="px-8 drop-shadow-xl self-center"
-        src={`/cert/${certificate.id}/preview.png`}
+        src={`/cert/${certificate.id}/preview.png?t=${certificate.updatedAt}`}
         alt="Preview of the certificate"
       />
     </div>

@@ -1,9 +1,9 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Batch } from "@prisma/client";
+import type { Batch, Template } from "@prisma/client";
 
 import { useState } from "react";
 import { json } from "@remix-run/node";
-import { Link, useParams } from "@remix-run/react";
+import { Link, useParams, useLoaderData } from "@remix-run/react";
 
 import {
   CircleFadingPlus,
@@ -16,6 +16,14 @@ import { CSVDropZone } from "~/components/csv-drop-zone";
 import { TaskRunner } from "~/components/task-runner";
 
 import { Badge } from "~/components/ui/badge";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 import {
   Table,
@@ -51,6 +59,18 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
+  const templates = await prisma.template.findMany({
+    where: {
+      program: {
+        is: {
+          id: {
+            equals: Number(params.programId),
+          },
+        },
+      },
+    },
+  });
+
   if (!batch) {
     throw new Response(null, {
       status: 404,
@@ -58,7 +78,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ batch });
+  return json({ batch, templates });
 };
 
 type LoaderReturnType = {
@@ -94,12 +114,18 @@ function StatusIndicator({ status, error }: { status: string; error: string }) {
 
 export default function ImportPage() {
   const params = useParams();
+  const { templates } = useLoaderData<typeof loader>();
   const [key, setKey] = useState(1);
   const [rows, setRows] = useState<Array<Record<string, string>>>([]);
 
+  const firstTemplate: Template | null =
+    templates && templates.length > 0 ? templates[0] : null;
+
   const handleCSVRead = (rows: Array<Record<string, string>>) => {
+    // @todo when Track support is added, match the Track when selecting the template in row._template
     const rowsWithMeta = rows.map((row) => {
       row._status = "todo";
+      row._template = String(firstTemplate?.id);
       return row;
     });
     setRows(rowsWithMeta);
@@ -117,6 +143,14 @@ export default function ImportPage() {
     });
   };
 
+  const setRowTemplate = (index: number, template: string) => {
+    setRows((rows) => {
+      const update = [...rows];
+      update[index]._template = template;
+      return update;
+    });
+  };
+
   const handleImport = async (item: Record<string, string>, index: number) => {
     setRowStatus(index, "pending");
 
@@ -124,6 +158,7 @@ export default function ImportPage() {
     formData.append("firstName", item.firstname);
     formData.append("lastName", item.lastname);
     formData.append("email", item.email);
+    formData.append("templateId", item._template);
     formData.append("batchId", params.batchId);
 
     await fetch("/api/import", {
@@ -175,21 +210,22 @@ export default function ImportPage() {
         <TableHeader>
           <TableRow>
             <TableHead></TableHead>
-            <TableHead>Firstname</TableHead>
-            <TableHead>Lastname</TableHead>
+            <TableHead>Name</TableHead>
             <TableHead className="font-medium">Email</TableHead>
             <TableHead>Team</TableHead>
             <TableHead>Track</TableHead>
+            <TableHead>Template</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row: Record<string, string>) => (
+          {rows.map((row: Record<string, string>, index: number) => (
             <TableRow key={row.email}>
               <TableCell>
                 <StatusIndicator status={row._status} error={row._error} />
               </TableCell>
-              <TableCell>{row.firstname}</TableCell>
-              <TableCell>{row.lastname}</TableCell>
+              <TableCell>
+                {row.firstname} {row.lastname}
+              </TableCell>
               <TableCell className="font-medium">{row.email}</TableCell>
               <TableCell>
                 {row.team || <Badge variant="outline">empty</Badge>}
@@ -197,12 +233,49 @@ export default function ImportPage() {
               <TableCell>
                 {row.track || <Badge variant="outline">empty</Badge>}
               </TableCell>
+              <TableCell>
+                <Select
+                  name="template"
+                  value={row._template}
+                  onValueChange={(value) => {
+                    setRowTemplate(index, value);
+                  }}
+                >
+                  <SelectTrigger className="w-[280px]">
+                    <SelectValue placeholder="Template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((template: Template) => (
+                      <SelectItem
+                        key={template.id}
+                        value={template.id.toString()}
+                      >
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TableCell>
             </TableRow>
           ))}
+          {templates.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="text-destructive">
+                No certificate templates configured yet. Please{" "}
+                <Link
+                  to={`/org/program/${params.programId}/templates`}
+                  className="underline"
+                >
+                  add a template
+                </Link>{" "}
+                first.
+              </TableCell>
+            </TableRow>
+          )}
           {rows.length === 0 && (
             <TableRow>
               <TableCell colSpan={5}>
-                No participants to import. Please select a file first.
+                No participants to import. Please select a CSV file first.
               </TableCell>
             </TableRow>
           )}

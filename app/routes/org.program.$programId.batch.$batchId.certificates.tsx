@@ -43,7 +43,19 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ batch });
+  const templates = await prisma.template.findMany({
+    where: {
+      program: {
+        is: {
+          id: {
+            equals: Number(params.programId),
+          },
+        },
+      },
+    },
+  });
+
+  return json({ batch, templates });
 };
 
 type LoaderReturnType = {
@@ -55,33 +67,48 @@ export const handle = {
 };
 
 export default function ProgramPage() {
-  const { batch } = useLoaderData<typeof loader>();
+  const { batch, templates } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+
+  const templatesMap = new Map();
+  for (const template of templates) {
+    templatesMap.set(template.id, template);
+  }
 
   return (
     <div className="flex flex-col gap-4">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Firstname</TableHead>
-            <TableHead>Lastname</TableHead>
+            <TableHead>Name</TableHead>
             <TableHead className="font-medium">Email</TableHead>
             <TableHead>Team</TableHead>
             <TableHead>Track</TableHead>
+            <TableHead>Template</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {batch.certificates.map((cert: Certificate) => (
-            <TableRow key={cert.email} onClick={() => navigate(`${cert.id}`)} className="cursor-pointer">
-              <TableCell>{cert.firstName}</TableCell>
-              <TableCell>{cert.lastName}</TableCell>
+            <TableRow
+              key={cert.email}
+              onClick={() => navigate(`${cert.id}`)}
+              className="cursor-pointer"
+            >
+              <TableCell>
+                {cert.firstName} {cert.lastName}
+              </TableCell>
               <TableCell className="font-medium">{cert.email}</TableCell>
               <TableCell>
                 <Badge variant="outline">empty</Badge>
               </TableCell>
               <TableCell>
                 <Badge variant="outline">empty</Badge>
+              </TableCell>
+              <TableCell>
+                {templatesMap.get(cert.templateId)?.name || (
+                  <Badge variant="destructive">not found</Badge>
+                )}
               </TableCell>
               <TableCell>
                 <Button variant="outline" asChild>
