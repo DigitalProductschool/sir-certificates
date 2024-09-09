@@ -11,8 +11,6 @@ import {
 export function Breadcrumbs() {
   const matches = useMatches();
 
-  console.log(matches);
-
   return (
     <Breadcrumb className="hidden md:flex">
       <BreadcrumbList>
