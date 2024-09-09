@@ -62,9 +62,18 @@ type LoaderReturnType = {
   org: Organisation;
 };
 
+type Match = {
+  id: string;
+  pathname: string;
+  data: LoaderReturnType;
+  params: Record<string, string>;
+};
+
 export const handle = {
-  breadcrumb: (data: LoaderReturnType) => (
-    <Link to="/org">{data.org ? data.org.name : "Organisation"}</Link>
+  breadcrumb: (match: Match) => (
+    <Link to="/org">
+      {match.data.org ? match.data.org.name : "Organisation"}
+    </Link>
   ),
 };
 

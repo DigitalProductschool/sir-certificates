@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { json } from "@remix-run/node";
 import {
   Form,
-  Link,
   Outlet,
   useLoaderData,
   useNavigate,
   useParams,
   useMatches,
 } from "@remix-run/react";
+
+import { InfoIcon } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -32,6 +33,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
@@ -63,9 +70,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   return json({ program });
 };
 
-export const handle = {
-  breadcrumb: () => <Link to="#">Templates</Link>,
-};
+/* export const handle = {
+  breadcrumb: (match) => <Link to={match.pathname}>Templates</Link>,
+}; */
 
 export default function ProgramPage() {
   const { program } = useLoaderData<typeof loader>();
@@ -95,6 +102,8 @@ export default function ProgramPage() {
   // @todo reset form inputs after adding a new template, see https://www.youtube.com/watch?v=bMLej7bg5Zo&list=PLXoynULbYuEDG2wBFSZ66b85EIspy3fy6
 
   // @todo reduce layout shifts by setting a size (or aspect ratio?) for the preview image and/or the layout
+
+  // @todo refactor the add dialog into the create route
 
   return (
     <div className="flex flex-col gap-4">
@@ -182,6 +191,15 @@ export default function ProgramPage() {
             </Form>
           </DialogContent>
         </Dialog>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <InfoIcon className="text-muted-foreground" />
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            The layout code needs to be replaced with an easier UI, for now
+            reach out to Marcus.
+          </TooltipContent>
+        </Tooltip>
       </div>
       <Outlet />
     </div>

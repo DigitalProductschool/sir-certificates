@@ -4,13 +4,9 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 // import type { Batch } from "@prisma/client";
+import { useEffect } from "react";
 import { json, redirect } from "@remix-run/node";
-import {
-  Form,
-  Link,
-  useLoaderData,
-  useNavigate,
-} from "@remix-run/react";
+import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -83,6 +79,18 @@ export default function ProgramPage() {
   const startDate = new Date(batch.startDate);
   const endDate = new Date(batch.endDate);
 
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        navigate(`../${batch.id}/certificates`);
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [batch.id, navigate]);
+
   return (
     <Dialog
       open={true}
@@ -93,7 +101,7 @@ export default function ProgramPage() {
       <DialogContent className="sm:max-w-[425px]">
         <Form method="POST">
           <DialogHeader>
-            <DialogTitle>Batch Settings</DialogTitle>
+            <DialogTitle>Batch settings</DialogTitle>
             <DialogDescription>
               Change the batch information as needed. Do not forget to refresh
               the certificates afterwards.

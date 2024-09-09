@@ -76,6 +76,8 @@ export async function readFileIfExists(filePath: string) {
 	}
 }
 
+// @todo dry up the code for generateCertificate and generateCertificateTemplate
+
 export async function generateCertificate(
 	certificate: Certificate,
 	batch: Batch,

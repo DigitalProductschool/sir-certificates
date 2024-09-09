@@ -3,6 +3,7 @@ import type {
   LoaderFunction,
   MetaFunction,
 } from "@remix-run/node";
+import type { Template } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import { requireUserId } from "~/lib/auth.server";
@@ -13,7 +14,7 @@ import {
 } from "~/lib/pdf.server";
 
 import { Button } from "~/components/ui/button";
-
+import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import {
   Select,
@@ -88,8 +89,21 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   return json({ template });
 };
 
+type LoaderReturnType = {
+  template: Template;
+};
+
+type Match = {
+  id: string;
+  pathname: string;
+  data: LoaderReturnType;
+  params: Record<string,string>
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="#">Templates</Link>,
+  breadcrumb: (match : Match) => (
+    <Link to="#">Template: {match.data.template.name}</Link>
+  ),
 };
 
 export default function ProgramPage() {
@@ -97,12 +111,14 @@ export default function ProgramPage() {
 
   return (
     <>
-      <Form key={template.id} method="POST" className="flex flex-col gap-4">
+      <Form key={template.id} method="POST" className="pt-4">
         <div className="grid grid-cols-2 gap-4">
-          <Input name="name" defaultValue={template.name} />
+          <Label htmlFor="name">Template name</Label>
+          <Label htmlFor="locale">Date format</Label>
+          <Input id="name" name="name" defaultValue={template.name} />
           <div className="grid grid-cols-2 gap-4">
             <Select name="locale" defaultValue={template.locale}>
-              <SelectTrigger>
+              <SelectTrigger id="locale">
                 <SelectValue placeholder="Select a date format" />
               </SelectTrigger>
               <SelectContent>
