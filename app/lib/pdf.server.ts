@@ -114,6 +114,10 @@ export async function generateCertificate(
 		await readFile(`${dir}/fonts/${layout.fonts.bold}.ttf`),
 		{ subset: true },
 	);
+	const fontRegularItalic = await pdf.embedFont(
+		await readFile(`${dir}/fonts/${layout.fonts.italic}.ttf`),
+		{ subset: true },
+	);
 
 	// Modify page
 	const page = pdf.getPages()[0];
@@ -155,6 +159,7 @@ export async function generateCertificate(
 			);
 			replacements = replacements.replace("{startDate}", startDate);
 			replacements = replacements.replace("{endDate}", endDate);
+			replacements = replacements.replace("{batchName}", batch.name);
 			replacements = replacements.replace(
 				"{signatureDate}",
 				signatureDate,
@@ -163,9 +168,19 @@ export async function generateCertificate(
 			// @todo add team
 			replacements = replacements.replace("{team}", "");
 
+			let fontChoice = fontRegular;
+			switch (line.font) {
+				case "bold":
+					fontChoice = fontExtraBold;
+					break;
+				case "italic":
+					fontChoice = fontRegularItalic;
+					break;
+			}
+
 			return {
 				text: replacements,
-				font: line.font === "regular" ? fontRegular : fontExtraBold,
+				font: fontChoice,
 				split: line.split,
 			};
 		});
@@ -208,6 +223,7 @@ export async function generateTemplateSample(template: Template) {
 	const pdf = await PDFDocument.load(pdfTemplate);
 
 	// Load custom fonts
+	// @todo optimize loading only the fonts used in the layout
 	pdf.registerFontkit(fontkit);
 	const fontRegular = await pdf.embedFont(
 		await readFile(`${dir}/fonts/${layout.fonts.regular}.ttf`),
@@ -215,6 +231,10 @@ export async function generateTemplateSample(template: Template) {
 	);
 	const fontExtraBold = await pdf.embedFont(
 		await readFile(`${dir}/fonts/${layout.fonts.bold}.ttf`),
+		{ subset: true },
+	);
+	const fontRegularItalic = await pdf.embedFont(
+		await readFile(`${dir}/fonts/${layout.fonts.italic}.ttf`),
 		{ subset: true },
 	);
 
@@ -260,9 +280,19 @@ export async function generateTemplateSample(template: Template) {
 			// @todo add team
 			replacements = replacements.replace("{team}", "Team");
 
+			let fontChoice = fontRegular;
+			switch (line.font) {
+				case "bold":
+					fontChoice = fontExtraBold;
+					break;
+				case "italic":
+					fontChoice = fontRegularItalic;
+					break;
+			}
+
 			return {
 				text: replacements,
-				font: line.font === "regular" ? fontRegular : fontExtraBold,
+				font: fontChoice,
 				split: line.split,
 			};
 		});
@@ -438,7 +468,11 @@ export const sampleLayout: any = [
 ];
 
 const sampleSettings = {
-	fonts: { regular: "SharpSans-Medium", bold: "SharpSans-Extrabold" },
+	fonts: {
+		regular: "SharpSans-Medium",
+		bold: "SharpSans-Extrabold",
+		italic: "SharpSans-MediumItalic",
+	},
 	language: "en-GB",
 	texts: sampleLayout,
 };
