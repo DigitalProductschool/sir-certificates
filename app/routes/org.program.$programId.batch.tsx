@@ -12,6 +12,8 @@ import {
   useParams,
 } from "@remix-run/react";
 
+import { Settings } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 
 import {
@@ -21,6 +23,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
@@ -126,9 +134,19 @@ export default function ProgramPage() {
               </SelectContent>
             </Select>
 
-            <Button asChild>
-              <Link to={`${latestBatch.id}/edit`}>Edit</Link>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" asChild>
+                  <Link
+                    to={`${latestBatch.id}/edit`}
+                    aria-label="Edit batch settings"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Edit batch settings</TooltipContent>
+            </Tooltip>
 
             {matches.length > 3 && (
               <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">

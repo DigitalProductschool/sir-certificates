@@ -62,8 +62,15 @@ type LoaderReturnType = {
   batch: Batch;
 };
 
+type Match = {
+  id: string;
+  pathname: string;
+  data: LoaderReturnType;
+  params: Record<string, string>;
+};
+
 export const handle = {
-  breadcrumb: (data: LoaderReturnType) => <Link to="#">{data.batch.name}</Link>,
+  breadcrumb: (match: Match) => <Link to="#">{match.data.batch.name}</Link>,
 };
 
 export default function ProgramPage() {

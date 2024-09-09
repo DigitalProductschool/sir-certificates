@@ -39,10 +39,17 @@ type LoaderReturnType = {
   program: Program;
 };
 
+type Match = {
+  id: string;
+  pathname: string;
+  data: LoaderReturnType;
+  params: Record<string, string>;
+};
+
 export const handle = {
-  breadcrumb: (data: LoaderReturnType) => (
-    <Link to={`/org/program/${data.program.id}/batch`}>
-      {data.program.name}
+  breadcrumb: (match: Match) => (
+    <Link to={`/org/program/${match.data.program.id}/batch`}>
+      {match.data.program.name}
     </Link>
   ),
 };

@@ -43,10 +43,17 @@ type LoaderReturnType = {
   certificate: Certificate;
 };
 
+type Match = {
+  id: string;
+  pathname: string;
+  data: LoaderReturnType;
+  params: Record<string,string>
+}
+
 export const handle = {
-  breadcrumb: (data: LoaderReturnType) => (
+  breadcrumb: (match: Match) => (
     <Link to="#">
-      {data.certificate.firstName} {data.certificate.lastName}
+      {match.data.certificate.firstName} {match.data.certificate.lastName}
     </Link>
   ),
 };

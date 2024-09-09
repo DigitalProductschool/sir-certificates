@@ -11,6 +11,8 @@ import {
 export function Breadcrumbs() {
   const matches = useMatches();
 
+  console.log(matches);
+
   return (
     <Breadcrumb className="hidden md:flex">
       <BreadcrumbList>
@@ -21,7 +23,7 @@ export function Breadcrumbs() {
               {index != 0 && <BreadcrumbSeparator />}
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  {match.handle.breadcrumb(match.data)}
+                  {match.handle.breadcrumb(match)}
                 </BreadcrumbLink>
               </BreadcrumbItem>
             </Fragment>
