@@ -15,7 +15,8 @@ import {
 type TaskRunnerProps = {
 	items: Array<unknown>;
 	itemLabel: string;
-	startLabel: string;
+	startLabel?: string;
+	pauseLabel?: string;
 	confirmTitle: string;
 	confirmDescription: string;
 	onRunTask: (item: any, index: number) => Promise<unknown>;
@@ -30,6 +31,7 @@ export function TaskRunner({
 	items,
 	itemLabel,
 	startLabel,
+	pauseLabel,
 	confirmTitle,
 	confirmDescription,
 	onRunTask,
@@ -111,7 +113,7 @@ export function TaskRunner({
 				{isRunning ? (
 					<>
 						<Pause className="mr-2 h-4 w-4" />
-						{startLabel ?? "Pause"}
+						{pauseLabel ?? "Pause"}
 					</>
 				) : (
 					<>
