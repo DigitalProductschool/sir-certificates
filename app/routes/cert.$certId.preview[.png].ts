@@ -1,7 +1,9 @@
 import type { LoaderFunction } from "@remix-run/node";
 
 import { prisma } from "~/lib/prisma.server";
-import { /* generateCertificate,*/ generatePreviewOfCertificate } from "~/lib/pdf.server";
+import {
+	/* generateCertificate,*/ generatePreviewOfCertificate,
+} from "~/lib/pdf.server";
 
 export const loader: LoaderFunction = async ({ params }) => {
 	// @todo is auth necessary or always public?
@@ -22,9 +24,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 		});
 	}
 
-	const skipIfExists = true;
-	//await generateCertificate(certificate, certificate.batch, skipIfExists);
-	const preview = await generatePreviewOfCertificate(certificate, skipIfExists);
+	const preview = await generatePreviewOfCertificate(certificate, true);
 
 	return new Response(preview, {
 		status: 200,
