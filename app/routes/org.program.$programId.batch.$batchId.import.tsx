@@ -207,6 +207,7 @@ export default function ImportPage() {
         items={rows}
         itemLabel="participants"
         startLabel="Start Import"
+        pauseLabel="Pause Import"
         confirmTitle="Start the import?"
         confirmDescription="The participants from the CSV file will be added to the selected batch. If a provided email is already in this batch, the name and other information will be updated to prevent duplicates."
         onRunTask={handleImport}
