@@ -232,9 +232,9 @@ export default function ImportPage() {
                 <StatusIndicator status={row._status} error={row._error} />
               </TableCell>
               <TableCell>
-                {row.firstname} {row.lastname}
+                {row.firstname || <Badge variant="destructive">firstname</Badge>} {row.lastname || <Badge variant="destructive">lastname</Badge>}
               </TableCell>
-              <TableCell className="font-medium">{row.email}</TableCell>
+              <TableCell className="font-medium">{row.email || <Badge variant="destructive">email</Badge>}</TableCell>
               <TableCell>
                 {row.team || <Badge variant="outline">empty</Badge>}
               </TableCell>
