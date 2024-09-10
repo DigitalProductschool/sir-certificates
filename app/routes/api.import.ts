@@ -15,7 +15,12 @@ export const action: ActionFunction = async ({ request }) => {
 	const formData = await request.formData();
 	const inputs = Object.fromEntries(formData);
 
-	console.log("Import", inputs);
+	if (!inputs.email || inputs.email === "") {
+		throw new Response(null, {
+			status: 400,
+			statusText: "Missing email",
+		});
+	}
 
 	// If this email exists already for this batch, update instead of create
 	const certificate = await prisma.certificate
