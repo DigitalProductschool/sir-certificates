@@ -74,17 +74,23 @@ export default function CertificatePage() {
         {certificate.firstName} {certificate.lastName}
       </H2>
 
-      <div className="flex px-8">
+      <div className="flex px-8 gap-2">
         <Button asChild>
-          <Link to={`/cert/${certificate.id}/download.pdf`} reloadDocument>
+          <Link to={`/cert/${certificate.uuid}/download.pdf`} reloadDocument>
             Download Certificate
           </Link>
         </Button>
+        <Button variant="link" asChild>
+          <Link to={`/view/${certificate.uuid}`}>
+            View public page
+          </Link>
+        </Button>
+
       </div>
 
       <img
         className="px-8 drop-shadow-xl self-center"
-        src={`/cert/${certificate.id}/preview.png?t=${certificate.updatedAt}`}
+        src={`/cert/${certificate.uuid}/preview.png?t=${certificate.updatedAt}`}
         alt="Preview of the certificate"
       />
     </div>

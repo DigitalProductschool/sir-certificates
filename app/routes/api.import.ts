@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { ActionFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
@@ -42,6 +43,7 @@ export const action: ActionFunction = async ({ request }) => {
 				},
 			},
 			create: {
+				uuid: randomUUID(),
 				firstName: inputs.firstName,
 				lastName: inputs.lastName,
 				email: inputs.email,

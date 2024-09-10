@@ -57,6 +57,7 @@ model Batch {
 
 model Certificate {
   id            Int       @id @default(autoincrement())
+  uuid          String    @unique @db.Uuid
   firstName     String  
   lastName      String
   email         String

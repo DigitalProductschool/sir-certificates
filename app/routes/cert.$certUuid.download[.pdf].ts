@@ -1,3 +1,4 @@
+import slug from "slug";
 import type { LoaderFunction } from "@remix-run/node";
 
 import { prisma } from "~/lib/prisma.server";
@@ -8,7 +9,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 	const certificate = await prisma.certificate.findUnique({
 		where: {
-			id: Number(params.certId),
+			uuid: params.certUuid,
 		},
 		include: {
 			batch: true,
@@ -35,7 +36,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 		status: 200,
 		headers: {
 			"Content-Type": "application/pdf",
-			"Content-Disposition": `attachment; filename*="${certificate.firstName} ${certificate.lastName} Certificate.pdf"`,
+			"Content-Disposition": `attachment; filename=${slug(`${certificate.firstName} ${certificate.lastName}`)}.certificate.pdf`,
 		},
 	});
 };
