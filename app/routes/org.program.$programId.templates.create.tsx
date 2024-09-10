@@ -100,7 +100,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   });
 };
 
-export default function EditBatchPage() {
+export default function CreateTemplateDialog() {
   const [templateName, setTemplateName] = useState("");
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);

@@ -11,3 +11,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   return redirect("../../");
 };
+
+
+// @todo improve user-facing error handling with an ErrorBoundary and a Dialog
