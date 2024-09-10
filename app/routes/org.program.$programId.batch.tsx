@@ -16,7 +16,6 @@ import {
 import { Settings } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
-
 import {
   Select,
   SelectContent,
@@ -24,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-
 import {
   Tooltip,
   TooltipContent,
@@ -47,7 +45,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       id: Number(params.programId),
     },
     include: {
-      batches: true,
+      batches: {
+        orderBy: {
+          startDate: "desc",
+        },
+      },
     },
   });
 
@@ -69,7 +71,7 @@ export default function ProgramPage() {
 
   const latestBatch =
     program.batches.length > 0
-      ? program.batches[program.batches.length - 1]
+      ? program.batches[0]
       : undefined;
 
   const currentBatch = program.batches.find(
@@ -113,7 +115,7 @@ export default function ProgramPage() {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {program.batches.toReversed().map((batch: Batch) => {
+                {program.batches.map((batch: Batch) => {
                   // batch is still a JSON object, not an actual Batch
                   // @todo check if https://www.prisma.io/docs/orm/prisma-client/type-safety#what-are-generated-types can help here to operate on the correct type
                   const startDate = new Date(batch.startDate);
@@ -181,7 +183,11 @@ export default function ProgramPage() {
             )}
 
             {currentBatch && (
-              <Form action={`${currentBatch.id}/delete`} method="POST" className="flex grow justify-end">
+              <Form
+                action={`${currentBatch.id}/delete`}
+                method="POST"
+                className="flex grow justify-end"
+              >
                 <Button type="submit" variant="destructive">
                   Delete Batch
                 </Button>

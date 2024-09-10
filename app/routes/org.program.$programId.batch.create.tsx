@@ -30,7 +30,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
 
-  await prisma.batch.create({
+  const batch = await prisma.batch.create({
     data: {
       name: inputs.name,
       startDate: new Date(inputs.startDate),
@@ -43,7 +43,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     },
   });
 
-  return redirect(`../`);
+  return redirect(`../${batch.id}/import`);
 };
 
 export default function CreateBatchDialog() {
