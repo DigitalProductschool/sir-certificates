@@ -6,5 +6,7 @@ node_modules
 
 /storage/*
 !/storage/.gitkeep
+!/storage/fonts/
 
 .DS_Store
+_project/

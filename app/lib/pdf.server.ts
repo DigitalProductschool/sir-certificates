@@ -471,9 +471,9 @@ export const sampleLayout: any = [
 
 const sampleSettings = {
 	fonts: {
-		regular: "SharpSans-Medium",
-		bold: "SharpSans-Extrabold",
-		italic: "SharpSans-MediumItalic",
+		regular: "Montserrat-Regular",
+		bold: "Montserrat-ExtraBold",
+		italic: "Montserrat-Italic",
 	},
 	language: "en-GB",
 	texts: sampleLayout,

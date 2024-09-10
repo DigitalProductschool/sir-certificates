@@ -4,9 +4,11 @@
 
 ## Development
 
-Create an empty postgreSQL database. \
-Copy `.env.template` and rename it to `.env`. \
-Adjust `DATABASE_URL` in `.env` to match you settings.
+1. Create an empty postgreSQL database.
+2. Copy `.env.template` and rename it to `.env`.
+3. Adjust `DATABASE_URL` in `.env` to match you settings.
+4. Adjust the `SEED_ADMIN_*` settings for your admin user.
+
 
 Install dependencies:
 
@@ -23,6 +25,9 @@ Run database migrations:
 ```shellscript
 npx prisma db push
 ```
+
+Install fonts:
+We've added Montserrat (open font) as an example for now. Custom fonts can be installed to `/storage/fonts`. 
 
 Run the dev server:
 
