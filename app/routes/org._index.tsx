@@ -42,7 +42,8 @@ export default function OrgIndex() {
               <Link to={`program/${program.id}/batch`}>{program.name}</Link>
             </CardTitle>
             <CardDescription className="max-w-lg text-balance leading-relaxed">
-              [Most recent batch] – [Import Participants] – <Link to={`program/${program.id}/templates`}>Templates</Link>
+              <Link to={`program/${program.id}/batch`}>Certificates</Link> |{" "}
+              <Link to={`program/${program.id}/templates`}>Templates</Link>
             </CardDescription>
           </CardHeader>
         </Card>

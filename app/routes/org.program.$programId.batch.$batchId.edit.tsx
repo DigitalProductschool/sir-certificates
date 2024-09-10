@@ -4,7 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 // import type { Batch } from "@prisma/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
 
@@ -72,9 +72,10 @@ export const handle = {
   breadcrumb: () => <Link to="#">Batch XXX</Link>,
 };
 
-export default function ProgramPage() {
+export default function EditBatchPage() {
   const { batch } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(true);
 
   const startDate = new Date(batch.startDate);
   const endDate = new Date(batch.endDate);
@@ -83,7 +84,7 @@ export default function ProgramPage() {
     const down = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        navigate(`../${batch.id}/certificates`);
+        setOpen(false);
       }
     };
 
@@ -93,9 +94,9 @@ export default function ProgramPage() {
 
   return (
     <Dialog
-      open={true}
+      open={open}
       onOpenChange={(open) => {
-        if (!open) navigate(`../${batch.id}/certificates`);
+        if (!open) navigate(-1);
       }}
     >
       <DialogContent className="sm:max-w-[425px]">

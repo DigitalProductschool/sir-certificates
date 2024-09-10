@@ -1,11 +1,32 @@
 import type { ActionFunction } from "@remix-run/node";
+import { useEffect, useState } from "react";
 import {
   redirect,
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
 
-import { useRouteError } from "@remix-run/react";
+import { Form, useNavigate, useRouteError } from "@remix-run/react";
+
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 import { requireUserId } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
@@ -78,6 +99,85 @@ export const action: ActionFunction = async ({ request, params }) => {
     statusText: "Unkown error when creating new template",
   });
 };
+
+export default function EditBatchPage() {
+  const [templateName, setTemplateName] = useState("");
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [navigate]);
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        if (!open) navigate(-1);
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button variant="outline">Add Template</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <Form method="POST" encType="multipart/form-data">
+          <DialogHeader>
+            <DialogTitle>Add template</DialogTitle>
+            <DialogDescription>
+              Upload a new certificate template for this program, then configure
+              the layout options in the next step.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Label htmlFor="pdf">Select a PDF file</Label>
+            <Input
+              id="pdf"
+              name="pdf"
+              type="file"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  let filename = e.target.files[0].name;
+                  if (filename.lastIndexOf(".") > 0) {
+                    filename = filename.substring(0, filename.lastIndexOf("."));
+                  }
+                  setTemplateName(filename);
+                }
+              }}
+            />
+            <Label htmlFor="name">Template name</Label>
+            <Input
+              id="name"
+              name="name"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+            />
+            <Label htmlFor="locale">Date format</Label>
+            <Select name="locale" defaultValue="de-DE">
+              <SelectTrigger>
+                <SelectValue placeholder="Select a date format" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="de-DE">German</SelectItem>
+                <SelectItem value="en-GB">English UK</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button type="submit">Upload PDF</Button>
+          </DialogFooter>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function ErrorBoundary() {
   const error = useRouteError();
