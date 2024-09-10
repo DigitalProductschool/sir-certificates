@@ -90,7 +90,7 @@ export default function EditBatchDialog() {
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [batch.id, navigate]);
+  }, [navigate]);
 
   return (
     <Dialog
