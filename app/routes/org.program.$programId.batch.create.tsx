@@ -1,12 +1,7 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
-// import type { Batch } from "@prisma/client";
+import type { ActionFunction, MetaFunction } from "@remix-run/node";
 import { useEffect, useState } from "react";
-import { json, redirect } from "@remix-run/node";
-import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
+import { redirect } from "@remix-run/node";
+import { Form, useNavigate } from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -23,8 +18,8 @@ import { Label } from "~/components/ui/label";
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = () => {
-  const title = `Edit Batch XXX`;
+export const meta: MetaFunction = () => {
+  const title = `Add Batch`;
   return [{ title }, { name: "description", content: "Welcome to Remix!" }];
 };
 
@@ -35,50 +30,25 @@ export const action: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
 
-  await prisma.batch.update({
-    where: {
-      id: Number(params.batchId),
-    },
+  await prisma.batch.create({
     data: {
       name: inputs.name,
       startDate: new Date(inputs.startDate),
       endDate: new Date(inputs.endDate),
+      program: {
+        connect: {
+          id: Number(params.programId),
+        },
+      },
     },
   });
 
-  return redirect(`../${params.batchId}/certificates`);
+  return redirect(`../`);
 };
 
-export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireUserId(request);
-
-  const batch = await prisma.batch.findUnique({
-    where: {
-      id: Number(params.batchId),
-    },
-  });
-
-  if (!batch) {
-    throw new Response(null, {
-      status: 404,
-      statusText: "Not Found",
-    });
-  }
-
-  return json({ batch });
-};
-
-export const handle = {
-  breadcrumb: () => <Link to="#">Batch XXX</Link>,
-};
-
-export default function EditBatchDialog() {
-  const { batch } = useLoaderData<typeof loader>();
+export default function CreateBatchDialog() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
-
-  const startDate = new Date(batch.startDate);
-  const endDate = new Date(batch.endDate);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -90,7 +60,7 @@ export default function EditBatchDialog() {
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [batch.id, navigate]);
+  }, [navigate]);
 
   return (
     <Dialog
@@ -102,32 +72,21 @@ export default function EditBatchDialog() {
       <DialogContent className="sm:max-w-[425px]">
         <Form method="POST">
           <DialogHeader>
-            <DialogTitle>Batch settings</DialogTitle>
+            <DialogTitle>Add batch</DialogTitle>
             <DialogDescription>
-              Change the batch information as needed. Do not forget to refresh
-              the certificates afterwards.
+              Create a new batch for this program
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" defaultValue={batch.name} />
+            <Input id="name" name="name" />
             <Label htmlFor="startDate">Start date</Label>
-            <Input
-              type="date"
-              id="startDate"
-              name="startDate"
-              defaultValue={startDate.toISOString().split("T")[0]}
-            />
+            <Input type="date" id="startDate" name="startDate" />
             <Label htmlFor="endDate">End date</Label>
-            <Input
-              type="date"
-              id="endDate"
-              name="endDate"
-              defaultValue={endDate.toISOString().split("T")[0]}
-            />
+            <Input type="date" id="endDate" name="endDate" />
           </div>
           <DialogFooter>
-            <Button type="submit">Save changes</Button>
+            <Button type="submit">Save Batch</Button>
           </DialogFooter>
         </Form>
       </DialogContent>

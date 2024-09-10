@@ -93,7 +93,7 @@ export default function ProgramPage() {
   return (
     <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-3">
       <div className="flex items-center gap-4">
-        {latestBatch && (
+        {program.batches.length > 0 && (
           <>
             <Select
               key={params.batchId}
@@ -150,7 +150,11 @@ export default function ProgramPage() {
               </Tooltip>
             )}
 
-            {matches.length > 3 && (
+            <Button variant="outline" asChild>
+              <Link to="create">Add Batch</Link>
+            </Button>
+
+            {currentBatch && (
               <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
                 <NavLink
                   to={`${params.batchId}/certificates`}
