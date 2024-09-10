@@ -56,7 +56,7 @@ jobs:
         # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
         run: |
           ssh -t preview "postgres:clone certificates-db ${REVIEW_APP_NAME}-db"
-          ssh -t preview "postgres:unlink certificates-db ${REVIEW_APP_NAME}"          
+          ssh -t preview "postgres:unlink certificates-db ${REVIEW_APP_NAME} --no-restart"          
           ssh -t preview "postgres:link ${REVIEW_APP_NAME}-db $REVIEW_APP_NAME"
           ssh -t preview "postgres:promote ${REVIEW_APP_NAME}-db $REVIEW_APP_NAME"
         env:
