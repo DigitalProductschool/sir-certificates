@@ -10,7 +10,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 	const certificate = await prisma.certificate.findUnique({
 		where: {
-			id: Number(params.certId),
+			uuid: params.certUuid,
 		},
 		include: {
 			batch: true,
