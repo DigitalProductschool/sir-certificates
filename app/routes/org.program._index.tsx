@@ -26,6 +26,17 @@ export const loader: LoaderFunction = async ({ request }) => {
   return json({ programs });
 };
 
+type Match = {
+  id: string;
+  pathname: string;
+  data: typeof loader;
+  params: Record<string, string>;
+};
+
+export const handle = {
+  breadcrumb: (match: Match) => <Link to={match.pathname}>Programs</Link>,
+};
+
 export default function OrgIndex() {
   const { programs } = useLoaderData<typeof loader>();
 
@@ -39,11 +50,11 @@ export default function OrgIndex() {
         >
           <CardHeader className="pb-3">
             <CardTitle>
-              <Link to={`program/${program.id}/batch`}>{program.name}</Link>
+              <Link to={`${program.id}/batch`}>{program.name}</Link>
             </CardTitle>
             <CardDescription className="max-w-lg text-balance leading-relaxed">
-              <Link to={`program/${program.id}/batch`}>Certificates</Link> |{" "}
-              <Link to={`program/${program.id}/templates`}>Templates</Link>
+              <Link to={`${program.id}/batch`}>Certificates</Link> |{" "}
+              <Link to={`${program.id}/templates`}>Templates</Link>
             </CardDescription>
           </CardHeader>
         </Card>

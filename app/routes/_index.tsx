@@ -41,7 +41,7 @@ export default function Index() {
 
       {user && user.isAdmin && (
         <p>
-          <Link to="/org">Go to Admin</Link>
+          <Link to="/org/program">Go to Admin</Link>
         </p>
       )}
 

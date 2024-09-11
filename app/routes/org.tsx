@@ -1,18 +1,17 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Organisation, User } from "@prisma/client";
 import { json } from "@remix-run/node";
-import { Link, Outlet } from "@remix-run/react";
+import { NavLink, Link, Outlet } from "@remix-run/react";
 import { Layout } from "~/components/layout";
 import { Breadcrumbs } from "~/components/breadcrumbs";
 import {
   BadgeCheck,
   Home,
-  LineChart,
   Package2,
   PanelLeft,
   Search,
   Settings,
-  ShoppingCart,
+  User as UserIcon,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
@@ -71,7 +70,7 @@ type Match = {
 
 export const handle = {
   breadcrumb: (match: Match) => (
-    <Link to="/org">
+    <Link to="/org/program">
       {match.data.org ? match.data.org.name : "Organisation"}
     </Link>
   ),
@@ -92,29 +91,29 @@ export default function OrgDashboard() {
             </Link>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  to="/org"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                <NavLink
+                  to="program"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg aria-current:bg-accent aria-current:text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                 >
                   <Home className="h-5 w-5" />
                   <span className="sr-only">Programs</span>
-                </Link>
+                </NavLink>
               </TooltipTrigger>
               <TooltipContent side="right">Programs</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  to="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:text-foreground md:h-8 md:w-8"
+                <NavLink
+                  to="user"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg aria-current:bg-accent aria-current:text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                 >
-                  <ShoppingCart className="h-5 w-5" />
-                  <span className="sr-only">Templates</span>
-                </Link>
+                  <UserIcon className="h-5 w-5" />
+                  <span className="sr-only">User</span>
+                </NavLink>
               </TooltipTrigger>
-              <TooltipContent side="right">Templates</TooltipContent>
+              <TooltipContent side="right">User</TooltipContent>
             </Tooltip>
-            <Tooltip>
+            {/*<Tooltip>
               <TooltipTrigger asChild>
                 <Link
                   to="#"
@@ -125,18 +124,18 @@ export default function OrgDashboard() {
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="right">Analytics</TooltipContent>
-            </Tooltip>
+            </Tooltip>*/}
           </nav>
           <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  to="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                <NavLink
+                  to="settings"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground aria-current:bg-accent aria-current:text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                 >
                   <Settings className="h-5 w-5" />
                   <span className="sr-only">Settings</span>
-                </Link>
+                </NavLink>
               </TooltipTrigger>
               <TooltipContent side="right">Settings</TooltipContent>
             </Tooltip>
@@ -161,26 +160,26 @@ export default function OrgDashboard() {
                     <span className="sr-only">Certificates</span>
                   </Link>
                   <Link
-                    to="/org"
+                    to="program"
                     className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                   >
                     <Home className="h-5 w-5" />
                     Programs
                   </Link>
                   <Link
-                    to="#"
+                    to="user"
                     className="flex items-center gap-4 px-2.5 text-foreground"
                   >
-                    <ShoppingCart className="h-5 w-5" />
-                    Templates
+                    <UserIcon className="h-5 w-5" />
+                    User
                   </Link>
-                  <Link
+                  {/*<Link
                     to="#"
                     className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                   >
                     <LineChart className="h-5 w-5" />
                     Settings
-                  </Link>
+                  </Link>*/}
                 </nav>
               </SheetContent>
             </Sheet>
