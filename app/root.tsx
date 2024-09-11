@@ -73,7 +73,9 @@ export function ErrorBoundary() {
         <Links />
       </head>
       <body>
-        {errorInfo}
+        <div className="h-screen w-full flex flex-col items-center justify-center px-4">
+          {errorInfo}
+        </div>
         <Scripts />
       </body>
     </html>
