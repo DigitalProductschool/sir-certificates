@@ -1,8 +1,9 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Batch, Certificate } from "@prisma/client";
 import { json } from "@remix-run/node";
-import { Link, Outlet, useLoaderData, useNavigate } from "@remix-run/react";
+import { Link, Outlet, useLoaderData } from "@remix-run/react";
 
+import { SendNotification } from "~/components/send-notification";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -75,7 +76,6 @@ export const handle = {
 
 export default function ProgramPage() {
   const { batch, templates } = useLoaderData<typeof loader>();
-  const navigate = useNavigate();
 
   const templatesMap = new Map();
   for (const template of templates) {
@@ -92,16 +92,13 @@ export default function ProgramPage() {
             <TableHead>Team</TableHead>
             <TableHead>Track</TableHead>
             <TableHead>Template</TableHead>
+            <TableHead>Notification</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {batch.certificates.map((cert: Certificate) => (
-            <TableRow
-              key={cert.email}
-              onClick={() => navigate(`${cert.id}`)}
-              className="cursor-pointer"
-            >
+            <TableRow key={cert.email}>
               <TableCell>
                 {cert.firstName} {cert.lastName}
               </TableCell>
@@ -116,6 +113,9 @@ export default function ProgramPage() {
                 {templatesMap.get(cert.templateId)?.name || (
                   <Badge variant="destructive">not found</Badge>
                 )}
+              </TableCell>
+              <TableCell>
+                <SendNotification certificate={cert} />
               </TableCell>
               <TableCell>
                 <Button variant="outline" asChild>
