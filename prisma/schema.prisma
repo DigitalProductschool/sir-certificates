@@ -67,7 +67,9 @@ model Certificate {
   teamId        Int?
   template      Template @relation(fields: [templateId], references: [id])
   templateId    Int
-  updatedAt     DateTime  @updatedAt  
+  updatedAt     DateTime  @updatedAt
+  notifiedAt    DateTime?
+  mjResponse    Json?
 
   @@unique(name: "certId", [batchId, email])
   @@map("certificates")  

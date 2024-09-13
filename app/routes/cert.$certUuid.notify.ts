@@ -1,0 +1,98 @@
+import type { ActionFunction } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import Mailjet from "node-mailjet";
+import slug from "slug";
+
+import { requireUserId } from "~/lib/auth.server";
+import { generateCertificate } from "~/lib/pdf.server";
+import { prisma } from "~/lib/prisma.server";
+
+export const action: ActionFunction = async ({ request, params }) => {
+	// @todo require admin user
+	await requireUserId(request);
+
+	const certificate = await prisma.certificate.findUnique({
+		where: {
+			uuid: params.certUuid,
+		},
+		include: {
+			batch: {
+				include: {
+					program: true,
+				},
+			},
+		},
+	});
+
+	if (!certificate) {
+		throw new Response(null, {
+			status: 404,
+			statusText: "Not Found",
+		});
+	}
+
+	const mailjet = new Mailjet({
+		apiKey: process.env.MJ_APIKEY_PUBLIC,
+		apiSecret: process.env.MJ_APIKEY_PRIVATE,
+	});
+
+	const pdf = await generateCertificate(certificate, certificate.batch, true);
+	let pdfBase64;
+	if (pdf) {
+		pdfBase64 = pdf.toString("base64");
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const response: any = await mailjet
+		.post("send", { version: "v3.1" })
+		.request({
+			// SandboxMode: true,
+			Messages: [
+				{
+					CustomId: certificate.uuid,
+					From: {
+						Email: "notifications@certificates.unternehmertum.de",
+						Name: "UnternehmerTUM Certificates",
+					},
+					To: [
+						{
+							Email: "marcus@dpschool.io",
+							Name: `${certificate.firstName} ${certificate.lastName}`,
+						},
+					],
+					Subject: `Your certificate from ${certificate.batch.program.name} is ready`,
+					TextPart: `Dear ${certificate.firstName} ${certificate.lastName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\nYou can download and share your certificate with this link:\nhttps://certificates.unternehmertum.de/view/${certificate.uuid}\n\nCongratulations!`,
+					HTMLPart: `<p>Dear ${certificate.firstName} ${certificate.lastName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.</p><p>You can download and share your certificate with this link:<br /><a href="https://certificates.unternehmertum.de/view/${certificate.uuid}">https://certificates.unternehmertum.de/view/${certificate.uuid}</a></p><p>Congratulations!</p>`,
+					Attachments: [
+						{
+							ContentType: "application/pdf",
+							Filename:
+								slug(
+									`${certificate.firstName} ${certificate.lastName}`,
+								) + ".certificate.pdf",
+							ContentID: "certpreview",
+							Base64Content: pdfBase64,
+						},
+					],
+				},
+			],
+		})
+		.catch((error) => {
+			throw new Response(error.message, {
+				status: 500,
+				statusText: error.statusCode,
+			});
+		});
+
+	await prisma.certificate.update({
+		where: {
+			id: certificate.id,
+		},
+		data: {
+			notifiedAt: new Date(),
+			mjResponse: response.body.Messages?.[0], // response.body.Messages, // response.body.Messages?.[0],
+		},
+	});
+
+	return json(response.body);
+};

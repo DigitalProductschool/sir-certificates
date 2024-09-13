@@ -6,8 +6,8 @@ export type RegisterForm = {
 };
 
 export type LoginForm = {
-  email: string
-  password: string
-}
+	email: string;
+	password: string;
+};
 
 // @todo add types for other forms
