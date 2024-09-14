@@ -3,6 +3,8 @@ import type { Batch, Certificate } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { Link, Outlet, useLoaderData } from "@remix-run/react";
 
+import { MailCheck } from "lucide-react";
+
 import { SendNotification } from "~/components/send-notification";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -14,6 +16,12 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
@@ -87,6 +95,7 @@ export default function ProgramPage() {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead></TableHead>
             <TableHead>Name</TableHead>
             <TableHead className="font-medium">Email</TableHead>
             <TableHead>Team</TableHead>
@@ -98,6 +107,16 @@ export default function ProgramPage() {
         <TableBody>
           {batch.certificates.map((cert: Certificate) => (
             <TableRow key={cert.email}>
+              <TableCell>
+                {cert.notifiedAt && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <MailCheck />
+                    </TooltipTrigger>
+                    <TooltipContent side="top">{(new Date(cert.notifiedAt)).toLocaleString()}</TooltipContent>
+                  </Tooltip>
+                )}
+              </TableCell>
               <TableCell>
                 {cert.firstName} {cert.lastName}
               </TableCell>
