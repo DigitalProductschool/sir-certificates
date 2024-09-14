@@ -92,8 +92,7 @@ export default function ProgramPage() {
             <TableHead>Team</TableHead>
             <TableHead>Track</TableHead>
             <TableHead>Template</TableHead>
-            <TableHead>Notification</TableHead>
-            <TableHead></TableHead>
+            <TableHead colSpan={2}>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -115,12 +114,12 @@ export default function ProgramPage() {
                 )}
               </TableCell>
               <TableCell>
-                <SendNotification certificate={cert} />
+                <Button variant="outline" asChild>
+                  <Link to={`${cert.id}`}>Preview</Link>
+                </Button>
               </TableCell>
               <TableCell>
-                <Button variant="outline" asChild>
-                  <Link to={`${cert.id}`}>Show</Link>
-                </Button>
+                <SendNotification certificate={cert} />
               </TableCell>
             </TableRow>
           ))}

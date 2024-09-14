@@ -62,7 +62,7 @@ export default function CertificatePage() {
   const { certificate } = useLoaderData<typeof loader>();
 
   return (
-    <div className="flex flex-col bg-background h-full w-[40%] mt-24 fixed z-50 bottom-0 right-0 p-4 gap-8 pb-12 overflow-auto">
+    <div className="flex flex-col bg-background h-full w-[40%] mt-24 fixed z-50 bottom-0 right-0 p-4 gap-8 pb-12 overflow-auto drop-shadow-xl">
       <div className="flex justify-end">
         <Button variant="outline" size="icon" asChild>
           <Link to="../">
