@@ -1,8 +1,9 @@
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 
 import { redirect, json } from "@remix-run/node";
-import { useActionData, Form, Link } from "@remix-run/react";
+import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { useState } from "react";
+import { CheckIcon } from "lucide-react";
 import { Layout } from "~/components/layout";
 import { FormField } from "~/components/form-field";
 import { Button } from "~/components/ui/button";
@@ -88,11 +89,11 @@ export const action: ActionFunction = async ({ request }) => {
 export const loader: LoaderFunction = async ({ request }) => {
 	// If there's already a user in the session, redirect to the home page
 	return (await getUser(request)) ? redirect("/") : null;
-	//return json({});
 };
 
 export default function Login() {
 	const actionData = useActionData<typeof action>();
+	const [searchParams /*, setSearchParams */] = useSearchParams();
 
 	const [formAction, setFormAction] = useState("login");
 	const [formData, setFormData] = useState({
@@ -112,19 +113,6 @@ export default function Login() {
 	) => {
 		setFormData((form) => ({ ...form, [field]: event.target.value }));
 	};
-
-	/*
-				<Button
-					onClick={() =>
-						setFormAction(
-							formAction == "login" ? "register" : "login",
-						)
-					}
-					className="absolute top-8 right-8"
-				>
-					{formAction === "login" ? "Sign Up" : "Sign In"}
-				</Button>
-	*/
 
 	return (
 		<Layout type="modal">
@@ -226,6 +214,12 @@ export default function Login() {
 					</CardContent>
 				</Form>
 			</Card>
+			{searchParams.get("verification") === "done" && (
+				<div className="absolute top-8 flex p-2 px-4 gap-2 rounded-xl bg-green-600 text-primary-foreground">
+					<CheckIcon /> Email successfully verified. You can now
+					login.
+				</div>
+			)}
 		</Layout>
 	);
 }
