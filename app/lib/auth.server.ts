@@ -52,7 +52,7 @@ export async function register(user: RegisterForm) {
 		);
 	}
 
-	return createUserSessionAndRedirect(newUser.id, "/");
+	return redirect("/user/verification-info");
 }
 
 export async function login({ email, password }: LoginForm) {
@@ -62,6 +62,13 @@ export async function login({ email, password }: LoginForm) {
 
 	if (!user || !(await bcrypt.compare(password, user.password)))
 		return json({ error: `Incorrect login` }, { status: 400 });
+
+	if (!user.isVerified) {
+		return json(
+			{ error: `You still need to verify your email` },
+			{ status: 400 },
+		);
+	}
 
 	return createUserSessionAndRedirect(user.id, "/");
 }
@@ -88,7 +95,7 @@ export async function requireUserId(
 
 	if (!userId || typeof userId !== "number") {
 		const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
-		throw redirect(`/login?${searchParams}`);
+		throw redirect(`/user/login?${searchParams}`);
 	}
 	return userId;
 }
@@ -104,7 +111,13 @@ export async function getUser(request: Request) {
 	try {
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
-			select: { id: true, email: true, firstName: true, lastName: true, isAdmin: true },
+			select: {
+				id: true,
+				email: true,
+				firstName: true,
+				lastName: true,
+				isAdmin: true,
+			},
 		});
 		return user;
 	} catch {
@@ -114,7 +127,7 @@ export async function getUser(request: Request) {
 
 export async function logout(request: Request) {
 	const session = await getUserSession(request);
-	return redirect("/login", {
+	return redirect("/user/login", {
 		headers: {
 			"Set-Cookie": await storage.destroySession(session),
 		},

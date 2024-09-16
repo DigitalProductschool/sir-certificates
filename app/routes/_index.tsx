@@ -47,7 +47,7 @@ export default function Index() {
 
       <br />
 
-      <form action="/logout" method="POST">
+      <form action="/user/logout" method="POST">
         <Button type="submit" variant="outline">
           Logout
         </Button>

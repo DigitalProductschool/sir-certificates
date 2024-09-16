@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
@@ -25,7 +26,9 @@ async function main() {
       password: passwordHash,
       firstName: process.env.SEED_ADMIN_FIRSTNAME,
       lastName: process.env.SEED_ADMIN_LASTNAME,
+      verifyCode: randomUUID(),
       isAdmin: true,
+      isVerified: true,
     },
   });
   console.log("Admin:", admin);
