@@ -9,7 +9,7 @@ import { H2 } from "~/components/typography/headlines";
 
 import { Button } from "~/components/ui/button";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
@@ -20,8 +20,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  // @todo require admin
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const certificate = await prisma.certificate.findUnique({
     where: {

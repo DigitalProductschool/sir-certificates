@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -38,7 +38,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const program = await prisma.program.findUnique({
     where: {
@@ -63,7 +63,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   breadcrumb: (match) => <Link to={match.pathname}>Templates</Link>,
 }; */
 
-export default function ProgramPage() {
+export default function ProgramTemplatesPage() {
   const { program } = useLoaderData<typeof loader>();
 
   const params = useParams();

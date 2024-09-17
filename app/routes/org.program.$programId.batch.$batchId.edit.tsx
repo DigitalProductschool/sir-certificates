@@ -20,7 +20,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
@@ -29,8 +29,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
-  // @todo require admin
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
@@ -50,7 +49,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const batch = await prisma.batch.findUnique({
     where: {

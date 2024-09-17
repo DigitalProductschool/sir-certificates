@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
   saveUploadedTemplate,
@@ -38,8 +38,7 @@ import {
 } from "~/lib/pdf.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  // @todo require admin user
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const uploadHandler = unstable_createMemoryUploadHandler({
     maxPartSize: 5 * 1024 * 1024,

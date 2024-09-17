@@ -2,7 +2,7 @@ import type { ActionFunction } from "@remix-run/node";
 import { useEffect } from "react";
 import { redirect } from "@remix-run/node";
 import { useNavigate, useRouteError } from "@remix-run/react";
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 import { Button } from "~/components/ui/button";
@@ -16,8 +16,7 @@ import {
 } from "~/components/ui/dialog";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  // @todo require admin
-  await requireUserId(request);
+  await requireAdmin(request);
 
   await prisma.userInvitation
     .delete({

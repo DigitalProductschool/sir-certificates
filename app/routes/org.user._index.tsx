@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
@@ -33,7 +33,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const user = await prisma.user.findMany();
   const invitations = await prisma.userInvitation.findMany();

@@ -3,7 +3,7 @@ import type { Program } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { Link, Outlet } from "@remix-run/react";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
@@ -14,7 +14,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const program = await prisma.program.findUnique({
     where: {

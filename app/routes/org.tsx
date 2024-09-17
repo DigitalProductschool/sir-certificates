@@ -30,7 +30,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { requireUserId, getUser } from "~/lib/auth.server";
+import { requireAdmin, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -39,8 +39,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  // @todo requireAdminUser
-  await requireUserId(request);
+  await requireAdmin(request);
   const user = await getUser(request);
 
   let org = await prisma.organisation.findUnique({

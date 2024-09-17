@@ -73,7 +73,6 @@ export const action: ActionFunction = async ({ request }) => {
 
 	switch (formAction) {
 		case "login": {
-			console.log("Logging in with", email, password);
 			return await login({ email, password });
 		}
 		case "register": {

@@ -21,7 +21,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
@@ -30,8 +30,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
-  // @todo require admin
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
@@ -51,7 +50,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const user = await prisma.user.findUnique({
     where: {
@@ -73,7 +72,7 @@ export const handle = {
   breadcrumb: () => <Link to="#">User XXX</Link>,
 };
 
-export default function EditBatchDialog() {
+export default function EditUserDialog() {
   const { user } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
@@ -115,7 +114,10 @@ export default function EditBatchDialog() {
             <Label htmlFor="lastName">Last name</Label>
             <Input id="lastName" name="lastName" defaultValue={user.lastName} />
             <div className="flex items-end">
-              <Label htmlFor="isAdmin" className="flex flex-col flex-1 leading-6">
+              <Label
+                htmlFor="isAdmin"
+                className="flex flex-col flex-1 leading-6"
+              >
                 Admin permissions
                 <span className="text-muted-foreground font-normal">
                   Give full access to all settings

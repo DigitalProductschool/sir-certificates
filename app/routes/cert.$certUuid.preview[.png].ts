@@ -6,7 +6,7 @@ import {
 } from "~/lib/pdf.server";
 
 export const loader: LoaderFunction = async ({ params }) => {
-	// @todo is auth necessary or always public?
+	// @todo is auth necessary or always public? For now it's public until "unpublish" is implemented
 
 	const certificate = await prisma.certificate.findUnique({
 		where: {
