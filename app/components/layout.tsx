@@ -8,7 +8,7 @@ export function Layout({
 	switch (type) {
 		case "modal":
 			return (
-				<div className="h-screen w-full flex flex-col items-center justify-center px-4">
+				<div className="h-screen w-full flex flex-col items-center justify-center px-4 bg-muted/40">
 					{children}
 				</div>
 			);
