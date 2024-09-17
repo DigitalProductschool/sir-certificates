@@ -6,7 +6,7 @@ import type {
 import type { Template } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
   generateTemplateSample,
@@ -31,8 +31,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
-  // @todo require admin user
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
@@ -71,7 +70,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const template = await prisma.template.findUnique({
     where: {
@@ -97,16 +96,16 @@ type Match = {
   id: string;
   pathname: string;
   data: LoaderReturnType;
-  params: Record<string,string>
-}
+  params: Record<string, string>;
+};
 
 export const handle = {
-  breadcrumb: (match : Match) => (
+  breadcrumb: (match: Match) => (
     <Link to="#">Template: {match.data.template.name}</Link>
   ),
 };
 
-export default function ProgramPage() {
+export default function TemplateEditorPage() {
   const { template } = useLoaderData<typeof loader>();
 
   return (

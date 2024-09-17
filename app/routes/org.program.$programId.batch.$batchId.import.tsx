@@ -40,7 +40,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
@@ -51,7 +51,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const batch = await prisma.batch.findUnique({
     where: {
@@ -89,8 +89,8 @@ type Match = {
   id: string;
   pathname: string;
   data: LoaderReturnType;
-  params: Record<string,string>
-}
+  params: Record<string, string>;
+};
 
 export const handle = {
   breadcrumb: (match: Match) => (
@@ -119,7 +119,7 @@ function StatusIndicator({ status, error }: { status: string; error: string }) {
   return <></>;
 }
 
-export default function ImportPage() {
+export default function ImportBatchPage() {
   const params = useParams();
   const { templates } = useLoaderData<typeof loader>();
   const [key, setKey] = useState(1);
@@ -232,9 +232,14 @@ export default function ImportPage() {
                 <StatusIndicator status={row._status} error={row._error} />
               </TableCell>
               <TableCell>
-                {row.firstname || <Badge variant="destructive">firstname</Badge>} {row.lastname || <Badge variant="destructive">lastname</Badge>}
+                {row.firstname || (
+                  <Badge variant="destructive">firstname</Badge>
+                )}{" "}
+                {row.lastname || <Badge variant="destructive">lastname</Badge>}
               </TableCell>
-              <TableCell className="font-medium">{row.email || <Badge variant="destructive">email</Badge>}</TableCell>
+              <TableCell className="font-medium">
+                {row.email || <Badge variant="destructive">email</Badge>}
+              </TableCell>
               <TableCell>
                 {row.team || <Badge variant="outline">empty</Badge>}
               </TableCell>

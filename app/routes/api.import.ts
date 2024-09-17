@@ -1,8 +1,9 @@
+// @todo rename route to cert.import
 import { randomUUID } from "node:crypto";
 import type { ActionFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import {
 	generateCertificate,
 	generatePreviewOfCertificate,
@@ -10,8 +11,7 @@ import {
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request }) => {
-	// @todo require admin user
-	await requireUserId(request);
+	await requireAdmin(request);
 
 	const formData = await request.formData();
 	const inputs = Object.fromEntries(formData);

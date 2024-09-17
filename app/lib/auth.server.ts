@@ -1,6 +1,7 @@
+import type { User } from "@prisma/client";
+import type { RegisterForm, LoginForm } from "./types.server";
 import bcrypt from "bcryptjs";
 import { redirect, json, createCookieSessionStorage } from "@remix-run/node";
-import type { RegisterForm, LoginForm } from "./types.server";
 import { prisma } from "./prisma.server";
 import { createUser } from "./user.server";
 
@@ -70,15 +71,16 @@ export async function login({ email, password }: LoginForm) {
 		);
 	}
 
-	return createUserSessionAndRedirect(user.id, "/");
+	return createUserSessionAndRedirect(user, "/");
 }
 
 export async function createUserSessionAndRedirect(
-	userId: number,
+	user: User,
 	redirectTo: string,
 ) {
 	const session = await storage.getSession();
-	session.set("userId", userId);
+	session.set("userId", user.id);
+	session.set("isAdmin", user.isAdmin);
 	return redirect(redirectTo, {
 		headers: {
 			"Set-Cookie": await storage.commitSession(session),
@@ -96,6 +98,28 @@ export async function requireUserId(
 	if (!userId || typeof userId !== "number") {
 		const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
 		throw redirect(`/user/login?${searchParams}`);
+	}
+	return userId;
+}
+
+export async function requireAdmin(
+	request: Request,
+	redirectTo: string = new URL(request.url).pathname,
+) {
+	const session = await getUserSession(request);
+	const userId = session.get("userId");
+
+	if (!userId || typeof userId !== "number") {
+		const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
+		throw redirect(`/user/login?${searchParams}`);
+	}
+
+	const isAdmin = session.get("isAdmin");
+	if (!isAdmin) {
+		throw new Response(null, {
+			status: 403,
+			statusText: "You are not allowed access here.",
+		});
 	}
 	return userId;
 }

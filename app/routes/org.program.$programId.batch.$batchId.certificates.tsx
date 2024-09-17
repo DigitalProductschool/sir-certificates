@@ -23,7 +23,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
@@ -34,7 +34,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const batch = await prisma.batch.findUnique({
     where: {
@@ -82,7 +82,7 @@ export const handle = {
   breadcrumb: (match: Match) => <Link to="#">{match.data.batch.name}</Link>,
 };
 
-export default function ProgramPage() {
+export default function BatchCertificatesPage() {
   const { batch, templates } = useLoaderData<typeof loader>();
 
   const templatesMap = new Map();
@@ -113,7 +113,9 @@ export default function ProgramPage() {
                     <TooltipTrigger asChild>
                       <MailCheck />
                     </TooltipTrigger>
-                    <TooltipContent side="top">{(new Date(cert.notifiedAt)).toLocaleString()}</TooltipContent>
+                    <TooltipContent side="top">
+                      {new Date(cert.notifiedAt).toLocaleString()}
+                    </TooltipContent>
                   </Tooltip>
                 )}
               </TableCell>

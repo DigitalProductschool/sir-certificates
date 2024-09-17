@@ -60,7 +60,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 
 		return createUserSessionAndRedirect(
-			user.id,
+			user,
 			user.isAdmin ? "/org/program" : "/",
 		);
 	}

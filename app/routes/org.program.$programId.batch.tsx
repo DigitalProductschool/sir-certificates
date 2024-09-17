@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -38,7 +38,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const program = await prisma.program.findUnique({
     where: {
@@ -63,16 +63,14 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   return json({ program });
 };
 
-export default function ProgramPage() {
+export default function BatchPage() {
   const { program } = useLoaderData<typeof loader>();
   const params = useParams();
   const navigate = useNavigate();
   const matches = useMatches();
 
   const latestBatch =
-    program.batches.length > 0
-      ? program.batches[0]
-      : undefined;
+    program.batches.length > 0 ? program.batches[0] : undefined;
 
   const currentBatch = program.batches.find(
     (batch: Batch) =>

@@ -16,5 +16,4 @@ export type InviteForm = {
 	lastName: string;
 };
 
-
 // @todo add types for other forms

@@ -3,13 +3,12 @@ import { json } from "@remix-run/node";
 import Mailjet from "node-mailjet";
 import slug from "slug";
 
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { generateCertificate } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	// @todo require admin user
-	await requireUserId(request);
+	await requireAdmin(request);
 
 	const certificate = await prisma.certificate.findUnique({
 		where: {
@@ -31,6 +30,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		});
 	}
 
+	// @todo refactor to singleton/import
 	const mailjet = new Mailjet({
 		apiKey: process.env.MJ_APIKEY_PUBLIC,
 		apiSecret: process.env.MJ_APIKEY_PRIVATE,
@@ -56,7 +56,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					},
 					To: [
 						{
-							Email: "marcus@dpschool.io",
+							Email: certificate.email,
 							Name: `${certificate.firstName} ${certificate.lastName}`,
 						},
 					],
@@ -90,7 +90,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		},
 		data: {
 			notifiedAt: new Date(),
-			mjResponse: response.body.Messages?.[0], // response.body.Messages, // response.body.Messages?.[0],
+			mjResponse: response.body.Messages?.[0],
 		},
 	});
 

@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { requireUserId } from "~/lib/auth.server";
+import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
@@ -19,7 +19,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  await requireUserId(request);
+  await requireAdmin(request);
 
   const programs = await prisma.program.findMany();
 

@@ -37,12 +37,13 @@ export const createUserInvitation = async (user: InviteForm) => {
 };
 
 export const sendVerificationEmail = async (user: User) => {
+	// @todo refactor to singleton/import
 	const mailjet = new Mailjet({
 		apiKey: process.env.MJ_APIKEY_PUBLIC,
 		apiSecret: process.env.MJ_APIKEY_PRIVATE,
 	});
 
-	// @todo dynamic domain (from settings?)
+	// @todo dynamic domain and org name (from settings?)
 	const verificationUrl = `https://certificates.unternehmertum.de/user/verify/${user.id}/${user.verifyCode}`;
 
 	await mailjet
