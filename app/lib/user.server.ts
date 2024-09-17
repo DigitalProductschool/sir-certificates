@@ -1,5 +1,5 @@
-import type { User } from "@prisma/client";
-import type { RegisterForm } from "./types.server";
+import type { User, UserInvitation } from "@prisma/client";
+import type { RegisterForm, InviteForm } from "./types.server";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import Mailjet from "node-mailjet";
@@ -19,6 +19,21 @@ export const createUser = async (user: RegisterForm) => {
 	});
 	await sendVerificationEmail(newUser);
 	return { id: newUser.id, email: user.email };
+};
+
+export const createUserInvitation = async (user: InviteForm) => {
+	const verifyCode = randomUUID();
+	const invite = await prisma.userInvitation.create({
+		data: {
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			isAdmin: true,
+			verifyCode,
+		},
+	});
+	await sendInvitationEmail(invite);
+	return { id: invite.id, email: user.email };
 };
 
 export const sendVerificationEmail = async (user: User) => {
@@ -48,6 +63,47 @@ export const sendVerificationEmail = async (user: User) => {
 					Subject: `Please verify your email`,
 					TextPart: `Dear ${user.firstName} ${user.lastName},\n\nto complete your sign up for UnternehmerTUM Certificates, please click on the following link:\n${verificationUrl}\n\nIf you haven't signed up yourself, please ignore or report this email.\n\nThank you!`,
 					HTMLPart: `<p>Dear ${user.firstName} ${user.lastName},</p><p>to complete your sign up for UnternehmerTUM Certificates, please click on the following link:<br /><a href="${verificationUrl}">${verificationUrl}</a></p><p>If you haven't signed up yourself, please ignore or report this email.</p><p>Thank you!</p>`,
+				},
+			],
+		})
+		.catch((error) => {
+			throw new Response(error.message, {
+				status: 500,
+				statusText: error.statusCode,
+			});
+		});
+
+	return true;
+};
+
+export const sendInvitationEmail = async (invite: UserInvitation) => {
+	// @todo refactor into a singleton/import
+	const mailjet = new Mailjet({
+		apiKey: process.env.MJ_APIKEY_PUBLIC,
+		apiSecret: process.env.MJ_APIKEY_PRIVATE,
+	});
+
+	// @todo dynamic domain (from settings?) // @todo replace org names
+	const acceptUrl = `https://certificates.unternehmertum.de/user/accept-invite/${invite.id}/${invite.verifyCode}`;
+
+	await mailjet
+		.post("send", { version: "v3.1" })
+		.request({
+			Messages: [
+				{
+					From: {
+						Email: "invitation@certificates.unternehmertum.de",
+						Name: "UnternehmerTUM Certificates",
+					},
+					To: [
+						{
+							Email: invite.email,
+							Name: `${invite.firstName} ${invite.lastName}`,
+						},
+					],
+					Subject: `You have been invited to UnternehmerTUM Certificates`,
+					TextPart: `Dear ${invite.firstName} ${invite.lastName},\n\nyou have been invited to become an admiminstrator for the UnternehmerTUM certificates tool.\n\nTo accept the invitation, please click on the following link:\n${acceptUrl}\n\nThank you!`,
+					HTMLPart: `<p>Dear ${invite.firstName} ${invite.lastName},</p><p>you have been invited to become an admiminstrator for the UnternehmerTUM certificates tool.</p><p>To accept the invitation, please click on the following link:<br /><a href="${acceptUrl}">${acceptUrl}</a></p><p>Thank you!</p>`,
 				},
 			],
 		})

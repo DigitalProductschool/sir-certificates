@@ -1,9 +1,9 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { User } from "@prisma/client";
+import type { User, UserInvitation } from "@prisma/client";
 import { json } from "@remix-run/node";
-import { useLoaderData, Link } from "@remix-run/react";
+import { Form, Link, useLoaderData } from "@remix-run/react";
 
-import { Settings } from "lucide-react";
+import { Settings, Trash2Icon } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 
@@ -36,8 +36,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   await requireUserId(request);
 
   const user = await prisma.user.findMany();
+  const invitations = await prisma.userInvitation.findMany();
 
-  return json({ user });
+  return json({ user, invitations });
 };
 
 type Match = {
@@ -52,48 +53,78 @@ export const handle = {
 };
 
 export default function UserIndexPage() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, invitations } = useLoaderData<typeof loader>();
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead className="font-medium">Email</TableHead>
-          <TableHead>Permissions</TableHead>
-          <TableHead></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {user.map((u: User) => (
-          <TableRow key={u.id}>
-            <TableCell>
-              {u.firstName} {u.lastName}
-            </TableCell>
-            <TableCell className="font-medium">{u.email}</TableCell>
-            <TableCell>{u.isAdmin ? "Admin" : "Viewer"}</TableCell>
-            <TableCell>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" asChild>
-                    <Link to={`${u.id}/edit`} aria-label="Edit user settings">
-                      <Settings className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Edit user settings</TooltipContent>
-              </Tooltip>
-            </TableCell>
-          </TableRow>
-        ))}
-        {user.length === 0 && (
+    <>
+      <div>
+        <Button asChild>
+          <Link to="invite">Invite admin</Link>
+        </Button>
+      </div>
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={5} className="text-destructive">
-              No user in the database.
-            </TableCell>
+            <TableHead>Name</TableHead>
+            <TableHead className="font-medium">Email</TableHead>
+            <TableHead>Permissions</TableHead>
+            <TableHead></TableHead>
           </TableRow>
-        )}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {invitations.map((invite: UserInvitation) => (
+            <TableRow key={invite.id} className="text-muted-foreground">
+              <TableCell>
+                {invite.firstName} {invite.lastName}
+              </TableCell>
+              <TableCell className="font-medium">{invite.email}</TableCell>
+              <TableCell>Invite pending…</TableCell>
+              <TableCell className="text-foreground">
+                <Form action={`invite/${invite.id}/delete`} method="POST">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="icon">
+                        <Trash2Icon className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      Cancel invitation
+                    </TooltipContent>
+                  </Tooltip>
+                </Form>
+              </TableCell>
+            </TableRow>
+          ))}
+          {user.map((u: User) => (
+            <TableRow key={u.id}>
+              <TableCell>
+                {u.firstName} {u.lastName}
+              </TableCell>
+              <TableCell className="font-medium">{u.email}</TableCell>
+              <TableCell>{u.isAdmin ? "Admin" : "Viewer"}</TableCell>
+              <TableCell>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" asChild>
+                      <Link to={`${u.id}/edit`} aria-label="Edit user settings">
+                        <Settings className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Edit user settings</TooltipContent>
+                </Tooltip>
+              </TableCell>
+            </TableRow>
+          ))}
+          {user.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="text-destructive">
+                No user in the database.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </>
   );
 }
