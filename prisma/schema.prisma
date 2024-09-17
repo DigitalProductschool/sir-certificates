@@ -28,6 +28,18 @@ model User {
   @@map("user")  
 }
 
+model UserInvitation {
+  id            Int       @id @default(autoincrement())
+  createdAt     DateTime  @default(now())
+  email         String    @unique
+  firstName     String
+  lastName      String
+  verifyCode    String    @db.Uuid
+  isAdmin       Boolean   @default(false)
+
+  @@map("user_invitations")  
+}
+
 model Organisation {
   id            Int       @id @default(autoincrement())
   name          String

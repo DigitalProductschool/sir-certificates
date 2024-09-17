@@ -10,4 +10,11 @@ export type LoginForm = {
 	password: string;
 };
 
+export type InviteForm = {
+	email: string;
+	firstName: string;
+	lastName: string;
+};
+
+
 // @todo add types for other forms
