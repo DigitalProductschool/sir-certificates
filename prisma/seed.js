@@ -20,7 +20,10 @@ async function main() {
     where: {
       id: 1,
     },
-    update: {},
+    update: {
+      isAdmin: true,
+      isVerified: true,      
+    },
     create: {
       email: process.env.SEED_ADMIN_EMAIL,
       password: passwordHash,
