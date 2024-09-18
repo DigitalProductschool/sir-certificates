@@ -12,6 +12,7 @@ import {
   Search,
   Settings,
   User as UserIcon,
+  UserRound,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
@@ -189,6 +190,7 @@ export default function OrgDashboard() {
                 type="search"
                 placeholder="Search..."
                 className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+                disabled
               />
             </div>
             <DropdownMenu>
@@ -198,6 +200,7 @@ export default function OrgDashboard() {
                   size="icon"
                   className="overflow-hidden rounded-full"
                 >
+                  <UserRound />
                   {/*<img
                   src="/placeholder-user.jpg"
                   width={36}
@@ -210,9 +213,9 @@ export default function OrgDashboard() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                {/*<DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuItem>Support</DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator />*/}
                 <DropdownMenuItem>
                   <form action="/user/logout" method="POST">
                     <button type="submit">Logout</button>
