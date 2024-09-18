@@ -3,10 +3,9 @@ import type {
   LoaderFunction,
   MetaFunction,
 } from "@remix-run/node";
-// import type { Batch } from "@prisma/client";
 import { useEffect, useState, useRef } from "react";
 import { json, redirect } from "@remix-run/node";
-import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, useLoaderData, useNavigate } from "@remix-run/react";
 
 import { Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -30,8 +29,8 @@ import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
-  const title = `Edit Batch XXX`;
-  return [{ title }, { name: "description", content: "Welcome to Remix!" }];
+  const title = `Edit Program`;
+  return [{ title }];
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -40,51 +39,42 @@ export const action: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
 
-  await prisma.batch.update({
+  await prisma.program.update({
     where: {
-      id: Number(params.batchId),
+      id: Number(params.programId),
     },
     data: {
       name: inputs.name,
-      startDate: new Date(inputs.startDate),
-      endDate: new Date(inputs.endDate),
     },
   });
 
-  return redirect(`../${params.batchId}/certificates`);
+  return redirect(`/org/program`);
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   await requireAdmin(request);
 
-  const batch = await prisma.batch.findUnique({
+  const program = await prisma.program.findUnique({
     where: {
-      id: Number(params.batchId),
+      id: Number(params.programId),
     },
   });
 
-  if (!batch) {
+  if (!program) {
     throw new Response(null, {
       status: 404,
       statusText: "Not Found",
     });
   }
 
-  return json({ batch });
-};
-
-export const handle = {
-  breadcrumb: () => <Link to="#">Batch XXX</Link>,
+  return json({ program });
 };
 
 export default function EditBatchDialog() {
-  const { batch } = useLoaderData<typeof loader>();
+  const { program } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const formRef = useRef<HTMLFormElement | null>(null);
-
-  const startDate = new Date(batch.startDate);
-  const endDate = new Date(batch.endDate);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -107,46 +97,31 @@ export default function EditBatchDialog() {
     >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Batch settings</DialogTitle>
+          <DialogTitle>Program settings</DialogTitle>
           <DialogDescription>
-            Change the batch information as needed. Do not forget to refresh the
-            certificates afterwards.
+            Change the program information as needed.
           </DialogDescription>
         </DialogHeader>
-        <Form method="POST" ref={formRef} className="grid gap-4 py-4">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" name="name" defaultValue={batch.name} />
-          <Label htmlFor="startDate">Start date</Label>
-          <Input
-            type="date"
-            id="startDate"
-            name="startDate"
-            defaultValue={startDate.toISOString().split("T")[0]}
-          />
-          <Label htmlFor="endDate">End date</Label>
-          <Input
-            type="date"
-            id="endDate"
-            name="endDate"
-            defaultValue={endDate.toISOString().split("T")[0]}
-          />
+        <Form method="POST" ref={formRef}>
+          <div className="grid gap-4 py-4">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" name="name" defaultValue={program.name} />
+          </div>
         </Form>
         <DialogFooter>
-          <Form
-            action={`../${batch.id}/delete`}
-            method="POST"
-            className="flex grow"
-          >
+          <Form action={`../delete`} method="POST" className="flex grow">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button type="submit" variant="destructive" size="icon">
                   <Trash2Icon className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Delete this batch</TooltipContent>
+              <TooltipContent side="top">Delete this program</TooltipContent>
             </Tooltip>
           </Form>
-          <Button type="submit">Save changes</Button>
+          <Button onClick={() => formRef.current?.submit()}>
+            Save changes
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
