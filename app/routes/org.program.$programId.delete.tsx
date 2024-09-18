@@ -22,18 +22,18 @@ import {
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdmin(request);
 
-  await prisma.batch
+  await prisma.program
     .delete({
       where: {
-        id: Number(params.batchId),
+        id: Number(params.programId),
       },
     })
     .catch((error) => {
       console.error(error);
-      throwErrorResponse(error, "Could not delete batch");
+      throwErrorResponse(error, "Could not delete program");
     });
 
-  return redirect("../");
+  return redirect("/org/program");
 };
 
 export function ErrorBoundary() {
@@ -46,7 +46,7 @@ export function ErrorBoundary() {
     const routeError = error as ErrorResponse;
     if (routeError.statusText.includes("P2003")) {
       additionalInfo =
-        " Please delete all the certificates first before deleting the batch.";
+        "Please delete all the certificates, batches and templates first before deleting the program.";
     }
   }
 
@@ -54,7 +54,7 @@ export function ErrorBoundary() {
     const down = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        navigate(-2);
+        navigate("/org/program");
       }
     };
 
@@ -66,22 +66,21 @@ export function ErrorBoundary() {
     <Dialog
       open={true}
       onOpenChange={(open) => {
-        if (!open) navigate(-2);
+        if (!open) navigate("/org/program");
       }}
     >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Error</DialogTitle>
           <DialogDescription>
-            The batch could not be deleted.
-            {additionalInfo}
+            The program could not be deleted. {additionalInfo}
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter>
           <Button
             onClick={() => {
-              navigate(-2);
+              navigate("/org/program");
             }}
           >
             Understood

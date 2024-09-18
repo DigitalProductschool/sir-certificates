@@ -3,7 +3,6 @@ import type { Batch } from "@prisma/client";
 import { useEffect } from "react";
 import { json } from "@remix-run/node";
 import {
-  Form,
   NavLink,
   Link,
   Outlet,
@@ -178,18 +177,6 @@ export default function BatchPage() {
                   Import Participants
                 </NavLink>
               </div>
-            )}
-
-            {currentBatch && (
-              <Form
-                action={`${currentBatch.id}/delete`}
-                method="POST"
-                className="flex grow justify-end"
-              >
-                <Button type="submit" variant="destructive">
-                  Delete Batch
-                </Button>
-              </Form>
             )}
           </>
         )}
