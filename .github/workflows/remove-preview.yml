@@ -16,6 +16,16 @@ jobs:
     # only run when a pull request is closed
     #if: github.event_name == 'pull_request' && github.event.action == 'closed'
     steps:
+      - name: Destroy the review app
+        uses: dokku/github-action@master
+        with: 
+          branch: 'main'
+          # destroy a review app
+          command: review-apps:destroy
+          git_remote_url: 'ssh://dokku@167.235.152.70:22/certificates'
+          # specify a name for the review app
+          review_app_name: pre-${{ github.event.pull_request.number }}
+          ssh_private_key: ${{ secrets.SSH_KEY_SIR }}          
       - name: Destroy review database
         # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/
         run: |
@@ -34,15 +44,4 @@ jobs:
           SSH_USER: dokku
           SSH_KEY: ${{ secrets.SSH_KEY_SIR }}
           SSH_HOST: 167.235.152.70
-          REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
-
-      - name: Destroy the review app
-        uses: dokku/github-action@master
-        with: 
-          branch: 'main'
-          # destroy a review app
-          command: review-apps:destroy
-          git_remote_url: 'ssh://dokku@167.235.152.70:22/certificates'
-          # specify a name for the review app
-          review_app_name: pre-${{ github.event.pull_request.number }}
-          ssh_private_key: ${{ secrets.SSH_KEY_SIR }}          
+          REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}          
