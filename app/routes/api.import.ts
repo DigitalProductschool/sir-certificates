@@ -35,7 +35,7 @@ export const action: ActionFunction = async ({ request }) => {
 			update: {
 				firstName: inputs.firstName,
 				lastName: inputs.lastName,
-				// @todo team, track
+				teamName: inputs.team,
 				template: {
 					connect: {
 						id: Number(inputs.templateId),
@@ -46,6 +46,7 @@ export const action: ActionFunction = async ({ request }) => {
 				uuid: randomUUID(),
 				firstName: inputs.firstName,
 				lastName: inputs.lastName,
+				teamName: inputs.team,				
 				email: inputs.email,
 				batch: {
 					connect: { id: Number(inputs.batchId) },

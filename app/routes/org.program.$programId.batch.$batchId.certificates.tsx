@@ -99,7 +99,6 @@ export default function BatchCertificatesPage() {
             <TableHead>Name</TableHead>
             <TableHead className="font-medium">Email</TableHead>
             <TableHead>Team</TableHead>
-            <TableHead>Track</TableHead>
             <TableHead>Template</TableHead>
             <TableHead colSpan={2}>Actions</TableHead>
           </TableRow>
@@ -124,10 +123,7 @@ export default function BatchCertificatesPage() {
               </TableCell>
               <TableCell className="font-medium">{cert.email}</TableCell>
               <TableCell>
-                <Badge variant="outline">empty</Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">empty</Badge>
+                {cert.teamName || <Badge variant="outline">empty</Badge>}
               </TableCell>
               <TableCell>
                 {templatesMap.get(cert.templateId)?.name || (

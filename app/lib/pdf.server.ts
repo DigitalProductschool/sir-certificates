@@ -167,8 +167,10 @@ export async function generateCertificate(
 				signatureDate,
 			);
 
-			// @todo add team
-			replacements = replacements.replace("{team}", "");
+			replacements = replacements.replace(
+				"{team}",
+				certificate.teamName || "",
+			);
 
 			let fontChoice = fontRegular;
 			switch (line.font) {
@@ -274,13 +276,13 @@ export async function generateTemplateSample(template: Template) {
 			replacements = replacements.replace("{firstnameCaps}", "FIRSTNAME");
 			replacements = replacements.replace("{startDate}", startDate);
 			replacements = replacements.replace("{endDate}", endDate);
+			replacements = replacements.replace("{batchName}", "Batch Name");
 			replacements = replacements.replace(
 				"{signatureDate}",
 				signatureDate,
 			);
 
-			// @todo add team
-			replacements = replacements.replace("{team}", "Team");
+			replacements = replacements.replace("{team}", "Team Name");
 
 			let fontChoice = fontRegular;
 			switch (line.font) {
@@ -305,7 +307,7 @@ export async function generateTemplateSample(template: Template) {
 			x: text.x,
 			y: text.y,
 			maxWidth: text.maxWidth,
-			color: text.color ? rgb(...text.color) : grayscale(0.0),
+			color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
 		});
 	});
 
