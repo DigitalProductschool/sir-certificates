@@ -94,91 +94,89 @@ export default function BatchPage() {
     <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-3">
       <div className="flex items-center gap-4">
         {program.batches.length > 0 && (
-          <>
-            <Select
-              key={params.batchId}
-              defaultValue={params.batchId}
-              onValueChange={handleBatchSelect}
-            >
-              <SelectTrigger className="w-[280px] [&>span]:line-clamp-none">
-                <SelectValue placeholder="Select a Batch" asChild>
-                  <div className="flex gap-2 text-left items-center">
-                    {currentBatch?.name}
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(currentBatch?.startDate).toLocaleDateString()}–{" "}
-                      {new Date(currentBatch?.endDate).toLocaleDateString()}
-                    </div>
+          <Select
+            key={params.batchId}
+            defaultValue={params.batchId}
+            onValueChange={handleBatchSelect}
+          >
+            <SelectTrigger className="w-[280px] [&>span]:line-clamp-none">
+              <SelectValue placeholder="Select a Batch" asChild>
+                <div className="flex gap-2 text-left items-center">
+                  {currentBatch?.name}
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(currentBatch?.startDate).toLocaleDateString()}–{" "}
+                    {new Date(currentBatch?.endDate).toLocaleDateString()}
                   </div>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {program.batches.map((batch: Batch) => {
-                  // batch is still a JSON object, not an actual Batch
-                  // @todo check if https://www.prisma.io/docs/orm/prisma-client/type-safety#what-are-generated-types can help here to operate on the correct type
-                  const startDate = new Date(batch.startDate);
-                  const endDate = new Date(batch.endDate);
-                  return (
-                    <SelectItem
-                      key={batch.id}
-                      value={batch.id.toString()}
-                      textValue={batch.name}
-                    >
-                      {batch.name}
-                      <div className="text-xs text-muted-foreground">
-                        {startDate.toLocaleDateString()}–{" "}
-                        {endDate.toLocaleDateString()}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+                </div>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {program.batches.map((batch: Batch) => {
+                // batch is still a JSON object, not an actual Batch
+                // @todo check if https://www.prisma.io/docs/orm/prisma-client/type-safety#what-are-generated-types can help here to operate on the correct type
+                const startDate = new Date(batch.startDate);
+                const endDate = new Date(batch.endDate);
+                return (
+                  <SelectItem
+                    key={batch.id}
+                    value={batch.id.toString()}
+                    textValue={batch.name}
+                  >
+                    {batch.name}
+                    <div className="text-xs text-muted-foreground">
+                      {startDate.toLocaleDateString()}–{" "}
+                      {endDate.toLocaleDateString()}
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        )}
 
-            {currentBatch && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" asChild>
-                    <Link
-                      to={`${currentBatch.id}/edit`}
-                      aria-label="Edit batch settings"
-                    >
-                      <Settings className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Edit batch settings</TooltipContent>
-              </Tooltip>
-            )}
-
-            <Button variant="outline" asChild>
-              <Link to="create">Add Batch</Link>
-            </Button>
-
-            {currentBatch && (
-              <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
-                <NavLink
-                  to={`${params.batchId}/certificates`}
-                  className={({ isActive }) =>
-                    isActive
-                      ? "bg-background text-foreground shadow-sm rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
-                      : "rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
-                  }
+        {currentBatch && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" asChild>
+                <Link
+                  to={`${currentBatch.id}/edit`}
+                  aria-label="Edit batch settings"
                 >
-                  Certificates
-                </NavLink>
-                <NavLink
-                  to={`${params.batchId}/import`}
-                  className={({ isActive }) =>
-                    isActive
-                      ? "bg-background text-foreground shadow-sm rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
-                      : "rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
-                  }
-                >
-                  Import Participants
-                </NavLink>
-              </div>
-            )}
-          </>
+                  <Settings className="h-4 w-4" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Edit batch settings</TooltipContent>
+          </Tooltip>
+        )}
+
+        <Button variant="outline" asChild>
+          <Link to="create">Add Batch</Link>
+        </Button>
+
+        {currentBatch && (
+          <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
+            <NavLink
+              to={`${params.batchId}/certificates`}
+              className={({ isActive }) =>
+                isActive
+                  ? "bg-background text-foreground shadow-sm rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
+                  : "rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
+              }
+            >
+              Certificates
+            </NavLink>
+            <NavLink
+              to={`${params.batchId}/import`}
+              className={({ isActive }) =>
+                isActive
+                  ? "bg-background text-foreground shadow-sm rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
+                  : "rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
+              }
+            >
+              Import Participants
+            </NavLink>
+          </div>
         )}
 
         {program.batches.length === 0 && (

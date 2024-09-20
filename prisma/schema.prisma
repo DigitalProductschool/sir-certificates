@@ -62,7 +62,7 @@ model Batch {
   startDate     DateTime 
   endDate       DateTime
   certificates  Certificate[]
-  teams         Team[]
+//teams         Team[]
   program       Program @relation(fields: [programId], references: [id])
   programId     Int  
 
@@ -77,8 +77,9 @@ model Certificate {
   email         String
   batch         Batch @relation(fields: [batchId], references: [id])
   batchId       Int
-  team          Team? @relation(fields: [teamId], references: [id])
-  teamId        Int?
+  teamName      String?
+//team          Team? @relation(fields: [teamId], references: [id])
+//teamId        Int?
   template      Template @relation(fields: [templateId], references: [id])
   templateId    Int
   updatedAt     DateTime  @updatedAt
@@ -89,15 +90,15 @@ model Certificate {
   @@map("certificates")  
 }
 
-model Team {
-  id            Int       @id @default(autoincrement())
-  name          String
-  batch         Batch @relation(fields: [batchId], references: [id])
-  batchId       Int  
-  certificates  Certificate[]
-
-  @@map("teams")
-}
+// model Team {
+// id            Int       @id @default(autoincrement())
+// name          String
+// batch         Batch @relation(fields: [batchId], references: [id])
+// batchId       Int  
+// certificates  Certificate[]
+// 
+// @@map("teams")
+// }
 
 model Template {
   id            Int       @id @default(autoincrement())
