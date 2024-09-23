@@ -112,3 +112,13 @@ model Template {
 
   @@map("templates")  
 }
+
+model Typeface {
+  id            Int       @id @default(autoincrement())
+  name          String
+  weight        Int       @db.SmallInt
+  style         String    @db.VarChar(32)
+
+  @@map("typefaces")  
+}
+
