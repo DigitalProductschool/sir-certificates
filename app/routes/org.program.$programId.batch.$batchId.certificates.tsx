@@ -1,5 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Batch, Certificate } from "@prisma/client";
+import type { Certificate } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { Link, Outlet, useLoaderData } from "@remix-run/react";
 
@@ -36,16 +36,18 @@ export const meta: MetaFunction<typeof loader> = () => {
 export const loader: LoaderFunction = async ({ request, params }) => {
   await requireAdmin(request);
 
-  const batch = await prisma.batch.findUnique({
+  const certificates = await prisma.certificate.findMany({
     where: {
-      id: Number(params.batchId),
+      batch: {
+        is: {
+          id: Number(params.batchId),
+        },
+      },
     },
-    include: {
-      certificates: true,
-    },
+    orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
   });
 
-  if (!batch) {
+  if (!certificates) {
     throw new Response(null, {
       status: 404,
       statusText: "Not Found",
@@ -64,26 +66,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
-  return json({ batch, templates });
-};
-
-type LoaderReturnType = {
-  batch: Batch;
-};
-
-type Match = {
-  id: string;
-  pathname: string;
-  data: LoaderReturnType;
-  params: Record<string, string>;
-};
-
-export const handle = {
-  breadcrumb: (match: Match) => <Link to="#">{match.data.batch.name}</Link>,
+  return json({ certificates, templates });
 };
 
 export default function BatchCertificatesPage() {
-  const { batch, templates } = useLoaderData<typeof loader>();
+  const { certificates, templates } = useLoaderData<typeof loader>();
 
   const templatesMap = new Map();
   for (const template of templates) {
@@ -104,7 +91,7 @@ export default function BatchCertificatesPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {batch.certificates.map((cert: Certificate) => (
+          {certificates.map((cert: Certificate) => (
             <TableRow key={cert.email}>
               <TableCell>
                 {cert.notifiedAt && (
@@ -140,7 +127,7 @@ export default function BatchCertificatesPage() {
               </TableCell>
             </TableRow>
           ))}
-          {batch.certificates.length === 0 && (
+          {certificates.length === 0 && (
             <TableRow>
               <TableCell colSpan={5}>No certificates created yet</TableCell>
             </TableRow>

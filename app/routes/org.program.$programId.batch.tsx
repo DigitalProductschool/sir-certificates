@@ -1,5 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Batch } from "@prisma/client";
+import type { Batch, Prisma } from "@prisma/client";
 import { useEffect } from "react";
 import { json } from "@remix-run/node";
 import {
@@ -31,6 +31,10 @@ import {
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
+type ProgramWithBatches = Prisma.ProgramGetPayload<{
+  include: { batches: true };
+}>;
+
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const title = `${data.program?.name} Batches`;
   return [{ title }, { name: "description", content: "Welcome to Remix!" }];
@@ -60,6 +64,32 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return json({ program });
+};
+
+type LoaderReturnType = {
+  program: ProgramWithBatches;
+};
+
+type Match = {
+  id: string;
+  pathname: string;
+  data: LoaderReturnType;
+  params: Record<string, string>;
+};
+
+export const handle = {
+  breadcrumb: (match: Match) =>
+    match.params.batchId ? (
+      <Link to="#">
+        {
+          match.data.program.batches.find(
+            (batch) => batch.id === Number(match.params.batchId),
+          )?.name
+        }
+      </Link>
+    ) : (
+      <Link to="#">Batches</Link>
+    ),
 };
 
 export default function BatchPage() {
