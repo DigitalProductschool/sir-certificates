@@ -169,7 +169,7 @@ export default function ImportBatchPage() {
     formData.append("templateId", item._template);
     formData.append("batchId", params.batchId);
 
-    await fetch("/api/import", {
+    await fetch("/cert/import", {
       method: "POST",
       credentials: "same-origin",
       body: formData,
