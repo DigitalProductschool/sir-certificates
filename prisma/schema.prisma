@@ -115,7 +115,7 @@ model Template {
 
 model Typeface {
   id            Int       @id @default(autoincrement())
-  name          String
+  name          String    @unique @db.VarChar(64)
   weight        Int       @db.SmallInt
   style         String    @db.VarChar(32)
 

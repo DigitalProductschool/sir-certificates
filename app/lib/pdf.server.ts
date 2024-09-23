@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Batch, Certificate, Template, Prisma } from "@prisma/client";
+import type { Batch, Certificate, Template } from "@prisma/client";
 
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +10,7 @@ import { PDFDocument, PDFPage, PDFFont, Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
+import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -52,6 +53,38 @@ type TextOptions = {
 
 const A4PageWidth = 595;
 
+async function assembleTypefacesFromLayout(
+	pdf: PDFDocument,
+	layout: TextOptions[],
+) {
+	const typefaces = await getAvailableTypefaces();
+	const fontMap = new Map<string, PDFFont>();
+
+	for (const text of layout) {
+		for (const line of text.lines) {
+			if (!fontMap.has(line.font)) {
+				const typeface = typefaces.get(line.font);
+				if (typeface) {
+					const fontBuffer = await readFontFile(typeface.id);
+					if (fontBuffer) {
+						const font = await pdf.embedFont(fontBuffer, {
+							subset: true,
+						});
+						fontMap.set(line.font, font);
+					}
+				} else {
+					throw new Response("Missing font: " + line.font, {
+						status: 500,
+						statusText: "Missing font: " + line.font,
+					});
+				}
+			}
+		}
+	}
+
+	return fontMap;
+}
+
 // @todo dry up the code for generateCertificate and generateCertificateTemplate
 
 export async function generateCertificate(
@@ -74,52 +107,39 @@ export async function generateCertificate(
 		}
 	}
 
-	// Generate certificate PDF
-	const layout = { ...sampleSettings };
-	layout.texts = template.layout as Prisma.JsonArray;
-
+	// Get PDF template // @todo simplify by loading from path string?
 	const templatePath = `${dir}/templates/${certificate.templateId}.pdf`;
-	const pdfTemplate = await readFile(templatePath);
-
-	// Get PDF template
-	const pdf = await PDFDocument.load(pdfTemplate);
+	const templateBuffer = await readFile(templatePath);
+	const pdf = await PDFDocument.load(templateBuffer);
 
 	// Load custom fonts
-	// @todo make custom fonts manageable via template settings and uploading custom fonts
 	pdf.registerFontkit(fontkit);
-	const fontRegular = await pdf.embedFont(
-		await readFile(`${dir}/fonts/${layout.fonts.regular}.ttf`),
-		{ subset: true },
-	);
-	const fontExtraBold = await pdf.embedFont(
-		await readFile(`${dir}/fonts/${layout.fonts.bold}.ttf`),
-		{ subset: true },
-	);
-	const fontRegularItalic = await pdf.embedFont(
-		await readFile(`${dir}/fonts/${layout.fonts.italic}.ttf`),
-		{ subset: true },
+	const fontMap = await assembleTypefacesFromLayout(
+		pdf,
+		template.layout as TextOptions[],
 	);
 
 	// Modify page
 	// @todo refactor date formats to be configurable via template settings
 	const page = pdf.getPages()[0];
-	const startDate = batch.startDate.toLocaleString(layout.language, {
+	const startDate = batch.startDate.toLocaleString(template.locale, {
 		year: "numeric",
 		month: "short",
 		day: "numeric",
 	});
-	const endDate = batch.endDate.toLocaleString(layout.language, {
+	const endDate = batch.endDate.toLocaleString(template.locale, {
 		year: "numeric",
 		month: "short",
 		day: "numeric",
 	});
-	const signatureDate = batch.endDate.toLocaleString(layout.language, {
+	const signatureDate = batch.endDate.toLocaleString(template.locale, {
 		year: "numeric",
 		month: "numeric",
 		day: "numeric",
 	});
 
-	layout.texts.forEach((text: TextOptions) => {
+	const texts = template.layout as any;
+	texts.forEach((text: TextOptions) => {
 		const lines = text.lines.map((line: Line) => {
 			let replacements = line.text;
 
@@ -152,19 +172,9 @@ export async function generateCertificate(
 				certificate.teamName || "",
 			);
 
-			let fontChoice = fontRegular;
-			switch (line.font) {
-				case "bold":
-					fontChoice = fontExtraBold;
-					break;
-				case "italic":
-					fontChoice = fontRegularItalic;
-					break;
-			}
-
 			return {
 				text: replacements,
-				font: fontChoice,
+				font: fontMap.get(line.font)!,
 				split: line.split,
 			};
 		});
@@ -207,51 +217,38 @@ export async function generateTemplateSample(template: Template) {
 		throw new Error("Could not create certificate storage folder");
 	}
 
-	// Generate certificate PDF
-	const layout = { ...sampleSettings };
-	layout.texts = template.layout as Prisma.JsonArray;
-
-	const templatePath = `${templateDir}/${template.id}.pdf`;
-	const pdfTemplate = await readFile(templatePath);
-
 	// Get PDF template
-	const pdf = await PDFDocument.load(pdfTemplate);
+	const templatePath = `${templateDir}/${template.id}.pdf`;
+	const templateBuffer = await readFile(templatePath);
+	const pdf = await PDFDocument.load(templateBuffer);
 
 	// Load custom fonts
-	// @todo optimize loading only the fonts used in the layout
 	pdf.registerFontkit(fontkit);
-	const fontRegular = await pdf.embedFont(
-		await readFile(`${dir}/fonts/${layout.fonts.regular}.ttf`),
-		{ subset: true },
-	);
-	const fontExtraBold = await pdf.embedFont(
-		await readFile(`${dir}/fonts/${layout.fonts.bold}.ttf`),
-		{ subset: true },
-	);
-	const fontRegularItalic = await pdf.embedFont(
-		await readFile(`${dir}/fonts/${layout.fonts.italic}.ttf`),
-		{ subset: true },
+	const fontMap = await assembleTypefacesFromLayout(
+		pdf,
+		template.layout as TextOptions[],
 	);
 
 	// Modify page
 	const page = pdf.getPages()[0];
-	const startDate = new Date().toLocaleString(layout.language, {
+	const startDate = new Date().toLocaleString(template.locale, {
 		year: "numeric",
 		month: "short",
 		day: "numeric",
 	});
-	const endDate = new Date().toLocaleString(layout.language, {
+	const endDate = new Date().toLocaleString(template.locale, {
 		year: "numeric",
 		month: "short",
 		day: "numeric",
 	});
-	const signatureDate = new Date().toLocaleString(layout.language, {
+	const signatureDate = new Date().toLocaleString(template.locale, {
 		year: "numeric",
 		month: "numeric",
 		day: "numeric",
 	});
 
-	layout.texts.forEach((text: TextOptions) => {
+	const texts = template.layout as any;
+	texts.forEach((text: TextOptions) => {
 		const lines = text.lines.map((line: Line) => {
 			let replacements = line.text;
 
@@ -275,19 +272,9 @@ export async function generateTemplateSample(template: Template) {
 
 			replacements = replacements.replace("{team}", "Team Name");
 
-			let fontChoice = fontRegular;
-			switch (line.font) {
-				case "bold":
-					fontChoice = fontExtraBold;
-					break;
-				case "italic":
-					fontChoice = fontRegularItalic;
-					break;
-			}
-
 			return {
 				text: replacements,
-				font: fontChoice,
+				font: fontMap.get(line.font)!,
 				split: line.split,
 			};
 		});
@@ -320,54 +307,6 @@ export async function generateTemplateSample(template: Template) {
 	await writeFile(pdfFilePath, pdfBuffer);
 
 	return pdfBuffer;
-}
-
-export async function generatePreviewOfCertificate(
-	certificate: Certificate,
-	skipIfExists = true,
-) {
-	const previewFilePath = `${previewDir}/${certificate.id}.png`;
-	const pdfFilePath = `${certDir}/${certificate.id}.pdf`;
-	return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
-}
-
-export async function generatePreviewOfTemplate(
-	template: Template,
-	skipIfExists = true,
-) {
-	const previewFilePath = `${previewDir}/tpl-${template.id}.png`;
-	const pdfFilePath = `${templateDir}/${template.id}.sample.pdf`;
-	return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
-}
-
-export async function generatePdfPreview(
-	pdfFilePath: string,
-	previewFilePath: string,
-	skipIfExists = true,
-) {
-	const folderCreated = await ensureFolderExists(previewDir);
-	if (!folderCreated) {
-		throw new Error("Could not create preview storage folder");
-	}
-
-	if (skipIfExists) {
-		const existingFile = await readFileIfExists(previewFilePath);
-		if (existingFile !== false) {
-			return existingFile;
-		}
-	}
-
-	// @todo make sure that the PDF file exists
-
-	// Generate PDF preview PNG
-	const document = await convert(pdfFilePath, {
-		scale: 2,
-	});
-
-	for await (const page of document) {
-		await writeFile(previewFilePath, page);
-		return page;
-	}
 }
 
 export function drawTextBox(
@@ -450,6 +389,54 @@ export function drawTextBoxCentered(
 	});
 }
 
+export async function generatePreviewOfCertificate(
+	certificate: Certificate,
+	skipIfExists = true,
+) {
+	const previewFilePath = `${previewDir}/${certificate.id}.png`;
+	const pdfFilePath = `${certDir}/${certificate.id}.pdf`;
+	return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
+}
+
+export async function generatePreviewOfTemplate(
+	template: Template,
+	skipIfExists = true,
+) {
+	const previewFilePath = `${previewDir}/tpl-${template.id}.png`;
+	const pdfFilePath = `${templateDir}/${template.id}.sample.pdf`;
+	return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
+}
+
+export async function generatePdfPreview(
+	pdfFilePath: string,
+	previewFilePath: string,
+	skipIfExists = true,
+) {
+	const folderCreated = await ensureFolderExists(previewDir);
+	if (!folderCreated) {
+		throw new Error("Could not create preview storage folder");
+	}
+
+	if (skipIfExists) {
+		const existingFile = await readFileIfExists(previewFilePath);
+		if (existingFile !== false) {
+			return existingFile;
+		}
+	}
+
+	// @todo make sure that the PDF file exists
+
+	// Generate PDF preview PNG
+	const document = await convert(pdfFilePath, {
+		scale: 2,
+	});
+
+	for await (const page of document) {
+		await writeFile(previewFilePath, page);
+		return page;
+	}
+}
+
 export async function saveUploadedTemplate(
 	template: Template,
 	templatePDF: File,
@@ -465,57 +452,13 @@ export async function saveUploadedTemplate(
 
 export const sampleLayout: any = [
 	{
-		lines: [{ text: "{fullname}", font: "bold" }],
-		size: 16,
-		x: 74,
-		y: 579,
-	},
-	{
-		lines: [
-			{
-				text: "for successfully completing our interdisciplinary program from  ",
-				font: "regular",
-			},
-			{ text: "{startDate} – {endDate}", font: "bold", split: "X" },
-			{ text: " as an ", font: "regular" },
-			{ text: "Interaction Designer", font: "bold" },
-			{ text: " of team ", font: "regular" },
-			{ text: "{team}", font: "bold" },
-			{ text: ".", font: "regular" },
-		],
-		size: 12,
-		lineHeight: 18,
-		x: 55,
-		y: 541,
+		x: 50,
+		y: 550,
 		maxWidth: 485,
-	},
-	{
-		lines: [
-			{
-				text: "{firstname} developed competencies in the following fields",
-				font: "bold",
-			},
-		],
 		size: 12,
 		lineHeight: 18,
-		x: 319,
-		y: 467,
-		maxWidth: 222,
-	},
-	{
-		lines: [{ text: "Munich, {signatureDate}", font: "regular" }],
-		size: 8,
-		x: 413,
-		y: 765,
+		align: "left",
+		color: [0, 0, 0],
+		lines: [],
 	},
 ];
-
-const sampleSettings = {
-	fonts: {
-		regular: "Montserrat-Regular",
-		bold: "Montserrat-ExtraBold",
-		italic: "Montserrat-Italic",
-	},
-	language: "en-GB",
-	texts: sampleLayout,
-};
