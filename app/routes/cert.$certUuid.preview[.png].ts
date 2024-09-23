@@ -1,9 +1,7 @@
 import type { LoaderFunction } from "@remix-run/node";
 
 import { prisma } from "~/lib/prisma.server";
-import {
-	/* generateCertificate,*/ generatePreviewOfCertificate,
-} from "~/lib/pdf.server";
+import { generatePreviewOfCertificate } from "~/lib/pdf.server";
 
 export const loader: LoaderFunction = async ({ params }) => {
 	// @todo is auth necessary or always public? For now it's public until "unpublish" is implemented

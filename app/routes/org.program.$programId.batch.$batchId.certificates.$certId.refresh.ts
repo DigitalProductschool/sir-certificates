@@ -17,6 +17,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     },
     include: {
       batch: true,
+      template: true,
     },
   });
 
@@ -28,7 +29,12 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   const skipIfExists = false;
-  await generateCertificate(certificate, certificate.batch, skipIfExists);
+  await generateCertificate(
+    certificate.batch,
+    certificate,
+    certificate.template,
+    skipIfExists,
+  );
   await generatePreviewOfCertificate(certificate, skipIfExists);
 
   const certificateUpdate = await prisma.certificate.update({

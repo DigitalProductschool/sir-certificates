@@ -20,6 +20,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					program: true,
 				},
 			},
+			template: true,
 		},
 	});
 
@@ -36,7 +37,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 		apiSecret: process.env.MJ_APIKEY_PRIVATE,
 	});
 
-	const pdf = await generateCertificate(certificate, certificate.batch, true);
+	const pdf = await generateCertificate(
+		certificate.batch,
+		certificate,
+		certificate.template,
+		true,
+	);
 	let pdfBase64;
 	if (pdf) {
 		pdfBase64 = pdf.toString("base64");

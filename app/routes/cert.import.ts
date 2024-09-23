@@ -46,7 +46,7 @@ export const action: ActionFunction = async ({ request }) => {
 				uuid: randomUUID(),
 				firstName: inputs.firstName,
 				lastName: inputs.lastName,
-				teamName: inputs.team,				
+				teamName: inputs.team,
 				email: inputs.email,
 				batch: {
 					connect: { id: Number(inputs.batchId) },
@@ -68,7 +68,12 @@ export const action: ActionFunction = async ({ request }) => {
 
 	if (certificate) {
 		const skipIfExists = false;
-		await generateCertificate(certificate, certificate.batch, skipIfExists);
+		await generateCertificate(
+			certificate.batch,
+			certificate,
+			certificate.template,
+			skipIfExists,
+		);
 		await generatePreviewOfCertificate(certificate, skipIfExists);
 	}
 
