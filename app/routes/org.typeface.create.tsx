@@ -29,21 +29,16 @@ import {
 
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
-import {
-  saveUploadedTemplate,
-  sampleLayout,
-  generateTemplateSample,
-  generatePreviewOfTemplate,
-} from "~/lib/pdf.server";
+import { saveUploadedTypeface } from "~/lib/typeface.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export const action: ActionFunction = async ({ request }) => {
   await requireAdmin(request);
 
   const uploadHandler = unstable_createMemoryUploadHandler({
     maxPartSize: 5 * 1024 * 1024,
     filter: (field) => {
-      if (field.name === "pdf") {
-        if (field.contentType === "application/pdf") {
+      if (field.name === "ttf") {
+        if (field.contentType === "font/ttf") {
           return true;
         } else {
           return false;
@@ -59,47 +54,44 @@ export const action: ActionFunction = async ({ request, params }) => {
     uploadHandler,
   );
 
-  const templateName = (formData.get("name") as string) || "(Template Name)";
-  const templateLocale = (formData.get("locale") as string) || undefined;
-  const templatePDF = formData.get("pdf") as File;
+  const typefaceName =
+    (formData.get("typefaceName") as string) || "(Typeface Name)";
+  const weight = Number(formData.get("weight")) || 400;
+  const style = (formData.get("style") as string) || "normal";
+  const typefaceTTF = formData.get("ttf") as File;
 
-  if (!templatePDF) {
+  if (!typefaceTTF) {
     throw new Response(null, {
       status: 400,
-      statusText: "Missing uploaded PDF file",
+      statusText: "Missing uploaded TTF file",
     });
   }
 
-  const template = await prisma.template
+  const typeface = await prisma.typeface
     .create({
       data: {
-        name: templateName,
-        layout: sampleLayout,
-        locale: templateLocale,
-        program: {
-          connect: { id: Number(params.programId) },
-        },
+        name: typefaceName,
+        weight: weight,
+        style: style,
       },
     })
     .catch((error) => {
-      throwErrorResponse(error, "Could not import template");
+      throwErrorResponse(error, "Could not import typeface");
     });
 
-  if (template) {
-    await saveUploadedTemplate(template, templatePDF);
-    await generateTemplateSample(template);
-    await generatePreviewOfTemplate(template);
-    return redirect(`../${template.id}`);
+  if (typeface) {
+    await saveUploadedTypeface(typeface, typefaceTTF);
+    return redirect(`/org/typeface`);
   }
 
   throw new Response(null, {
     status: 500,
-    statusText: "Unkown error when creating new template",
+    statusText: "Unkown error when creating new typeface",
   });
 };
 
-export default function CreateTemplateDialog() {
-  const [templateName, setTemplateName] = useState("");
+export default function CreateTypefaceDialog() {
+  const [typefaceName, setTypefaceName] = useState("");
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
 
@@ -125,17 +117,17 @@ export default function CreateTemplateDialog() {
       <DialogContent className="sm:max-w-[425px]">
         <Form method="POST" encType="multipart/form-data">
           <DialogHeader>
-            <DialogTitle>Add template</DialogTitle>
+            <DialogTitle>Add typeface</DialogTitle>
             <DialogDescription>
-              Upload a new certificate template for this program, then configure
-              the layout options in the next step.
+              Upload a new typeface that can be used for text rendering. The
+              font file needs to be in Truetype format (.ttf).
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <Label htmlFor="pdf">Select a PDF file</Label>
+            <Label htmlFor="ttf">Select a TTF file</Label>
             <Input
-              id="pdf"
-              name="pdf"
+              id="ttf"
+              name="ttf"
               type="file"
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
@@ -143,30 +135,41 @@ export default function CreateTemplateDialog() {
                   if (filename.lastIndexOf(".") > 0) {
                     filename = filename.substring(0, filename.lastIndexOf("."));
                   }
-                  setTemplateName(filename);
+                  setTypefaceName(filename);
                 }
               }}
             />
-            <Label htmlFor="name">Template name</Label>
+            <Label htmlFor="typefaceName">Typeface name</Label>
             <Input
-              id="name"
-              name="name"
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
+              id="typefaceName"
+              name="typefaceName"
+              value={typefaceName}
+              onChange={(e) => setTypefaceName(e.target.value)}
             />
-            <Label htmlFor="locale">Date format</Label>
-            <Select name="locale" defaultValue="de-DE">
+            <Label htmlFor="weight">Weight</Label>
+            <Select name="weight" defaultValue="400">
               <SelectTrigger>
-                <SelectValue placeholder="Select a date format" />
+                <SelectValue placeholder="Select weight" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="de-DE">German</SelectItem>
-                <SelectItem value="en-GB">English UK</SelectItem>
+                <SelectItem value="200">Light</SelectItem>
+                <SelectItem value="400">Regular</SelectItem>
+                <SelectItem value="700">Bold</SelectItem>
+              </SelectContent>
+            </Select>
+            <Label htmlFor="style">Style</Label>
+            <Select name="style" defaultValue="normal">
+              <SelectTrigger>
+                <SelectValue placeholder="Select style" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="italic">Italic</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
-            <Button type="submit">Upload PDF</Button>
+            <Button type="submit">Upload Typeface</Button>
           </DialogFooter>
         </Form>
       </DialogContent>

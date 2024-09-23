@@ -1,19 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as path from "node:path";
-import * as url from "node:url";
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { writeFile, readFile } from "node:fs/promises";
 
 import { convert } from "pdf-img-convert";
 import { PDFDocument, PDFPage, PDFFont, Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import type { Batch, Certificate, Template } from "@prisma/client";
 
-const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+import { ensureFolderExists, readFileIfExists } from "./fs.server";
 
-const dir = path.resolve(__dirname, "../../storage");
-const certDir = path.resolve(__dirname, "../../storage/certificates");
-const previewDir = path.resolve(__dirname, "../../storage/previews");
-const templateDir = path.resolve(__dirname, "../../storage/templates");
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+
+const dir = resolve(__dirname, "../../storage");
+const certDir = resolve(__dirname, "../../storage/certificates");
+const previewDir = resolve(__dirname, "../../storage/previews");
+const templateDir = resolve(__dirname, "../../storage/templates");
 
 type Line = {
 	text: string;
@@ -48,36 +50,6 @@ type TextOptions = {
 };
 
 const A4PageWidth = 595;
-
-export async function ensureFolderExists(folder: string) {
-	return await mkdir(folder, { recursive: true })
-		.then(() => {
-			return true; // folder was created
-		})
-		.catch((error) => {
-			if (error.code === "EEXIST") {
-				return true; // foldes existed already
-			} else {
-				console.error(error);
-				return false;
-			}
-		});
-}
-
-export async function readFileIfExists(filePath: string) {
-	try {
-		const existingFile = await readFile(filePath);
-		return existingFile;
-	} catch (error: any) {
-		if (error?.code === "ENOENT") {
-			return false;
-		} else {
-			// this error is unexpected
-			console.error(error);
-			return false;
-		}
-	}
-}
 
 // @todo dry up the code for generateCertificate and generateCertificateTemplate
 

@@ -13,6 +13,7 @@ import {
   Settings,
   User as UserIcon,
   UserRound,
+  BookType,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
@@ -113,18 +114,18 @@ export default function OrgDashboard() {
               </TooltipTrigger>
               <TooltipContent side="right">User</TooltipContent>
             </Tooltip>
-            {/*<Tooltip>
+            <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  to="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                <NavLink
+                  to="typeface"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg aria-current:bg-accent aria-current:text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                 >
-                  <LineChart className="h-5 w-5" />
-                  <span className="sr-only">Analytics</span>
-                </Link>
+                  <BookType className="h-5 w-5" />
+                  <span className="sr-only">Typefaces</span>
+                </NavLink>
               </TooltipTrigger>
-              <TooltipContent side="right">Analytics</TooltipContent>
-            </Tooltip>*/}
+              <TooltipContent side="right">Typefaces</TooltipContent>
+            </Tooltip>
           </nav>
           <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
             <Tooltip>
