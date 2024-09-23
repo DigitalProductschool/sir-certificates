@@ -129,10 +129,17 @@ export default function ImportBatchPage() {
     templates && templates.length > 0 ? templates[0] : null;
 
   const handleCSVRead = (rows: Array<Record<string, string>>) => {
-    // @todo when Track support is added, match the Track when selecting the template in row._template
+    // If a template column is in the CSV, try to match the template name
     const rowsWithMeta = rows.map((row) => {
       row._status = "todo";
-      row._template = String(firstTemplate?.id);
+      if (row.template) {
+        const matchingTemplate = templates.find((tpl: Template) => {
+          return tpl.name.toLowerCase() === row.template.toLowerCase();
+        });
+        row._template = String(matchingTemplate?.id || firstTemplate?.id);
+      } else {
+        row._template = String(firstTemplate?.id);
+      }
       return row;
     });
     setRows(rowsWithMeta);
