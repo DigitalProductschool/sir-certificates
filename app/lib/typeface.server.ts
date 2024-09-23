@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeFile, unlink } from "node:fs/promises";
 
-import { ensureFolderExists } from "./fs.server";
+import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -40,4 +40,19 @@ export async function deleteTypeface(typefaceId: number) {
 			console.error(error);
 			throwErrorResponse(error, "Could not delete typeface");
 		});
+}
+
+export async function getAvailableTypefaces() {
+	const typefaces = await prisma.typeface.findMany();
+
+	const typefaceMap = new Map<string, Typeface>();
+	for (const tf of typefaces) {
+		typefaceMap.set(tf.name, tf);
+	}
+
+	return typefaceMap;
+}
+
+export async function readFontFile(typefaceId: number) {
+	return readFileIfExists(`${typefaceDir}/${typefaceId}.ttf`);
 }

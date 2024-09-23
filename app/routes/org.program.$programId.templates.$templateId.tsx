@@ -2,10 +2,19 @@ import type {
   ActionFunction,
   LoaderFunction,
   MetaFunction,
+  ErrorResponse,
 } from "@remix-run/node";
 import type { Template } from "@prisma/client";
+import { useEffect } from "react";
 import { json } from "@remix-run/node";
-import { Form, Link, useLoaderData } from "@remix-run/react";
+import {
+  Form,
+  Link,
+  useLoaderData,
+  useNavigate,
+  useRouteError,
+  isRouteErrorResponse,
+} from "@remix-run/react";
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
@@ -14,6 +23,14 @@ import {
 } from "~/lib/pdf.server";
 
 import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import {
@@ -26,8 +43,8 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const title = `Template ${data.template?.name}`;
-  return [{ title }, { name: "description", content: "Welcome to Remix!" }];
+  const title = `Template ${data?.template?.name}`;
+  return [{ title }];
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -101,7 +118,7 @@ type Match = {
 
 export const handle = {
   breadcrumb: (match: Match) => (
-    <Link to="#">Template: {match.data.template.name}</Link>
+    <Link to="#">Template: {match.data?.template?.name}</Link>
   ),
 };
 
@@ -147,5 +164,61 @@ export default function TemplateEditorPage() {
         </Button>
       </Form>
     </>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const navigate = useNavigate();
+  console.error(error);
+
+  let additionalInfo = "";
+  if (isRouteErrorResponse(error)) {
+    const routeError = error as ErrorResponse;
+    if (routeError.statusText) {
+      additionalInfo = routeError.statusText;
+    }
+  }
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        navigate(-2);
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [navigate]);
+
+  return (
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) navigate(-2);
+      }}
+    >
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Error</DialogTitle>
+          <DialogDescription>
+            The template could not be saved.
+            <br />
+            {additionalInfo}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <Button
+            onClick={() => {
+              navigate(-2);
+            }}
+          >
+            Understood
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
