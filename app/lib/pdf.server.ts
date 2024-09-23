@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { Batch, Certificate, Template, Prisma } from "@prisma/client";
+
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeFile, readFile } from "node:fs/promises";
@@ -6,7 +8,6 @@ import { writeFile, readFile } from "node:fs/promises";
 import { convert } from "pdf-img-convert";
 import { PDFDocument, PDFPage, PDFFont, Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import type { Batch, Certificate, Template } from "@prisma/client";
 
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 
@@ -54,8 +55,9 @@ const A4PageWidth = 595;
 // @todo dry up the code for generateCertificate and generateCertificateTemplate
 
 export async function generateCertificate(
-	certificate: Certificate,
 	batch: Batch,
+	certificate: Certificate,
+	template: Template,
 	skipIfExists = true,
 ) {
 	const pdfFilePath = `${certDir}/${certificate.id}.pdf`;
@@ -73,7 +75,8 @@ export async function generateCertificate(
 	}
 
 	// Generate certificate PDF
-	const layout = sampleSettings;
+	const layout = { ...sampleSettings };
+	layout.texts = template.layout as Prisma.JsonArray;
 
 	const templatePath = `${dir}/templates/${certificate.templateId}.pdf`;
 	const pdfTemplate = await readFile(templatePath);
@@ -205,8 +208,8 @@ export async function generateTemplateSample(template: Template) {
 	}
 
 	// Generate certificate PDF
-	const layout = sampleSettings;
-	layout.texts = template.layout;
+	const layout = { ...sampleSettings };
+	layout.texts = template.layout as Prisma.JsonArray;
 
 	const templatePath = `${templateDir}/${template.id}.pdf`;
 	const pdfTemplate = await readFile(templatePath);

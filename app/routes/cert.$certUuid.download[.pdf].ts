@@ -13,6 +13,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 		},
 		include: {
 			batch: true,
+			template: true,
 		},
 	});
 
@@ -25,8 +26,9 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 	const skipIfExists = true;
 	const pdf = await generateCertificate(
-		certificate,
 		certificate.batch,
+		certificate,
+		certificate.template,
 		skipIfExists,
 	);
 
