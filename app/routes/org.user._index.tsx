@@ -59,7 +59,7 @@ export default function UserIndexPage() {
     <>
       <div>
         <Button asChild>
-          <Link to="invite">Invite admin</Link>
+          <Link to="invite">Invite Admin</Link>
         </Button>
       </div>
       <Table>
