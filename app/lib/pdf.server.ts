@@ -4,7 +4,7 @@ import * as url from "node:url";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 
 import { convert } from "pdf-img-convert";
-import { PDFDocument, PDFPage, PDFFont, Color, rgb, grayscale } from "pdf-lib";
+import { PDFDocument, PDFPage, PDFFont, Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import type { Batch, Certificate, Template } from "@prisma/client";
 
@@ -43,8 +43,11 @@ type TextOptions = {
 	lines: Array<Line>;
 	lineHeight?: number;
 	maxWidth?: number;
+	align?: "left" | "center";
 	color?: [number, number, number];
 };
+
+const A4PageWidth = 595;
 
 export async function ensureFolderExists(folder: string) {
 	return await mkdir(folder, { recursive: true })
@@ -107,6 +110,7 @@ export async function generateCertificate(
 	const pdf = await PDFDocument.load(pdfTemplate);
 
 	// Load custom fonts
+	// @todo make custom fonts manageable via template settings and uploading custom fonts
 	pdf.registerFontkit(fontkit);
 	const fontRegular = await pdf.embedFont(
 		await readFile(`${dir}/fonts/${layout.fonts.regular}.ttf`),
@@ -122,6 +126,7 @@ export async function generateCertificate(
 	);
 
 	// Modify page
+	// @todo refactor date formats to be configurable via template settings
 	const page = pdf.getPages()[0];
 	const startDate = batch.startDate.toLocaleString(layout.language, {
 		year: "numeric",
@@ -189,14 +194,25 @@ export async function generateCertificate(
 			};
 		});
 
-		drawTextBox(page, lines, {
-			size: text.size,
-			lineHeight: text.lineHeight,
-			x: text.x,
-			y: text.y,
-			maxWidth: text.maxWidth,
-			color: text.color ? rgb(...text.color) : grayscale(0.0),
-		});
+		if (text.align === "center") {
+			drawTextBoxCentered(page, lines, {
+				size: text.size,
+				lineHeight: text.lineHeight,
+				x: text.x,
+				y: text.y,
+				maxWidth: text.maxWidth,
+				color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+			});
+		} else {
+			drawTextBox(page, lines, {
+				size: text.size,
+				lineHeight: text.lineHeight,
+				x: text.x,
+				y: text.y,
+				maxWidth: text.maxWidth,
+				color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+			});
+		}
 	});
 
 	// Wrap up and return as buffer
@@ -301,14 +317,25 @@ export async function generateTemplateSample(template: Template) {
 			};
 		});
 
-		drawTextBox(page, lines, {
-			size: text.size,
-			lineHeight: text.lineHeight,
-			x: text.x,
-			y: text.y,
-			maxWidth: text.maxWidth,
-			color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-		});
+		if (text.align === "center") {
+			drawTextBoxCentered(page, lines, {
+				size: text.size,
+				lineHeight: text.lineHeight,
+				x: text.x,
+				y: text.y,
+				maxWidth: text.maxWidth,
+				color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+			});
+		} else {
+			drawTextBox(page, lines, {
+				size: text.size,
+				lineHeight: text.lineHeight,
+				x: text.x,
+				y: text.y,
+				maxWidth: text.maxWidth,
+				color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+			});
+		}
 	});
 
 	// Wrap up and return as buffer
@@ -382,12 +409,14 @@ export function drawTextBox(
 	let x = options.x;
 	let y = options.y;
 
+	// @todo check if a maxWidth set too low can trigger an infite loop here?
+
 	lines.forEach((line) => {
 		let firstInLine = true;
 		line.text.split(line.split || " ").forEach((word: string) => {
 			if (
 				x + line.font.widthOfTextAtSize(word, lineOptions.size) >
-				options.x + (options.maxWidth || 1000)
+				options.x + (options.maxWidth || A4PageWidth)
 			) {
 				x = options.x;
 				y -= options.lineHeight || 0;
@@ -408,6 +437,41 @@ export function drawTextBox(
 			x += line.font.widthOfTextAtSize(word, lineOptions.size);
 			firstInLine = false;
 		});
+	});
+}
+
+// @caveat centered text doesn't auto-wrap lines at the moment
+// @todo improve centered text rendering with auto-wrapping lines
+export function drawTextBoxCentered(
+	page: PDFPage,
+	lines: Array<LineWithFont>,
+	options: LineOptions = { x: 0, y: 0 },
+) {
+	const lineOptions = {
+		size: options.size || 12,
+		color: options.color,
+	};
+
+	let x = options.x;
+	let y = options.y;
+	const maxWidth = options.maxWidth || A4PageWidth;
+
+	lines.forEach((line) => {
+		const lineWidth = line.font.widthOfTextAtSize(
+			line.text,
+			lineOptions.size,
+		);
+
+		x = options.x + (maxWidth - lineWidth) / 2;
+
+		page.drawText(line.text, {
+			...lineOptions,
+			font: line.font,
+			x,
+			y,
+		});
+
+		y -= options.lineHeight || 0;
 	});
 }
 
