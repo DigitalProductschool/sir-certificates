@@ -58,7 +58,7 @@ jobs:
           ssh -t preview "postgres:clone certificates-db ${REVIEW_APP_NAME}-db"
           ssh -t preview "postgres:unlink certificates-db ${REVIEW_APP_NAME} --no-restart"          
           ssh -t preview "postgres:link ${REVIEW_APP_NAME}-db $REVIEW_APP_NAME"
-          ssh -t preview "postgres:promote ${REVIEW_APP_NAME}-db $REVIEW_APP_NAME"
+        # ssh -t preview "postgres:promote ${REVIEW_APP_NAME}-db $REVIEW_APP_NAME"
         env:
           REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
 
