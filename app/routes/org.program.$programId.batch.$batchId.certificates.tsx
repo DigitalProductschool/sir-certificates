@@ -1,9 +1,9 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Certificate } from "@prisma/client";
+import type { Certificate, Template } from "@prisma/client";
 import { json } from "@remix-run/node";
-import { Link, Outlet, useLoaderData } from "@remix-run/react";
+import { Link, Outlet, useLoaderData, useFetcher } from "@remix-run/react";
 
-import { MailCheck } from "lucide-react";
+import { MailCheck, RefreshCw } from "lucide-react";
 
 import { SendNotification } from "~/components/send-notification";
 import { Badge } from "~/components/ui/badge";
@@ -71,10 +71,21 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
 export default function BatchCertificatesPage() {
   const { certificates, templates } = useLoaderData<typeof loader>();
+  const fetcher = useFetcher();
 
-  const templatesMap = new Map();
+  const templatesMap = new Map<number, Template>();
   for (const template of templates) {
     templatesMap.set(template.id, template);
+  }
+
+  let certificatesNeedsRefresh = 0;
+  for (const certificate of certificates) {
+    const lastTemplateUpdate = templatesMap.get(
+      certificate.templateId,
+    )?.updatedAt;
+    if (lastTemplateUpdate && lastTemplateUpdate > certificate.updatedAt) {
+      certificatesNeedsRefresh++;
+    }
   }
 
   return (
@@ -86,47 +97,77 @@ export default function BatchCertificatesPage() {
             <TableHead>Name</TableHead>
             <TableHead className="font-medium">Email</TableHead>
             <TableHead>Team</TableHead>
-            <TableHead>Template</TableHead>
+            <TableHead>
+              Template{" "}
+              {certificatesNeedsRefresh > 0 && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="destructive">
+                      {certificatesNeedsRefresh}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {certificatesNeedsRefresh} certificates need to be refreshed
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </TableHead>
             <TableHead colSpan={2}>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {certificates.map((cert: Certificate) => (
-            <TableRow key={cert.email}>
-              <TableCell>
-                {cert.notifiedAt && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <MailCheck />
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      {new Date(cert.notifiedAt).toLocaleString()}
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </TableCell>
-              <TableCell>
-                {cert.firstName} {cert.lastName}
-              </TableCell>
-              <TableCell className="font-medium">{cert.email}</TableCell>
-              <TableCell>
-                {cert.teamName || <Badge variant="outline">empty</Badge>}
-              </TableCell>
-              <TableCell>
-                {templatesMap.get(cert.templateId)?.name || (
-                  <Badge variant="destructive">not found</Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                <Button variant="outline" asChild>
-                  <Link to={`${cert.id}`}>Preview</Link>
-                </Button>
-              </TableCell>
-              <TableCell>
-                <SendNotification certificate={cert} />
-              </TableCell>
-            </TableRow>
-          ))}
+          {certificates.map((cert: Certificate) => {
+            const template = templatesMap.get(cert.templateId);
+            return (
+              <TableRow key={cert.email}>
+                <TableCell>
+                  {cert.notifiedAt && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <MailCheck />
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        {new Date(cert.notifiedAt).toLocaleString()}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {cert.firstName} {cert.lastName}
+                </TableCell>
+                <TableCell className="font-medium">{cert.email}</TableCell>
+                <TableCell>
+                  {cert.teamName || <Badge variant="outline">empty</Badge>}
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-4 items-center">
+                    {template?.name || (
+                      <Badge variant="destructive">not found</Badge>
+                    )}
+                    {template?.updatedAt &&
+                      template?.updatedAt > cert.updatedAt && (
+                        <fetcher.Form
+                          action={`${cert.id}/refresh`}
+                          method="POST"
+                        >
+                          <Button size="icon" variant="outline">
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        </fetcher.Form>
+                      )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Button variant="outline" asChild>
+                    <Link to={`${cert.id}`}>Preview</Link>
+                  </Button>
+                </TableCell>
+                <TableCell>
+                  <SendNotification certificate={cert} />
+                </TableCell>
+              </TableRow>
+            );
+          })}
           {certificates.length === 0 && (
             <TableRow>
               <TableCell colSpan={5}>No certificates created yet</TableCell>
