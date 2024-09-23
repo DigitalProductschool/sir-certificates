@@ -7,7 +7,7 @@ interface SendNotificationProps {
 	certificate: Certificate;
 }
 
-export function SendNotification({ certificate }: SendNotificationProps) {
+export function CertificateSendNotification({ certificate }: SendNotificationProps) {
 	const fetcher = useFetcher();
 	return (
 		<fetcher.Form action={`/cert/${certificate.uuid}/notify`} method="POST">

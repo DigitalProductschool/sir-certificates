@@ -1,11 +1,13 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Certificate, Template } from "@prisma/client";
 import { json } from "@remix-run/node";
-import { Link, Outlet, useLoaderData, useFetcher } from "@remix-run/react";
+import { Link, Outlet, useLoaderData } from "@remix-run/react";
 
-import { MailCheck, RefreshCw } from "lucide-react";
+import { MailCheck } from "lucide-react";
 
-import { SendNotification } from "~/components/send-notification";
+import { CertificateRefresh } from "~/components/certificate-refresh";
+import { CertificateSendNotification } from "~/components/certificate-send-notification";
+
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -71,7 +73,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
 export default function BatchCertificatesPage() {
   const { certificates, templates } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher();
 
   const templatesMap = new Map<number, Template>();
   for (const template of templates) {
@@ -98,10 +99,11 @@ export default function BatchCertificatesPage() {
             <TableHead className="font-medium">Email</TableHead>
             <TableHead>Team</TableHead>
             <TableHead>
-              Template{" "}
+              Template
               {certificatesNeedsRefresh > 0 && (
                 <Tooltip>
                   <TooltipTrigger>
+                    &emsp;
                     <Badge variant="destructive">
                       {certificatesNeedsRefresh}
                     </Badge>
@@ -146,14 +148,7 @@ export default function BatchCertificatesPage() {
                     )}
                     {template?.updatedAt &&
                       template?.updatedAt > cert.updatedAt && (
-                        <fetcher.Form
-                          action={`${cert.id}/refresh`}
-                          method="POST"
-                        >
-                          <Button size="icon" variant="outline">
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                        </fetcher.Form>
+                        <CertificateRefresh certificate={cert} />
                       )}
                   </div>
                 </TableCell>
@@ -163,7 +158,7 @@ export default function BatchCertificatesPage() {
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <SendNotification certificate={cert} />
+                  <CertificateSendNotification certificate={cert} />
                 </TableCell>
               </TableRow>
             );
