@@ -11,6 +11,7 @@ import {
   Form,
   Link,
   useLoaderData,
+  useParams,
   useNavigate,
   useRouteError,
   isRouteErrorResponse,
@@ -169,6 +170,7 @@ export default function TemplateEditorPage() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
+  const params = useParams();
   const navigate = useNavigate();
   console.error(error);
 
@@ -187,7 +189,9 @@ export function ErrorBoundary() {
     const down = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        navigate(-2);
+        navigate(
+          `/org/program/${params.programId}/templates/${params.templateId}`,
+        );
       }
     };
 
@@ -199,7 +203,10 @@ export function ErrorBoundary() {
     <Dialog
       open={true}
       onOpenChange={(open) => {
-        if (!open) navigate(-2);
+        if (!open)
+          navigate(
+            `/org/program/${params.programId}/templates/${params.templateId}`,
+          );
       }}
     >
       <DialogContent className="sm:max-w-[425px]">
@@ -215,7 +222,9 @@ export function ErrorBoundary() {
         <DialogFooter>
           <Button
             onClick={() => {
-              navigate(-2);
+              navigate(
+                `/org/program/${params.programId}/templates/${params.templateId}`,
+              );
             }}
           >
             Understood
