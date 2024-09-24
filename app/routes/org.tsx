@@ -218,8 +218,8 @@ export default function OrgDashboard() {
                 <DropdownMenuItem>Support</DropdownMenuItem>
                 <DropdownMenuSeparator />*/}
                 <DropdownMenuItem>
-                  <form action="/user/logout" method="POST">
-                    <button type="submit">Logout</button>
+                  <form action="/user/logout" method="POST"  className="flex grow">
+                    <button type="submit" className="flex grow">Logout</button>
                   </form>
                 </DropdownMenuItem>
               </DropdownMenuContent>
