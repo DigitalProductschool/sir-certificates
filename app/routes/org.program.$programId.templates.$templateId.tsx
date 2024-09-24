@@ -175,8 +175,11 @@ export function ErrorBoundary() {
   let additionalInfo = "";
   if (isRouteErrorResponse(error)) {
     const routeError = error as ErrorResponse;
-    if (routeError.statusText) {
+    /* if (routeError.statusText) {
       additionalInfo = routeError.statusText;
+    } */
+    if (routeError.data) {
+      additionalInfo = routeError.data;
     }
   }
 

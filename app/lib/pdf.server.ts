@@ -74,9 +74,9 @@ async function assembleTypefacesFromLayout(
 						fontMap.set(line.font, font);
 					}
 				} else {
-					throw new Response("Missing font: " + line.font, {
+					throw new Response("Missing font: '" + line.font + "'", {
 						status: 500,
-						statusText: "Missing font: " + line.font,
+						statusText: "Missing font: '" + line.font + "'",
 					});
 				}
 			}
