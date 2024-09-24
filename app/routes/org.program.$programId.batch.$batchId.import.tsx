@@ -3,8 +3,7 @@ import type { Batch, Template } from "@prisma/client";
 
 import { useState } from "react";
 import { json } from "@remix-run/node";
-import { Link, useParams, useLoaderData } from "@remix-run/react";
-
+import { Link, useParams, useLoaderData, useNavigate } from "@remix-run/react";
 import {
   CircleFadingPlus,
   CircleFadingArrowUp,
@@ -12,6 +11,9 @@ import {
   TriangleAlert,
   ArrowDown,
 } from "lucide-react";
+
+import { ToastAction } from "~/components/ui/toast";
+import { useToast } from "~/components/ui/use-toast";
 
 import { CSVDropZone } from "~/components/csv-drop-zone";
 import { TaskRunner } from "~/components/task-runner";
@@ -123,9 +125,11 @@ function StatusIndicator({ status, error }: { status: string; error: string }) {
 
 export default function ImportBatchPage() {
   const params = useParams();
+  const navigate = useNavigate();
   const { templates } = useLoaderData<typeof loader>();
   const [key, setKey] = useState(1);
   const [rows, setRows] = useState<Array<Record<string, string>>>([]);
+  const { toast } = useToast();
 
   const firstTemplate: Template | null =
     templates && templates.length > 0 ? templates[0] : null;
@@ -209,6 +213,20 @@ export default function ImportBatchPage() {
     });
   };
 
+  const handleFinished = () =>
+    toast({
+      title: "Import complete",
+      description: "All participants have been imported.",
+      action: (
+        <ToastAction
+          altText="You can navigate to the certificate list now."
+          onClick={() => navigate(`../${params.batchId}/certificates`)}
+        >
+          Show Certificates
+        </ToastAction>
+      ),
+    });
+
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
@@ -218,7 +236,8 @@ export default function ImportBatchPage() {
         .&ensp;
         <Button variant="link" className="px-0" asChild>
           <a href="/assets/import-example.csv">
-            Download CSV template<ArrowDown className="w-4 h-4" />
+            Download CSV template
+            <ArrowDown className="w-4 h-4" />
           </a>
         </Button>
       </p>
@@ -234,6 +253,7 @@ export default function ImportBatchPage() {
         confirmDescription="The participants from the CSV file will be added to the selected batch. If a provided email is already in this batch, the name and other information will be updated to prevent duplicates."
         onRunTask={handleImport}
         onReset={handleReset}
+        onFinish={handleFinished}
       />
 
       <Table>
