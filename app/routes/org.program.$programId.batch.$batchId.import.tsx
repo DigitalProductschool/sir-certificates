@@ -177,7 +177,7 @@ export default function ImportBatchPage() {
     const formData = new FormData();
     formData.append("firstName", item.firstname);
     formData.append("lastName", item.lastname);
-    formData.append("team", item.team);
+    formData.append("team", item.team || "");
     formData.append("email", item.email);
     formData.append("templateId", item._template);
     formData.append("batchId", params.batchId);
