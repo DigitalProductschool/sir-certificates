@@ -47,8 +47,8 @@ export default function OrgIndex() {
   const { programs } = useLoaderData<typeof loader>();
 
   return (
-    <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-start gap-4 md:gap-8">
-      <div className="col-span-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 items-start gap-4 md:gap-8">
+      <div className="col-span-1 md:col-span-2 xl:col-span-3">
         <Button asChild>
           <Link to="create">Add Program</Link>
         </Button>
@@ -56,7 +56,7 @@ export default function OrgIndex() {
 
       {programs.map((program: Program) => (
         <Card key={program.id}>
-          <CardHeader className="pb-3 flex-row items-center">
+          <CardHeader className="pb-3 flex-row items-center gap-2">
             <CardTitle className="grow">
               <Link to={`${program.id}/batch`}>{program.name}</Link>
             </CardTitle>
@@ -71,7 +71,7 @@ export default function OrgIndex() {
               <TooltipContent side="top">Edit program</TooltipContent>
             </Tooltip>
           </CardHeader>
-          <CardContent className="max-w-lg text-balance leading-relaxed flex flex-row gap-4">
+          <CardContent className="flex flex-wrap gap-2">
             <Button variant="outline" asChild>
               <Link to={`${program.id}/batch`}>Certificates</Link>
             </Button>
