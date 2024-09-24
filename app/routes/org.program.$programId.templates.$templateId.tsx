@@ -13,6 +13,7 @@ import {
   useLoaderData,
   useParams,
   useNavigate,
+  useNavigation,
   useRouteError,
   isRouteErrorResponse,
 } from "@remix-run/react";
@@ -125,6 +126,7 @@ export const handle = {
 
 export default function TemplateEditorPage() {
   const { template } = useLoaderData<typeof loader>();
+  const navigation = useNavigation();
 
   return (
     <>
@@ -143,7 +145,9 @@ export default function TemplateEditorPage() {
                 <SelectItem value="en-GB">English UK</SelectItem>
               </SelectContent>
             </Select>
-            <Button type="submit">Save and update preview</Button>
+            <Button type="submit" disabled={navigation.state !== "idle"}>
+              Save and update preview
+            </Button>
           </div>
 
           <Textarea
