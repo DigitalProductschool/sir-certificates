@@ -62,6 +62,12 @@ Caveats:
 -   preview deployments currently interact with the production database, so be careful
 - 	storage: `dokku storage:ensure-directory --chown root [app]`, `dokku storage:mount [app] host-path:container-path`, `dokku ps:restart app-name`
 
+Server disk clean-up:
+
+- See available disk space `df -h`
+- See docker disk usage `docker system df`
+- Reclaim space from docker `docker system prune` (-a / -f)
+
 ### DIY
 
 If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
