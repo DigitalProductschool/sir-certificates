@@ -15,9 +15,10 @@ export function CSVDropZone({ onData }: { onData: any }) {
     <CSVReader
       config={{
         header: true,
+        transformHeader: (header: string) => header.toLowerCase(),
+        skipEmptyLines: "greedy",
       }}
       onUploadAccepted={(results: any) => {
-        // @todo lower-case (or normalize) column headers (property names)
         onData(results.data);
         setZoneHover(false);
       }}
