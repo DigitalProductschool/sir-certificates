@@ -146,7 +146,9 @@ export default function EditBatchDialog() {
               <TooltipContent side="top">Delete this batch</TooltipContent>
             </Tooltip>
           </Form>
-          <Button type="submit">Save changes</Button>
+          <Button onClick={() => formRef.current?.submit()}>
+            Save changes
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
