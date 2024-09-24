@@ -3,7 +3,7 @@ import type { Certificate, Template } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { Link, Outlet, useLoaderData } from "@remix-run/react";
 
-import { MailCheck } from "lucide-react";
+import { MailCheck, Settings } from "lucide-react";
 
 import { CertificateRefresh } from "~/components/certificate-refresh";
 import { CertificateSendNotification } from "~/components/certificate-send-notification";
@@ -153,9 +153,26 @@ export default function BatchCertificatesPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Button variant="outline" asChild>
-                    <Link to={`${cert.id}`}>Preview</Link>
-                  </Button>
+                  <div className="flex gap-4 items-center">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" asChild>
+                          <Link
+                            to={`${cert.id}/edit`}
+                            aria-label="Edit certificate"
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        Edit certificate
+                      </TooltipContent>
+                    </Tooltip>
+                    <Button variant="outline" asChild>
+                      <Link to={`${cert.id}/preview`}>Preview</Link>
+                    </Button>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <CertificateSendNotification certificate={cert} />

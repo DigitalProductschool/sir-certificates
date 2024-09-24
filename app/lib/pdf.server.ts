@@ -3,13 +3,14 @@ import type { Batch, Certificate, Template } from "@prisma/client";
 
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { writeFile, readFile } from "node:fs/promises";
+import { writeFile, readFile, unlink } from "node:fs/promises";
 
 import { convert } from "pdf-img-convert";
 import { PDFDocument, PDFPage, PDFFont, Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
+import { prisma, throwErrorResponse } from "./prisma.server";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -448,6 +449,30 @@ export async function saveUploadedTemplate(
 
 	const buffer = Buffer.from(await templatePDF.arrayBuffer());
 	return await writeFile(`${templateDir}/${template.id}.pdf`, buffer);
+}
+
+export async function deleteCertificatePreview(certificateId: number) {
+	return await unlink(`${previewDir}/${certificateId}.png`);
+}
+
+export async function deleteCertificatePDF(certificateId: number) {
+	return await unlink(`${certDir}/${certificateId}.pdf`);
+}
+
+export async function deleteCertificate(certificateId: number) {
+	await deleteCertificatePreview(certificateId);
+	await deleteCertificatePDF(certificateId);
+
+	return await prisma.certificate
+		.delete({
+			where: {
+				id: certificateId,
+			},
+		})
+		.catch((error) => {
+			console.error(error);
+			throwErrorResponse(error, "Could not delete certificate");
+		});
 }
 
 export const sampleLayout: any = [
