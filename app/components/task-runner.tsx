@@ -88,7 +88,7 @@ export function TaskRunner({
 			setCurrent((current) => current + 1);
 		}
 
-		if (done === items.length) {
+		if (isRunning && items.length > 0 && done === items.length) {
 			setIsRunning(false);
 			if (onFinish) onFinish();
 		}
