@@ -99,20 +99,22 @@ export default function BatchCertificatesPage() {
             <TableHead className="font-medium">Email</TableHead>
             <TableHead>Team</TableHead>
             <TableHead>
-              Template
-              {certificatesNeedsRefresh > 0 && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    &emsp;
-                    <Badge variant="destructive">
-                      {certificatesNeedsRefresh}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    {certificatesNeedsRefresh} certificates need to be refreshed
-                  </TooltipContent>
-                </Tooltip>
-              )}
+              <div className="flex items-center">
+                Template&emsp;
+                {certificatesNeedsRefresh > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Badge variant="destructive">
+                        {certificatesNeedsRefresh}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      {certificatesNeedsRefresh} certificates need to be
+                      refreshed
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
             </TableHead>
             <TableHead colSpan={2}>Actions</TableHead>
           </TableRow>
