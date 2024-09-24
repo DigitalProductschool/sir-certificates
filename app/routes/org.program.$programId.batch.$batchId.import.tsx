@@ -10,12 +10,14 @@ import {
   CircleFadingArrowUp,
   CircleCheckBig,
   TriangleAlert,
+  ArrowDown,
 } from "lucide-react";
 
 import { CSVDropZone } from "~/components/csv-drop-zone";
 import { TaskRunner } from "~/components/task-runner";
 
 import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 
 import {
   Select,
@@ -209,6 +211,18 @@ export default function ImportBatchPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        Prepare the list of participants for this batch as a CSV file with
+        Google Spreadsheets, Excel, Numbers or a similar tool. Please make sure
+        to include the required columns: <i>firstname, lastname, email</i>
+        .&ensp;
+        <Button variant="link" className="px-0" asChild>
+          <a href="/assets/import-example.csv">
+            Download CSV template<ArrowDown className="w-4 h-4" />
+          </a>
+        </Button>
+      </p>
+
       <CSVDropZone onData={handleCSVRead} />
 
       <TaskRunner
@@ -226,10 +240,10 @@ export default function ImportBatchPage() {
         <TableHeader>
           <TableRow>
             <TableHead></TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead className="font-medium">Email</TableHead>
+            <TableHead>Firstname*</TableHead>
+            <TableHead>Lastname*</TableHead>
+            <TableHead className="font-medium">Email*</TableHead>
             <TableHead>Team</TableHead>
-            <TableHead>Track</TableHead>
             <TableHead>Template</TableHead>
           </TableRow>
         </TableHeader>
@@ -242,7 +256,9 @@ export default function ImportBatchPage() {
               <TableCell>
                 {row.firstname || (
                   <Badge variant="destructive">firstname</Badge>
-                )}{" "}
+                )}
+              </TableCell>
+              <TableCell>
                 {row.lastname || <Badge variant="destructive">lastname</Badge>}
               </TableCell>
               <TableCell className="font-medium">
@@ -250,9 +266,6 @@ export default function ImportBatchPage() {
               </TableCell>
               <TableCell>
                 {row.team || <Badge variant="outline">empty</Badge>}
-              </TableCell>
-              <TableCell>
-                {row.track || <Badge variant="outline">empty</Badge>}
               </TableCell>
               <TableCell>
                 <Select
