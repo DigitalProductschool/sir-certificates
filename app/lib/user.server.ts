@@ -21,7 +21,10 @@ export const createUser = async (user: RegisterForm) => {
 	return { id: newUser.id, email: user.email };
 };
 
-export const createUserInvitation = async (user: InviteForm) => {
+export const createUserInvitation = async (
+	user: InviteForm,
+	from: User | null,
+) => {
 	const verifyCode = randomUUID();
 	const invite = await prisma.userInvitation.create({
 		data: {
@@ -32,7 +35,7 @@ export const createUserInvitation = async (user: InviteForm) => {
 			verifyCode,
 		},
 	});
-	await sendInvitationEmail(invite);
+	await sendInvitationEmail(invite, from);
 	return { id: invite.id, email: user.email };
 };
 
@@ -77,7 +80,10 @@ export const sendVerificationEmail = async (user: User) => {
 	return true;
 };
 
-export const sendInvitationEmail = async (invite: UserInvitation) => {
+export const sendInvitationEmail = async (
+	invite: UserInvitation,
+	from: User | null,
+) => {
 	// @todo refactor into a singleton/import
 	const mailjet = new Mailjet({
 		apiKey: process.env.MJ_APIKEY_PUBLIC,
@@ -86,6 +92,9 @@ export const sendInvitationEmail = async (invite: UserInvitation) => {
 
 	// @todo dynamic domain (from settings?) // @todo replace org names
 	const acceptUrl = `https://certificates.unternehmertum.de/user/accept-invite/${invite.id}/${invite.verifyCode}`;
+
+	const text = `Dear ${invite.firstName} ${invite.lastName},\n\n${from ? `${from.firstName} ${from.lastName} is inviting you` : "you have been invited"} to become an admiminstrator for the UnternehmerTUM certificates tool.\n\nTo accept the invitation, please click on the following link:\n${acceptUrl}\n\nThank you!`;
+	const html = `<p>Dear ${invite.firstName} ${invite.lastName},</p><p>${from ? `${from.firstName} ${from.lastName} is inviting you` : "you have been invited"} to become an admiminstrator for the UnternehmerTUM certificates tool.</p><p>To accept the invitation, please click on the following link:<br /><a href="${acceptUrl}">${acceptUrl}</a></p><p>Thank you!</p>`;
 
 	await mailjet
 		.post("send", { version: "v3.1" })
@@ -103,8 +112,8 @@ export const sendInvitationEmail = async (invite: UserInvitation) => {
 						},
 					],
 					Subject: `You have been invited to UnternehmerTUM Certificates`,
-					TextPart: `Dear ${invite.firstName} ${invite.lastName},\n\nyou have been invited to become an admiminstrator for the UnternehmerTUM certificates tool.\n\nTo accept the invitation, please click on the following link:\n${acceptUrl}\n\nThank you!`,
-					HTMLPart: `<p>Dear ${invite.firstName} ${invite.lastName},</p><p>you have been invited to become an admiminstrator for the UnternehmerTUM certificates tool.</p><p>To accept the invitation, please click on the following link:<br /><a href="${acceptUrl}">${acceptUrl}</a></p><p>Thank you!</p>`,
+					TextPart: text,
+					HTMLPart: html,
 				},
 			],
 		})
