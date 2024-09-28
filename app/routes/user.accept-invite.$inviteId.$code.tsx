@@ -39,8 +39,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 		const passwordHash = await bcrypt.hash(inputs.password, 10);
 
-		const user = await prisma.user.create({
-			data: {
+		const user = await prisma.user.upsert({
+			where: {
+				email: invite.email,
+			},
+			update: {
+				isAdmin: invite.isAdmin,
+				password: passwordHash,
+			},
+			create: {
 				firstName: invite.firstName,
 				lastName: invite.lastName,
 				email: invite.email,

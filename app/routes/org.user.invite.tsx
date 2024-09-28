@@ -17,6 +17,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
 import { requireAdmin } from "~/lib/auth.server";
+import { prisma } from "~/lib/prisma.server";
 import { createUserInvitation } from "~/lib/user.server";
 
 export const meta: MetaFunction = () => {
@@ -25,18 +26,22 @@ export const meta: MetaFunction = () => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  await requireAdmin(request);
+  const userId = await requireAdmin(request);
+  const user = await prisma.user.findUnique({ where: { id: userId } });
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
 
   // @todo add form validation
 
-  await createUserInvitation({
-    firstName: inputs.firstName,
-    lastName: inputs.lastName,
-    email: inputs.email,
-  });
+  await createUserInvitation(
+    {
+      firstName: inputs.firstName,
+      lastName: inputs.lastName,
+      email: inputs.email,
+    },
+    user,
+  );
 
   return redirect(`/org/user`);
 };
