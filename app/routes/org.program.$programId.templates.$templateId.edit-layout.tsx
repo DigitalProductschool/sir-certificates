@@ -5,7 +5,7 @@ import type {
   ErrorResponse,
 } from "@remix-run/node";
 import type { Template } from "@prisma/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { json } from "@remix-run/node";
 import {
   Form,
@@ -24,6 +24,8 @@ import {
   generatePreviewOfTemplate,
 } from "~/lib/pdf.server";
 
+import { EyeIcon, Braces } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -34,15 +36,10 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
-import { Input } from "~/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
+
+import { LayoutEditor } from "~/components/layout-editor";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const title = `Template ${data?.template?.name}`;
@@ -104,7 +101,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ template });
+  const typefaces = await prisma.typeface.findMany();
+
+  return json({ template, typefaces });
 };
 
 type LoaderReturnType = {
@@ -125,50 +124,73 @@ export const handle = {
 };
 
 export default function TemplateEditorPage() {
-  const { template } = useLoaderData<typeof loader>();
+  const { template, typefaces } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
+  const [layout, setLayout] = useState(template.layout);
+  const [switchEditor, setSwitchEditor] = useState("visual");
 
   return (
-    <>
-      <Form key={template.id} method="POST" className="pt-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Label htmlFor="name">Template name</Label>
-          <Label htmlFor="locale">Date format</Label>
-          <Input id="name" name="name" defaultValue={template.name} />
-          <div className="grid grid-cols-2 gap-4">
-            <Select name="locale" defaultValue={template.locale}>
-              <SelectTrigger id="locale">
-                <SelectValue placeholder="Select a date format" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="de-DE">German</SelectItem>
-                <SelectItem value="en-GB">English UK</SelectItem>
-              </SelectContent>
-            </Select>
+    <div className="pt-2 grid grid-cols-2 gap-4">
+      <div className="flex flex-col gap-2">
+        <div className="flex h-10 items-center gap-1.5">
+          <ToggleGroup
+            type="single"
+            value={switchEditor}
+            onValueChange={setSwitchEditor}
+          >
+            <ToggleGroupItem
+              value="visual"
+              aria-label="Toggle visual editor"
+              className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
+            >
+              <EyeIcon className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="code"
+              aria-label="Toggle code editor"
+              className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
+            >
+              <Braces className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>{" "}
+          <Label className="grow">Layout Editor</Label>
+          <Form key={template.id} method="POST">
+            <input type="hidden" name="layout" value={JSON.stringify(layout)} />
             <Button type="submit" disabled={navigation.state !== "idle"}>
-              Save and update preview
+              Save and Preview
             </Button>
-          </div>
-
-          <Textarea
-            name="layout"
-            className="font-mono"
-            defaultValue={JSON.stringify(template.layout, undefined, 2)}
-          />
-
-          <img
-            className="drop-shadow-xl self-center"
-            src={`${template.id}/preview.png?t=${template.updatedAt}`}
-            alt="Preview of the template"
-          />
+          </Form>
         </div>
-      </Form>
-      <Form action="delete" method="POST">
-        <Button type="submit" variant="destructive">
-          Delete Template
-        </Button>
-      </Form>
-    </>
+        {switchEditor === "visual" ? (
+          <LayoutEditor
+            layout={layout}
+            fonts={typefaces}
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            onChange={(updatedLayout: any) => setLayout(updatedLayout)}
+          />
+        ) : (
+          <Textarea
+            className="font-mono min-h-96 h-full"
+            value={JSON.stringify(layout, undefined, 2)}
+            onChange={(event) => {
+              const layoutJSON = JSON.parse(event.target.value);
+              setLayout(layoutJSON);
+            }}
+          />
+        )}
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label className="flex grow h-10 justify-center items-center">
+          Template Preview
+        </Label>
+
+        <img
+          className="drop-shadow-xl self-center"
+          src={`preview.png?t=${template.updatedAt}`}
+          alt="Preview of the template"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -189,28 +211,25 @@ export function ErrorBoundary() {
     }
   }
 
+  const backLink = `/org/program/${params.programId}/templates/${params.templateId}/edit-layout`;
+
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        navigate(
-          `/org/program/${params.programId}/templates/${params.templateId}`,
-        );
+        navigate(backLink);
       }
     };
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [navigate]);
+  }, [navigate, backLink]);
 
   return (
     <Dialog
       open={true}
       onOpenChange={(open) => {
-        if (!open)
-          navigate(
-            `/org/program/${params.programId}/templates/${params.templateId}`,
-          );
+        if (!open) navigate(backLink);
       }}
     >
       <DialogContent className="sm:max-w-[425px]">
@@ -226,9 +245,7 @@ export function ErrorBoundary() {
         <DialogFooter>
           <Button
             onClick={() => {
-              navigate(
-                `/org/program/${params.programId}/templates/${params.templateId}`,
-              );
+              navigate(backLink);
             }}
           >
             Understood

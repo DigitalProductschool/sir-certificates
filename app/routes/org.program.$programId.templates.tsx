@@ -11,7 +11,7 @@ import {
   useMatches,
 } from "@remix-run/react";
 
-import { InfoIcon } from "lucide-react";
+import { Settings } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 
@@ -74,15 +74,18 @@ export default function ProgramTemplatesPage() {
     program.templates.length > 0 ? program.templates[0] : undefined;
 
   const handleTemplateSelect = (value: string) => {
-    navigate(`/org/program/${program.id}/templates/${value}`);
+    navigate(`/org/program/${program.id}/templates/${value}/edit-layout`);
   };
 
   useEffect(() => {
     // IF at least one template exists AND we're on program level THEN navigate to the first template
     if (firstTemplate && matches.length === 4) {
-      navigate(`/org/program/${program.id}/templates/${firstTemplate.id}`, {
-        replace: true,
-      });
+      navigate(
+        `/org/program/${program.id}/templates/${firstTemplate.id}/edit-layout`,
+        {
+          replace: true,
+        },
+      );
     }
   }, [program.id, matches, firstTemplate, navigate]);
 
@@ -90,7 +93,7 @@ export default function ProgramTemplatesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-4">
+      <div className="flex gap-4">
         {program.templates.length > 0 ? (
           <Select
             key={params.templateId}
@@ -111,19 +114,26 @@ export default function ProgramTemplatesPage() {
         ) : (
           <p>No templates created yet</p>
         )}
+
+        {params.templateId && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" asChild>
+                <Link
+                  to={`${params.templateId}/edit-meta`}
+                  aria-label="Edit template settings"
+                >
+                  <Settings className="h-4 w-4" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Edit batch settings</TooltipContent>
+          </Tooltip>
+        )}
+
         <Button variant="outline" asChild>
           <Link to="create">Add Template</Link>
         </Button>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <InfoIcon className="text-muted-foreground" />
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            The layout code needs to be replaced with an easier UI, for now
-            reach out to Marcus.
-          </TooltipContent>
-        </Tooltip>
       </div>
       <Outlet />
     </div>
