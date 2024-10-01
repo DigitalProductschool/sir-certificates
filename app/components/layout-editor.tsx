@@ -92,136 +92,137 @@ function Toolbar({ settings, onChange, onDelete }: any) {
   const color = rgbToHex(settings.color || [0, 0, 0]);
   // @todo fix layout / overflow / wrapping on small screens
   return (
-    <div className="flex items-center pl-4 pr-2 py-2 gap-1 bg-muted">
-      <InputTiny
-        label="X"
-        tooltip="X position (in points)"
-        inputMode="numeric"
-        value={settings.x}
-        onChange={(event) => {
-          const update = { ...settings, x: Number(event.target.value) };
-          onChange(update);
-        }}
-      />
-      <InputTiny
-        label="Y"
-        tooltip="Y position (in points) from bottom"
-        inputMode="numeric"
-        value={settings.y}
-        onChange={(event) => {
-          const update = { ...settings, y: Number(event.target.value) };
-          onChange(update);
-        }}
-      />
-      <InputTiny
-        label="W"
-        tooltip="Max width (optional)"
-        inputMode="numeric"
-        value={settings.maxWidth}
-        onChange={(event) => {
-          const update = {
-            ...settings,
-            maxWidth: Number(event.target.value) || undefined,
-          };
-          onChange(update);
-        }}
-      />
-      &emsp;
-      <Popover>
-        <PopoverTrigger className="h-8 flex items-center rounded-md border border-input bg-background px-1.5 py-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className="w-6 h-5 rounded-sm"
-                style={{ backgroundColor: `#${color}` }}
-              ></div>
-            </TooltipTrigger>
-            <TooltipContent side="top">Text color</TooltipContent>
-          </Tooltip>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto rounded-2xl flex flex-col gap-2">
-          <HexColorPicker
-            color={color}
-            onChange={(newColor) => {
-              const update = {
-                ...settings,
-                color: hexToRgbArray(newColor),
-              };
-              onChange(update);
-            }}
-          />
-          <Input
-            value={color}
-            onChange={(event) => {
-              let newColor;
-              try {
-                newColor = hexToRgbArray(event.target.value);
-                const update = { ...settings, color: newColor };
+    <div className="flex bg-muted pl-4 pr-2 py-2">
+      <div className="flex grow flex-wrap items-center gap-1">
+        <InputTiny
+          label="X"
+          tooltip="X position (in points)"
+          inputMode="numeric"
+          value={settings.x}
+          onChange={(event) => {
+            const update = { ...settings, x: Number(event.target.value) };
+            onChange(update);
+          }}
+        />
+        <InputTiny
+          label="Y"
+          tooltip="Y position (in points) from bottom"
+          inputMode="numeric"
+          value={settings.y}
+          onChange={(event) => {
+            const update = { ...settings, y: Number(event.target.value) };
+            onChange(update);
+          }}
+        />
+        <InputTiny
+          label="W"
+          tooltip="Max width (optional)"
+          inputMode="numeric"
+          value={settings.maxWidth}
+          onChange={(event) => {
+            const update = {
+              ...settings,
+              maxWidth: Number(event.target.value) || undefined,
+            };
+            onChange(update);
+          }}
+        />
+        &emsp;
+        <Popover>
+          <PopoverTrigger className="h-8 flex items-center rounded-md border border-input bg-background px-1.5 py-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="w-6 h-5 rounded-sm"
+                  style={{ backgroundColor: `#${color}` }}
+                ></div>
+              </TooltipTrigger>
+              <TooltipContent side="top">Text color</TooltipContent>
+            </Tooltip>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto rounded-2xl flex flex-col gap-2">
+            <HexColorPicker
+              color={color}
+              onChange={(newColor) => {
+                const update = {
+                  ...settings,
+                  color: hexToRgbArray(newColor),
+                };
                 onChange(update);
-              } catch (error) {
-                // @todo fix typing out hex values (because invalid values are rejected, you can only change single characters or copy/paste)
-                console.log("Invalid color: ", event.target.value);
-              }
-            }}
-          />
-        </PopoverContent>
-      </Popover>
-      <InputTiny
-        label={<FontSizeIcon />}
-        tooltip="Font size"
-        inputMode="numeric"
-        value={settings.size}
-        onChange={(event) => {
-          const update = { ...settings, size: Number(event.target.value) };
-          onChange(update);
-        }}
-      />
-      <InputTiny
-        label={<LineHeightIcon />}
-        tooltip="Line height (optional)"
-        inputMode="numeric"
-        value={settings.lineHeight}
-        onChange={(event) => {
-          const update = {
-            ...settings,
-            lineHeight: Number(event.target.value) || undefined,
-          };
-          onChange(update);
-        }}
-      />
-      &emsp;
-      <ToggleGroup
-        type="single"
-        value={settings.align}
-        onValueChange={(value) => {
-          const update = { ...settings, align: value };
-          onChange(update);
-        }}
-      >
-        <ToggleGroupItem
-          value="left"
-          aria-label="Toggle align left"
-          className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
+              }}
+            />
+            <Input
+              value={color}
+              onChange={(event) => {
+                let newColor;
+                try {
+                  newColor = hexToRgbArray(event.target.value);
+                  const update = { ...settings, color: newColor };
+                  onChange(update);
+                } catch (error) {
+                  // @todo fix typing out hex values (because invalid values are rejected, you can only change single characters or copy/paste)
+                  console.log("Invalid color: ", event.target.value);
+                }
+              }}
+            />
+          </PopoverContent>
+        </Popover>
+        <InputTiny
+          label={<FontSizeIcon />}
+          tooltip="Font size"
+          inputMode="numeric"
+          value={settings.size}
+          onChange={(event) => {
+            const update = { ...settings, size: Number(event.target.value) };
+            onChange(update);
+          }}
+        />
+        <InputTiny
+          label={<LineHeightIcon />}
+          tooltip="Line height (optional)"
+          inputMode="numeric"
+          value={settings.lineHeight}
+          onChange={(event) => {
+            const update = {
+              ...settings,
+              lineHeight: Number(event.target.value) || undefined,
+            };
+            onChange(update);
+          }}
+        />
+        &emsp;
+        <ToggleGroup
+          type="single"
+          value={settings.align}
+          onValueChange={(value) => {
+            const update = { ...settings, align: value };
+            onChange(update);
+          }}
         >
-          <AlignLeft className="h-4 w-4" />
-        </ToggleGroupItem>
-        <ToggleGroupItem
-          value="center"
-          aria-label="Toggle align center"
-          className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
-        >
-          <AlignCenter className="h-4 w-4" />
-        </ToggleGroupItem>
-        <ToggleGroupItem
-          value="right"
-          aria-label="Toggle align right"
-          className="data-[state=off]:text-muted-foreground"
-          disabled
-        >
-          <AlignRight className="h-4 w-4" />
-        </ToggleGroupItem>
-      </ToggleGroup>
-      <span className="grow"></span>
+          <ToggleGroupItem
+            value="left"
+            aria-label="Toggle align left"
+            className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
+          >
+            <AlignLeft className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="center"
+            aria-label="Toggle align center"
+            className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
+          >
+            <AlignCenter className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="right"
+            aria-label="Toggle align right"
+            className="data-[state=off]:text-muted-foreground"
+            disabled
+          >
+            <AlignRight className="h-4 w-4" />
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
       <Button type="button" variant="ghost" size="icon" onClick={onDelete}>
         <Trash2 className="h-4 w-4" />
       </Button>
