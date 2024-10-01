@@ -144,33 +144,43 @@ export async function generateCertificate(
 		const lines = text.lines.map((line: Line) => {
 			let replacements = line.text;
 
-			replacements = replacements.replace(
-				"{fullname}",
+			// Certificate replacements
+			replacements = replacements.replaceAll(
+				"{certificate.fullName}",
 				`${certificate.firstName} ${certificate.lastName}`,
 			);
-			replacements = replacements.replace(
-				"{fullnameCaps}",
+			replacements = replacements.replaceAll(
+				"{certificate.fullNameCaps}",
 				`${certificate.firstName.toUpperCase()} ${certificate.lastName.toUpperCase()}`,
 			);
-			replacements = replacements.replace(
-				"{firstname}",
+			replacements = replacements.replaceAll(
+				"{certificate.firstName}",
 				certificate.firstName,
 			);
-			replacements = replacements.replace(
-				"{firstnameCaps}",
+			replacements = replacements.replaceAll(
+				"{certificate.firstNameCaps}",
 				certificate.firstName.toUpperCase(),
 			);
-			replacements = replacements.replace("{startDate}", startDate);
-			replacements = replacements.replace("{endDate}", endDate);
-			replacements = replacements.replace("{batchName}", batch.name);
-			replacements = replacements.replace(
-				"{signatureDate}",
-				signatureDate,
+			replacements = replacements.replaceAll(
+				"{certificate.lastName}",
+				certificate.lastName,
+			);
+			replacements = replacements.replaceAll(
+				"{certificate.lastNameCaps}",
+				certificate.lastName.toUpperCase(),
+			);
+			replacements = replacements.replaceAll(
+				"{certificate.teamName}",
+				certificate.teamName || "",
 			);
 
-			replacements = replacements.replace(
-				"{team}",
-				certificate.teamName || "",
+			// Batch replacements
+			replacements = replacements.replaceAll("{batch.name}", batch.name);
+			replacements = replacements.replaceAll("{batch.startDate}", startDate);
+			replacements = replacements.replaceAll("{batch.endDate}", endDate);
+			replacements = replacements.replaceAll(
+				"{batch.signatureDate}",
+				signatureDate,
 			);
 
 			return {
@@ -253,25 +263,44 @@ export async function generateTemplateSample(template: Template) {
 		const lines = text.lines.map((line: Line) => {
 			let replacements = line.text;
 
-			replacements = replacements.replace(
-				"{fullname}",
-				"Firstname Lastname",
+			// Certificate replacements
+			replacements = replacements.replaceAll(
+				"{certificate.fullName}",
+				`FirstName LastName`,
 			);
-			replacements = replacements.replace(
-				"{fullnameCaps}",
-				"FIRSTNAME LASTNAME",
+			replacements = replacements.replaceAll(
+				"{certificate.fullNameCaps}",
+				`FIRSTNAME LASTNAME`,
 			);
-			replacements = replacements.replace("{firstname}", "Firstname");
-			replacements = replacements.replace("{firstnameCaps}", "FIRSTNAME");
-			replacements = replacements.replace("{startDate}", startDate);
-			replacements = replacements.replace("{endDate}", endDate);
-			replacements = replacements.replace("{batchName}", "Batch Name");
-			replacements = replacements.replace(
-				"{signatureDate}",
-				signatureDate,
+			replacements = replacements.replaceAll(
+				"{certificate.firstName}",
+				"FirstName",
+			);
+			replacements = replacements.replaceAll(
+				"{certificate.firstNameCaps}",
+				"FIRSTNAME",
+			);
+			replacements = replacements.replaceAll(
+				"{certificate.lastName}",
+				"LastName",
+			);
+			replacements = replacements.replaceAll(
+				"{certificate.lastNameCaps}",
+				"LASTNAME",
+			);
+			replacements = replacements.replaceAll(
+				"{certificate.teamName}",
+				"TeamName",
 			);
 
-			replacements = replacements.replace("{team}", "Team Name");
+			// Batch replacements
+			replacements = replacements.replaceAll("{batch.name}", "BatchName");
+			replacements = replacements.replaceAll("{batch.startDate}", startDate);
+			replacements = replacements.replaceAll("{batch.endDate}", endDate);
+			replacements = replacements.replaceAll(
+				"{batch.signatureDate}",
+				signatureDate,
+			);
 
 			return {
 				text: replacements,

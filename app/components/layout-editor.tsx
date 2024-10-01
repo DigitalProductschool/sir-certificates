@@ -5,12 +5,24 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  Braces,
   PlusIcon,
   Trash2,
 } from "lucide-react";
 import { FontSizeIcon, LineHeightIcon } from "@radix-ui/react-icons";
 
 import { Button } from "~/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
 import { InputTiny } from "~/components/ui/input-tiny";
 import {
@@ -26,7 +38,6 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
-
 import {
   Tooltip,
   TooltipContent,
@@ -218,6 +229,14 @@ function Toolbar({ settings, onChange, onDelete }: any) {
 }
 
 function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
+  const addVariable = (variable: string) => {
+    onChangeLine({
+      id: lineId,
+      text: settings.text + variable,
+      font: settings.font,
+    });
+  };
+
   return (
     <div className="flex px-4 gap-2">
       <Input
@@ -231,6 +250,88 @@ function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
           })
         }
       />
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <Tooltip disableHoverableContent={true}>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon">
+                <Braces className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Add variable</TooltipContent>
+          </Tooltip>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Batch</DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onSelect={() => addVariable("{batch.name}")}>
+                  Name
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{batch.startDate}")}
+                >
+                  Start date
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{batch.endDate}")}
+                >
+                  End date
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{batch.signatureDate}")}
+                >
+                  Signature date
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Certificate</DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{certificate.fullName}")}
+                >
+                  Full Name
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{certificate.firstName}")}
+                >
+                  First Name
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{certificate.lastName}")}
+                >
+                  Last Name
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{certificate.teamName}")}
+                >
+                  Team Name
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{certificate.fullNameCaps}")}
+                >
+                  FULL NAME
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{certificate.firstNameCaps}")}
+                >
+                  FIRST NAME
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{certificate.firstNameCaps}")}
+                >
+                  LAST NAME
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <Select
         key={`${lineId}-font`}
         value={settings.font}
