@@ -176,7 +176,10 @@ export async function generateCertificate(
 
 			// Batch replacements
 			replacements = replacements.replaceAll("{batch.name}", batch.name);
-			replacements = replacements.replaceAll("{batch.startDate}", startDate);
+			replacements = replacements.replaceAll(
+				"{batch.startDate}",
+				startDate,
+			);
 			replacements = replacements.replaceAll("{batch.endDate}", endDate);
 			replacements = replacements.replaceAll(
 				"{batch.signatureDate}",
@@ -295,7 +298,10 @@ export async function generateTemplateSample(template: Template) {
 
 			// Batch replacements
 			replacements = replacements.replaceAll("{batch.name}", "BatchName");
-			replacements = replacements.replaceAll("{batch.startDate}", startDate);
+			replacements = replacements.replaceAll(
+				"{batch.startDate}",
+				startDate,
+			);
 			replacements = replacements.replaceAll("{batch.endDate}", endDate);
 			replacements = replacements.replaceAll(
 				"{batch.signatureDate}",
@@ -363,7 +369,7 @@ export function drawTextBox(
 				options.x + (options.maxWidth || A4PageWidth)
 			) {
 				x = options.x;
-				y -= options.lineHeight || 0;
+				y -= options.lineHeight || lineOptions.size * 1.4;
 				firstInLine = true;
 			}
 
@@ -415,7 +421,7 @@ export function drawTextBoxCentered(
 			y,
 		});
 
-		y -= options.lineHeight || 0;
+		y -= options.lineHeight || lineOptions.size * 1.4;
 	});
 }
 
@@ -508,9 +514,7 @@ export const sampleLayout: any = [
 	{
 		x: 50,
 		y: 550,
-		maxWidth: 485,
 		size: 12,
-		lineHeight: 18,
 		align: "left",
 		color: [0, 0, 0],
 		lines: [],
