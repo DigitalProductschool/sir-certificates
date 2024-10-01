@@ -91,6 +91,8 @@ export default function ProgramTemplatesPage() {
 
   // @todo reduce layout shifts by setting a size (or aspect ratio?) for the preview image and/or the layout
 
+  // @todo fix server-rendering / hydration
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-4">
