@@ -18,10 +18,7 @@ export async function deleteTemplatePDF(templateId: number) {
 }
 
 export async function deleteTemplate(templateId: number) {
-	await deleteTemplatePreview(templateId);
-	await deleteTemplatePDF(templateId);
-
-	return await prisma.template
+	const deletedTemplate = await prisma.template
 		.delete({
 			where: {
 				id: templateId,
@@ -31,4 +28,9 @@ export async function deleteTemplate(templateId: number) {
 			console.error(error);
 			throwErrorResponse(error, "Could not delete template");
 		});
+
+	await deleteTemplatePreview(templateId);
+	await deleteTemplatePDF(templateId);
+
+	return deletedTemplate;
 }

@@ -129,8 +129,11 @@ export default function TemplateEditorPage() {
   const [layout, setLayout] = useState(template.layout);
   const [switchEditor, setSwitchEditor] = useState("visual");
 
+  // @todo – when editing the template in JSON code,
+  // allow for a graceful handling of JSON syntax errors instead of preventing edits
+
   return (
-    <div className="pt-2 grid grid-cols-2 gap-4">
+    <div className="pt-2 grid grid-cols-2 gap-4 items-start">
       <div className="flex flex-col gap-2">
         <div className="flex h-10 items-center gap-1.5">
           <ToggleGroup

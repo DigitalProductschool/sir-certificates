@@ -8,7 +8,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   await deleteTemplate(Number(params.templateId));
 
-  return redirect("../../");
+  return redirect(`/org/program/${params.programId}/templates`);
 };
 
 // @todo improve user-facing error handling with an ErrorBoundary and a Dialog

@@ -16,6 +16,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuSub,
@@ -129,7 +130,7 @@ function Toolbar({ settings, onChange, onDelete }: any) {
       <Popover>
         <PopoverTrigger className="h-8 flex items-center rounded-md border border-input bg-background px-1.5 py-1">
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <div
                 className="w-6 h-5 rounded-sm"
                 style={{ backgroundColor: `#${color}` }}
@@ -251,17 +252,13 @@ function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
         }
       />
       <DropdownMenu>
-        <DropdownMenuTrigger>
-          <Tooltip disableHoverableContent={true}>
-            <TooltipTrigger>
-              <Button variant="ghost" size="icon">
-                <Braces className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">Add variable</TooltipContent>
-          </Tooltip>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="my-button">
+            <Braces className="w-4 h-4" />
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
+          <DropdownMenuLabel>Add variable</DropdownMenuLabel>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>Batch</DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -355,7 +352,7 @@ function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
         </SelectContent>
       </Select>
       <Button type="button" variant="ghost" size="icon" onClick={onDelete}>
-        <Trash2 className="h-4 w-4 text-muted-foreground" />
+        <Trash2 className="h-4 w-4" />
       </Button>
     </div>
   );
