@@ -185,28 +185,36 @@ export default function BatchPage() {
         </Button>
 
         {currentBatch && (
-          <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
-            <NavLink
-              to={`${params.batchId}/certificates`}
-              className={({ isActive }) =>
-                isActive
-                  ? "bg-background text-foreground shadow-sm rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
-                  : "rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
-              }
-            >
-              Certificates
-            </NavLink>
-            <NavLink
-              to={`${params.batchId}/import`}
-              className={({ isActive }) =>
-                isActive
-                  ? "bg-background text-foreground shadow-sm rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
-                  : "rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
-              }
-            >
-              Import Participants
-            </NavLink>
-          </div>
+          <>
+            <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
+              <NavLink
+                to={`${params.batchId}/certificates`}
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-background text-foreground shadow-sm rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
+                    : "rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
+                }
+              >
+                Certificates
+              </NavLink>
+              <NavLink
+                to={`${params.batchId}/import`}
+                className={({ isActive }) =>
+                  isActive
+                    ? "bg-background text-foreground shadow-sm rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
+                    : "rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background"
+                }
+              >
+                Import Participants
+              </NavLink>
+            </div>
+
+            <Button variant="outline" asChild>
+              <Link to={`${params.batchId}/certificates/create`}>
+                Add Certificate
+              </Link>
+            </Button>
+          </>
         )}
 
         {program.batches.length === 0 && (
