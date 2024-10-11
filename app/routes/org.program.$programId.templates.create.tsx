@@ -89,7 +89,9 @@ export const action: ActionFunction = async ({ request, params }) => {
     await saveUploadedTemplate(template, templatePDF);
     await generateTemplateSample(template);
     await generatePreviewOfTemplate(template);
-    return redirect(`../${template.id}/edit-layout`);
+    return redirect(
+      `/org/program/${params.programId}/${template.id}/edit-layout`,
+    );
   }
 
   throw new Response(null, {

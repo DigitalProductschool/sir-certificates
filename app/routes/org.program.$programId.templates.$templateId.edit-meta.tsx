@@ -1,10 +1,12 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-} from "@remix-run/node";
+import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 // import type { Batch } from "@prisma/client";
 import { useEffect, useState, useRef } from "react";
-import { json, redirect } from "@remix-run/node";
+import {
+  json,
+  redirect,
+  unstable_createMemoryUploadHandler,
+  unstable_parseMultipartFormData,
+} from "@remix-run/node";
 import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
 
 import { Trash2Icon } from "lucide-react";
@@ -36,14 +38,36 @@ import { requireAdmin } from "~/lib/auth.server";
 import {
   generateTemplateSample,
   generatePreviewOfTemplate,
+  saveUploadedTemplate,
 } from "~/lib/pdf.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdmin(request);
 
-  const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const uploadHandler = unstable_createMemoryUploadHandler({
+    maxPartSize: 5 * 1024 * 1024,
+    filter: (field) => {
+      if (field.name === "pdf") {
+        if (field.contentType === "application/pdf") {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return true;
+      }
+    },
+  });
+
+  const formData = await unstable_parseMultipartFormData(
+    request,
+    uploadHandler,
+  );
+
+  const templateName = (formData.get("name") as string) || "(Template Name)";
+  const templateLocale = (formData.get("locale") as string) || undefined;
+  const templatePDF = formData.get("pdf") as File;
 
   // If this email exists already for this batch, update instead of create
   const template = await prisma.template
@@ -52,8 +76,8 @@ export const action: ActionFunction = async ({ request, params }) => {
         id: Number(params.templateId),
       },
       data: {
-        name: inputs.name,
-        locale: inputs.locale,
+        name: templateName,
+        locale: templateLocale,
       },
     })
     .catch((error) => {
@@ -61,6 +85,9 @@ export const action: ActionFunction = async ({ request, params }) => {
     });
 
   if (template) {
+    if (templatePDF) {
+      await saveUploadedTemplate(template, templatePDF);
+    }
     await generateTemplateSample(template);
     await generatePreviewOfTemplate(template, false);
   }
@@ -126,7 +153,12 @@ export default function EditTemplateDialog() {
             the certificates afterwards.
           </DialogDescription>
         </DialogHeader>
-        <Form method="POST" ref={formRef} className="grid gap-4 py-4">
+        <Form
+          method="POST"
+          encType="multipart/form-data"
+          ref={formRef}
+          className="grid gap-4 py-4"
+        >
           <Label htmlFor="name">Name</Label>
           <Input id="name" name="name" defaultValue={template.name} />
 
@@ -140,6 +172,9 @@ export default function EditTemplateDialog() {
               <SelectItem value="en-GB">English UK</SelectItem>
             </SelectContent>
           </Select>
+
+          <Label htmlFor="pdf">Replace PDF template</Label>
+          <Input id="pdf" name="pdf" type="file" />
         </Form>
         <DialogFooter>
           <Form
