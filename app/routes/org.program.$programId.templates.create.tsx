@@ -90,7 +90,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     await generateTemplateSample(template);
     await generatePreviewOfTemplate(template);
     return redirect(
-      `/org/program/${params.programId}/${template.id}/edit-layout`,
+      `/org/program/${params.programId}/templates/${template.id}/edit-layout`,
     );
   }
 
