@@ -20,11 +20,12 @@ npm run install
 > https://github.com/Automattic/node-canvas?tab=readme-ov-file#compiling
 
 
-Run database migrations:
+When running for the first time, run these commands to take care of database consistency:
 
 ```shellscript
+npx prisma generate
 npx prisma db push
-```
+npx prisma db seed
 
 Install fonts:
 We've added Montserrat (open font) as an example for now. Custom fonts can be installed to `/storage/fonts`. 
@@ -86,3 +87,8 @@ The UI components are located in `/app/components/ui`.
 To add a UI component, run `npx shadcn-ui@0.8.0 add dialog` (we're currently on version 0.8.0)
 
 See the Remix.run and [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information on how to use custom css.
+
+
+## MailJet setup
+
+TODO Marcus! :)
