@@ -21,8 +21,12 @@ async function main() {
       id: 1,
     },
     update: {
+      email: process.env.SEED_ADMIN_EMAIL,
+      password: passwordHash,
+      firstName: process.env.SEED_ADMIN_FIRSTNAME,
+      lastName: process.env.SEED_ADMIN_LASTNAME,
       isAdmin: true,
-      isVerified: true,      
+      isVerified: true,
     },
     create: {
       email: process.env.SEED_ADMIN_EMAIL,
