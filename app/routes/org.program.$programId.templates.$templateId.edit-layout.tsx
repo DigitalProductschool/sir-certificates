@@ -129,6 +129,10 @@ export default function TemplateEditorPage() {
   const [layout, setLayout] = useState(template.layout);
   const [switchEditor, setSwitchEditor] = useState("visual");
 
+  useEffect(() => {
+    setLayout(template.layout);
+  }, [template.id, template.layout]);
+
   // @todo – when editing the template in JSON code,
   // allow for a graceful handling of JSON syntax errors instead of preventing edits
 
