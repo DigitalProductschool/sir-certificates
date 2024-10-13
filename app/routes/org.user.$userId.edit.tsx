@@ -35,6 +35,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
 
+  // @todo add error handling (i.e. user not found)
   await prisma.user.update({
     where: {
       id: Number(params.userId),
@@ -52,6 +53,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 export const loader: LoaderFunction = async ({ request, params }) => {
   await requireAdmin(request);
 
+  // @todo explicitly select necessary fields (don't send password, etc.)
   const user = await prisma.user.findUnique({
     where: {
       id: Number(params.userId),
