@@ -1,9 +1,16 @@
 import type { User, UserInvitation } from "@prisma/client";
 import type { RegisterForm, InviteForm } from "./types.server";
 import { randomUUID } from "node:crypto";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { writeFile } from "node:fs/promises";
 import bcrypt from "bcryptjs";
 import Mailjet from "node-mailjet";
+import { ensureFolderExists } from "./fs.server";
 import { prisma } from "./prisma.server";
+
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const userDir = resolve(__dirname, "../../storage/user");
 
 export const createUser = async (user: RegisterForm) => {
 	const passwordHash = await bcrypt.hash(user.password, 10);
@@ -126,3 +133,17 @@ export const sendInvitationEmail = async (
 
 	return true;
 };
+
+export async function saveUploadedPhoto(
+	user: User,
+	userPhoto: File,
+	extension: "png" | "jpg",
+) {
+	const folderCreated = await ensureFolderExists(userDir);
+	if (!folderCreated) {
+		throw new Error("Could not create user storage folder");
+	}
+
+	const buffer = Buffer.from(await userPhoto.arrayBuffer());
+	return await writeFile(`${userDir}/${user.id}.${extension}`, buffer);
+}

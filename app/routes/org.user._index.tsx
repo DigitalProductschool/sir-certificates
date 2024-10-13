@@ -35,6 +35,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 export const loader: LoaderFunction = async ({ request }) => {
   await requireAdmin(request);
 
+  // @todo explicitly select necessary fields (don't send password, etc.)
   const user = await prisma.user.findMany();
   const invitations = await prisma.userInvitation.findMany();
 
