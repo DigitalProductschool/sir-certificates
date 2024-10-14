@@ -46,6 +46,10 @@ export default function Index() {
       )}
 
       <br />
+        <p>
+          <Link to="/user/photo">Change photo</Link>
+        </p>
+
 
       <form action="/user/logout" method="POST">
         <Button type="submit" variant="outline">

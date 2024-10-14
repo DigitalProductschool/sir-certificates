@@ -1,4 +1,4 @@
-import type { User, UserInvitation } from "@prisma/client";
+import type { User, UserInvitation, UserPhoto } from "@prisma/client";
 import type { RegisterForm, InviteForm } from "./types.server";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
@@ -6,11 +6,11 @@ import { fileURLToPath } from "node:url";
 import { writeFile } from "node:fs/promises";
 import bcrypt from "bcryptjs";
 import Mailjet from "node-mailjet";
-import { ensureFolderExists } from "./fs.server";
+import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma } from "./prisma.server";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const userDir = resolve(__dirname, "../../storage/user");
+const userPhotoDir = resolve(__dirname, "../../storage/user/photos");
 
 export const createUser = async (user: RegisterForm) => {
 	const passwordHash = await bcrypt.hash(user.password, 10);
@@ -135,15 +135,51 @@ export const sendInvitationEmail = async (
 };
 
 export async function saveUploadedPhoto(
-	user: User,
-	userPhoto: File,
-	extension: "png" | "jpg",
+	userPhoto: UserPhoto,
+	userPhotoFile: File,
 ) {
-	const folderCreated = await ensureFolderExists(userDir);
+	const folderCreated = await ensureFolderExists(userPhotoDir);
 	if (!folderCreated) {
-		throw new Error("Could not create user storage folder");
+		throw new Error("Could not create user photo storage folder");
 	}
 
-	const buffer = Buffer.from(await userPhoto.arrayBuffer());
-	return await writeFile(`${userDir}/${user.id}.${extension}`, buffer);
+	let extension: "jpg" | "png" | "unkown";
+	switch (userPhoto.contentType) {
+		case "image/png":
+			extension = "png";
+			break;
+		case "image/jpeg":
+			extension = "jpg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	const buffer = Buffer.from(await userPhotoFile.arrayBuffer());
+	return await writeFile(
+		`${userPhotoDir}/${userPhoto.id}.${extension}`,
+		buffer,
+	);
+}
+
+export async function saveTransparentPhoto(
+	userPhoto: UserPhoto,
+	userPhotoBuffer: ArrayBuffer,
+) {
+	const folderCreated = await ensureFolderExists(userPhotoDir);
+	if (!folderCreated) {
+		throw new Error("Could not create user photo storage folder");
+	}
+
+	const buffer = Buffer.from(userPhotoBuffer);
+	return await writeFile(
+		`${userPhotoDir}/${userPhoto.id}.transparent.png`,
+		buffer,
+	);
+}
+
+export async function readPhoto(userPhoto: UserPhoto) {
+	return await readFileIfExists(
+		`${userPhotoDir}/${userPhoto.id}.transparent.png`,
+	);
 }
