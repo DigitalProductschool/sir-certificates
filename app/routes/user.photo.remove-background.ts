@@ -1,16 +1,13 @@
 import type { ActionFunction } from "@remix-run/node";
 import {
-	json,
 	unstable_createMemoryUploadHandler,
 	unstable_parseMultipartFormData,
 } from "@remix-run/node";
 
 import { requireUserId } from "~/lib/auth.server";
-import { saveTransparentPhoto } from "~/lib/user.server";
-import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request }) => {
-	const userId = await requireUserId(request);
+	await requireUserId(request);
 
 	const uploadHandler = unstable_createMemoryUploadHandler({
 		maxPartSize: 5 * 1024 * 1024,
@@ -38,30 +35,38 @@ export const action: ActionFunction = async ({ request }) => {
 	const photo = formData.get("photo") as File;
 
 	if (photo) {
-		const userPhoto = await prisma.userPhoto
-			.upsert({
-				where: {
-					userId,
-				},
-				update: {
-					contentType: photo.type,
-				},
-				create: {
-					contentType: photo.type,
-					user: {
-						connect: { id: userId },
-					},
-				},
-			})
-			.catch((error) => {
-				console.error(error);
-				throwErrorResponse(error, "Could not create/update user photo");
-			});
+		const photoBuffer = await photo.arrayBuffer();
 
-		if (userPhoto) {
-			const photoBuffer = await photo.arrayBuffer();
-			await saveTransparentPhoto(userPhoto, photoBuffer);
-			return json({ userPhoto });
+		if (process.env.BACKGROUND_REMOVAL_URL) {
+			const transPhotoBuffer = await fetch(
+				process.env.BACKGROUND_REMOVAL_URL,
+				{
+					method: "POST",
+					cache: "no-cache",
+					headers: {
+						"Content-Type": photo.type,
+						red: "0",
+						green: "0",
+						blue: "0",
+						alpha: "0",
+					},
+					body: photoBuffer,
+				},
+			).then((response) => {
+				// @todo add error handling, if(response.ok) {}
+				return response.arrayBuffer();
+			});
+			return new Response(transPhotoBuffer, {
+				headers: {
+					"Content-Type": "image/png",
+				},
+			});
+		} else {
+			return new Response(null, {
+				status: 500,
+				statusText:
+					"Missing configuration for background removal tool.",
+			});
 		}
 	} else {
 		return new Response(null, {

@@ -16,6 +16,7 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Slider } from "~/components/ui/slider";
 
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
@@ -48,6 +49,10 @@ export default function UserUploadPictureDialog() {
 	);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [topEdgeTransparent, setTopEdgeTransparent] = useState(false);
+	const [leftEdgeTransparent, setLeftEdgeTransparent] = useState(false);
+	const [rightEdgeTransparent, setRightEdgeTransparent] = useState(false);
+	const [bottomEdgeTransparent, setBottomEdgeTransparent] = useState(false);
 	const fetcher = useFetcher();
 
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,22 +84,15 @@ export default function UserUploadPictureDialog() {
 	};
 
 	const removeBackground = async (file: File): Promise<Blob> => {
-		const photoBuffer = await file.arrayBuffer();
-		const response = await fetch(
-			"https://ai-background-removal-f3m36uw7ma-ey.a.run.app/",
-			{
-				method: "POST",
-				cache: "no-cache",
-				headers: {
-					"Content-Type": file.type,
-					red: "0",
-					green: "0",
-					blue: "0",
-					alpha: "0",
-				},
-				body: photoBuffer,
-			},
-		);
+		const formData = new FormData();
+		formData.append("photo", file);
+
+		const response = await fetch("/user/photo/remove-background", {
+			method: "POST",
+			cache: "no-cache",
+			body: formData,
+			credentials: "include",
+		});
 
 		if (!response.ok) {
 			throw new Error("Background removal failed");
@@ -107,9 +105,61 @@ export default function UserUploadPictureDialog() {
 	const onCropComplete = useCallback(
 		(croppedArea: Area, croppedAreaPixels: Area) => {
 			setCroppedAreaPixels(croppedAreaPixels);
+			checkEdgeTransparency(croppedAreaPixels);
 		},
-		[],
+		[croppedAreaPixels],
 	);
+
+	const checkEdgeTransparency = async (cropArea: Area) => {
+		if (!transparentPreviewUrl) return;
+
+		const image = await createImage(transparentPreviewUrl);
+		const canvas = document.createElement("canvas");
+		const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+		if (!ctx) return;
+
+		canvas.width = cropArea.width;
+		canvas.height = cropArea.height;
+		ctx.drawImage(
+			image,
+			cropArea.x,
+			cropArea.y,
+			cropArea.width,
+			cropArea.height,
+			0,
+			0,
+			cropArea.width,
+			cropArea.height,
+		);
+
+		const leftEdgeData = ctx.getImageData(0, 0, 1, cropArea.height).data;
+		const rightEdgeData = ctx.getImageData(
+			cropArea.width - 1,
+			0,
+			1,
+			cropArea.height,
+		).data;
+		const topEdgeData = ctx.getImageData(0, 0, cropArea.width, 1).data;
+		const bottomEdgeData = ctx.getImageData(
+			0,
+			cropArea.height - 1,
+			cropArea.width,
+			1,
+		).data;
+
+		setLeftEdgeTransparent(isEdgeTransparent(leftEdgeData));
+		setRightEdgeTransparent(isEdgeTransparent(rightEdgeData));
+		setTopEdgeTransparent(isEdgeTransparent(topEdgeData));
+		setBottomEdgeTransparent(isEdgeTransparent(bottomEdgeData));
+	};
+
+	const isEdgeTransparent = (imageData: Uint8ClampedArray): boolean => {
+		for (let i = 3; i < imageData.length; i += 4) {
+			if (imageData[i] !== 0) return false;
+		}
+		return true;
+	};
 
 	const getCroppedImg = async (
 		imageSrc: string,
@@ -260,8 +310,11 @@ export default function UserUploadPictureDialog() {
 				<DialogHeader>
 					<DialogTitle>Upload picture</DialogTitle>
 					<DialogDescription>
-						Choose a photo to use as your picture. We will remove
-						the background for you.
+						Select a photo to be used when sharing your
+						certificates. We will remove the background for you.
+						Please move and zoom the picture to cover as much as
+						possible while keeping all the edges green. Try to avoid
+						obvious cut-offs.
 					</DialogDescription>
 				</DialogHeader>
 				<fetcher.Form
@@ -269,30 +322,28 @@ export default function UserUploadPictureDialog() {
 					encType="multipart/form-data"
 				>
 					<div className="grid gap-4 py-4">
-						<div className="grid grid-cols-4 items-center gap-4">
-							<Label htmlFor="avatar" className="text-right">
-								Avatar
-							</Label>
-							<Input
-								id="avatar"
-								type="file"
-								accept="image/*"
-								onChange={handleFileChange}
-								className="col-span-3"
-								disabled={isLoading || fetcher.state !== "idle"}
-								ref={fileInputRef}
-							/>
-						</div>
-						<div className="mt-4 aspect-square relative">
+						<Input
+							id="avatar"
+							type="file"
+							accept="image/*"
+							onChange={handleFileChange}
+							disabled={isLoading || fetcher.state !== "idle"}
+							ref={fileInputRef}
+						/>
+						<div className="mt-4 aspect-square relative bg-gradient-to-t from-[#8B0490] to-[#1B1575] rounded-lg">
 							{originalPreviewUrl || transparentPreviewUrl ? (
-								<div className="relative w-full h-full bg-gradient-to-t from-[#E906F2] to-[#2F24CC]">
+								<div
+									className={`relative w-full h-full rounded-lg border-8 ${leftEdgeTransparent ? "border-l-green-400" : "border-l-amber-400"} ${rightEdgeTransparent ? "border-r-green-400" : "border-r-amber-400"} ${topEdgeTransparent ? "border-t-green-400" : "border-t-amber-400"} ${bottomEdgeTransparent ? "border-b-amber-400" : "border-b-green-400"}`}
+								>
 									<div className="absolute inset-0 transition-opacity duration-1000 ease-in-out">
 										{originalPreviewUrl && (
 											<Cropper
 												image={originalPreviewUrl}
 												crop={crop}
 												zoom={zoom}
+												minZoom={0.5}
 												aspect={1}
+												restrictPosition={false}
 												onCropChange={setCrop}
 												onCropComplete={onCropComplete}
 												onZoomChange={setZoom}
@@ -332,7 +383,9 @@ export default function UserUploadPictureDialog() {
 												image={transparentPreviewUrl}
 												crop={crop}
 												zoom={zoom}
+												minZoom={0.5}
 												aspect={1}
+												restrictPosition={false}
 												onCropChange={setCrop}
 												onCropComplete={onCropComplete}
 												onZoomChange={setZoom}
@@ -354,7 +407,7 @@ export default function UserUploadPictureDialog() {
 									)}
 								</div>
 							) : (
-								<div className="w-full h-full flex items-center justify-center rounded-lg overflow-hidden bg-gradient-to-t from-[#E906F2] to-[#2F24CC]">
+								<div className="w-full h-full flex items-center justify-center rounded-lg overflow-hidden">
 									{userPhoto ? (
 										<img
 											src="/user/photo/preview.png"
@@ -379,16 +432,13 @@ export default function UserUploadPictureDialog() {
 						{(originalPreviewUrl || transparentPreviewUrl) && (
 							<div className="flex items-center gap-2">
 								<Label htmlFor="zoom">Zoom</Label>
-								<Input
+								<Slider
 									id="zoom"
-									type="range"
-									min={1}
+									min={0.5}
 									max={3}
 									step={0.1}
-									value={zoom}
-									onChange={(e) =>
-										setZoom(Number(e.target.value))
-									}
+									value={[zoom]}
+									onValueChange={([zoom]) => setZoom(zoom)}
 								/>
 							</div>
 						)}
@@ -409,7 +459,7 @@ export default function UserUploadPictureDialog() {
 								fetcher.state !== "idle"
 							}
 						>
-							Upload Avatar
+							Upload Picture
 						</Button>
 					</DialogFooter>
 				</fetcher.Form>
