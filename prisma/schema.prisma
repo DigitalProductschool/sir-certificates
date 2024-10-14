@@ -24,7 +24,7 @@ model User {
   verifyCode    String    @db.Uuid
   isAdmin       Boolean   @default(false)
   isVerified    Boolean   @default(false)
-
+  photo         UserPhoto?
   @@map("user")  
 }
 
@@ -39,6 +39,17 @@ model UserInvitation {
 
   @@map("user_invitations")  
 }
+
+model UserPhoto {
+  id            Int       @id @default(autoincrement())
+  user          User      @relation(fields: [userId], references: [id])
+  userId        Int       @unique
+  contentType   String    @db.VarChar(64)
+  updatedAt     DateTime  @updatedAt  
+
+  @@map("user_photos")
+}
+
 
 model Organisation {
   id            Int       @id @default(autoincrement())
