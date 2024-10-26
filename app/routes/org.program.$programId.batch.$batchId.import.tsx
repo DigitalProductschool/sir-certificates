@@ -1,5 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Batch, Template } from "@prisma/client";
+import type { Template } from "@prisma/client";
 
 import { useState } from "react";
 import { json } from "@remix-run/node";
@@ -19,7 +19,6 @@ import { CSVDropZone } from "~/components/csv-drop-zone";
 import { TaskRunner } from "~/components/task-runner";
 
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
 
 import {
   Select,
@@ -48,10 +47,7 @@ import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
-  return [
-    { title: "Import Participants" },
-    { name: "description", content: "Welcome to Remix!" },
-  ];
+  return [{ title: "Import Participants" }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -85,8 +81,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   return json({ batch, templates });
 };
 
-type LoaderReturnType = {
+/* type LoaderReturnType = {
   batch: Batch;
+  templates: Template[];
 };
 
 type Match = {
@@ -97,10 +94,8 @@ type Match = {
 };
 
 export const handle = {
-  breadcrumb: (match: Match) => (
-    <Link to="#">Import {match.data.batch.name}</Link>
-  ),
-};
+  breadcrumb: (match: Match) => <Link to="#">Import</Link>,
+}; */
 
 function StatusIndicator({ status, error }: { status: string; error: string }) {
   switch (status) {
@@ -230,16 +225,18 @@ export default function ImportBatchPage() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Prepare the list of participants for this batch as a CSV file with
-        Google Spreadsheets, Excel, Numbers or a similar tool. Please make sure
-        to include the required columns: <i>firstname, lastname, email</i>
+        To import multiple participants together, prepare the list of
+        participants for this batch as a CSV file with Google Spreadsheets,
+        Excel, Numbers or a similar tool. Please make sure to include the
+        required columns: <i>firstname, lastname, email</i>
         .&ensp;
-        <Button variant="link" className="px-0" asChild>
-          <a href="/assets/import-example.csv">
-            Download CSV template
-            <ArrowDown className="w-4 h-4" />
-          </a>
-        </Button>
+        <a
+          href="/assets/import-example.csv"
+          className="inline-flex items-center text-foreground font-medium underline"
+        >
+          Download CSV template
+          <ArrowDown className="w-4 h-4" />
+        </a>
       </p>
 
       <CSVDropZone onData={handleCSVRead} />

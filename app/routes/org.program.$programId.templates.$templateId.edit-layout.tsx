@@ -119,7 +119,7 @@ type Match = {
 
 export const handle = {
   breadcrumb: (match: Match) => (
-    <Link to="#">Template: {match.data?.template?.name}</Link>
+    <Link to="#">{match.data?.template?.name}</Link>
   ),
 };
 

@@ -95,8 +95,8 @@ export default function ProgramTemplatesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-4">
-        {program.templates.length > 0 ? (
+      <div className="flex gap-4 items-center">
+        {program.templates.length > 0 && (
           <Select
             key={params.templateId}
             defaultValue={params.templateId}
@@ -113,8 +113,6 @@ export default function ProgramTemplatesPage() {
               ))}
             </SelectContent>
           </Select>
-        ) : (
-          <p>No templates created yet</p>
         )}
 
         {params.templateId && (
@@ -129,7 +127,7 @@ export default function ProgramTemplatesPage() {
                 </Link>
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top">Edit batch settings</TooltipContent>
+            <TooltipContent side="top">Edit template settings</TooltipContent>
           </Tooltip>
         )}
 
@@ -137,6 +135,14 @@ export default function ProgramTemplatesPage() {
           <Link to="create">Add Template</Link>
         </Button>
       </div>
+
+      {program.templates.length === 0 && (
+        <p>
+          Certificates are based on PDF templates. Start by uploading your first
+          PDF template.
+        </p>
+      )}
+
       <Outlet />
     </div>
   );

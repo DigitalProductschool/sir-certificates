@@ -31,13 +31,13 @@ export const action: ActionFunction = async ({ request }) => {
 
   // @todo add form validation and error handling
 
-  await prisma.program.create({
+  const program = await prisma.program.create({
     data: {
       name: inputs.name,
     },
   });
 
-  return redirect(`/org/program`);
+  return redirect(`/org/program/${program.id}/templates`);
 };
 
 export default function CreateProgramDialog() {

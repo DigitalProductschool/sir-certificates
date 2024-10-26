@@ -1,7 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Certificate, Template } from "@prisma/client";
 import { json } from "@remix-run/node";
-import { Link, Outlet, useLoaderData } from "@remix-run/react";
+import { Link, Outlet, useLoaderData, useParams } from "@remix-run/react";
 
 import { MailCheck, Settings } from "lucide-react";
 
@@ -72,6 +72,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 };
 
 export default function BatchCertificatesPage() {
+  const { programId } = useParams();
   const { certificates, templates } = useLoaderData<typeof loader>();
 
   const templatesMap = new Map<number, Template>();
@@ -182,6 +183,20 @@ export default function BatchCertificatesPage() {
               </TableRow>
             );
           })}
+          {templates.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="text-destructive">
+                No PDF templates configured yet. Please{" "}
+                <Link
+                  to={`/org/program/${programId}/templates`}
+                  className="underline"
+                >
+                  add a template
+                </Link>{" "}
+                first.
+              </TableCell>
+            </TableRow>
+          )}
           {certificates.length === 0 && (
             <TableRow>
               <TableCell colSpan={5}>No certificates created yet</TableCell>
