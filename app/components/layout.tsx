@@ -8,14 +8,14 @@ export function Layout({
 	switch (type) {
 		case "modal":
 			return (
-				<div className="h-screen w-full flex flex-col items-center justify-center px-4 bg-muted/40">
+				<div className="h-screen w-full flex flex-col items-center justify-center px-4">
 					{children}
 				</div>
 			);
 		case "full":
 		default:
 			return (
-				<div className="flex min-h-screen w-full flex-col bg-muted/40">
+				<div className="flex min-h-screen w-full flex-col">
 					{children}
 				</div>
 			);

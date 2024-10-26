@@ -1,8 +1,14 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, Link } from "@remix-run/react";
+import { Outlet, useLoaderData } from "@remix-run/react";
 import { Layout } from "~/components/layout";
-import { Button } from "~/components/ui/button";
+import { SidebarParticipant } from "~/components/sidebar-participant";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "~/components/ui/sidebar";
+
 import { requireUserId, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
@@ -17,6 +23,13 @@ export const loader: LoaderFunction = async ({ request }) => {
   await requireUserId(request);
   const user = await getUser(request);
 
+  if (!user) {
+    return new Response(null, {
+      status: 500,
+      statusText: "Error while retrieving user information.",
+    });
+  }
+
   let org = await prisma.organisation.findUnique({
     where: {
       id: 1,
@@ -27,7 +40,20 @@ export const loader: LoaderFunction = async ({ request }) => {
     org = { id: 1, name: "Unknown Organisation" };
   }
 
-  return json({ user, org });
+  const certificates = await prisma.certificate.findMany({
+    where: {
+      email: user.email,
+    },
+    include: {
+      batch: {
+        include: {
+          program: true,
+        },
+      },
+    },
+  });
+
+  return json({ user, org, certificates });
 };
 
 export default function Index() {
@@ -35,27 +61,23 @@ export default function Index() {
 
   return (
     <Layout type="modal">
-      <h1 className="text-3xl">Welcome {user?.firstName}</h1>
+      <SidebarProvider defaultOpen={false}>
+        <SidebarParticipant />
 
-      <p>Happy to have you back at {org.name}</p>
+        <SidebarInset>
+          <div className="flex flex-col gap-4 py-4">
+            <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent">
+              <SidebarTrigger className="-ml-1" />
+            </header>
 
-      {user && user.isAdmin && (
-        <p>
-          <Link to="/org/program">Go to Admin</Link>
-        </p>
-      )}
+            <h1 className="text-3xl">Welcome {user?.firstName}</h1>
 
-      <br />
-        <p>
-          <Link to="/user/photo">Change photo</Link>
-        </p>
+            <p>Happy to have you back at {org.name}</p>
 
-
-      <form action="/user/logout" method="POST">
-        <Button type="submit" variant="outline">
-          Logout
-        </Button>
-      </form>
+            <Outlet />
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
     </Layout>
   );
 }

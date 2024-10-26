@@ -48,7 +48,7 @@ type Match = {
 
 export const handle = {
   breadcrumb: (match: Match) => (
-    <Link to={`/org/program/${match.data.program.id}/batch`}>
+    <Link to="#">
       {match.data.program.name}
     </Link>
   ),
