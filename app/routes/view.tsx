@@ -1,4 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Prisma } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { SidebarParticipant } from "~/components/sidebar-participant";
@@ -8,8 +9,19 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 
-import { requireUserId, getUser } from "~/lib/auth.server";
+import { getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+
+// @todo refactor to remove duplicate type definition here and in sidebar-participants
+type CertificatesWithBatchAndProgram = Prisma.CertificateGetPayload<{
+  include: {
+    batch: {
+      include: {
+        program: true;
+      };
+    };
+  };
+}>;
 
 export const meta: MetaFunction = () => {
   return [
@@ -19,15 +31,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  await requireUserId(request);
   const user = await getUser(request);
-
-  if (!user) {
-    return new Response(null, {
-      status: 500,
-      statusText: "Error while retrieving user information.",
-    });
-  }
 
   let org = await prisma.organisation.findUnique({
     where: {
@@ -39,27 +43,33 @@ export const loader: LoaderFunction = async ({ request }) => {
     org = { id: 1, name: "Unknown Organisation" };
   }
 
-  const certificates = await prisma.certificate.findMany({
-    where: {
-      email: user.email,
-    },
-    include: {
-      batch: {
-        include: {
-          program: true,
+  let certificates: CertificatesWithBatchAndProgram[] = [];
+  if (user) {
+    certificates = await prisma.certificate.findMany({
+      where: {
+        email: user.email,
+      },
+      include: {
+        batch: {
+          include: {
+            program: true,
+          },
         },
       },
-    },
-  });
+    });
+  }
 
+  // needed data for SidebarParticipant
   return json({ user, org, certificates });
 };
 
 export default function Index() {
-  const { user, org } = useLoaderData<typeof loader>();
+  const { user } = useLoaderData<typeof loader>();
 
-  return (
-    <div className="flex min-h-screen w-full">
+  // @todo add subtle login link, legal and privacy
+
+  return user ? (
+    <div className="flex min-h-screen w-full bg-muted">
       <SidebarProvider defaultOpen={false}>
         <SidebarParticipant />
 
@@ -67,14 +77,11 @@ export default function Index() {
           <header className="sticky top-0 flex h-14 items-center gap-4 border-b sm:static sm:h-auto sm:border-0 sm:bg-transparent">
             <SidebarTrigger className="-ml-1" />
           </header>
-
-          <h1 className="text-3xl">Welcome {user?.firstName}</h1>
-
-          <p>Happy to have you back at {org.name}</p>
-
           <Outlet />
         </SidebarInset>
       </SidebarProvider>
     </div>
+  ) : (
+    <Outlet />
   );
 }
