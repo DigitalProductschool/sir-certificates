@@ -32,7 +32,7 @@ export default function Index() {
   const { certificate } = useLoaderData<typeof loader>();
 
   return (
-    <div className="flex flex-col items-center h-dvh overflow-auto p-16 md:p-24 lg:p-32 gap-4 bg-muted">
+    <div className="flex flex-col items-center h-dvh overflow-auto p-16 md:p-24 lg:p-32 gap-4">
       <Button asChild>
         <Link to={`/cert/${certificate.uuid}/download.pdf`} reloadDocument>
           Download Certificate
