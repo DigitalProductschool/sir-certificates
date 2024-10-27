@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { ToastAction } from "~/components/ui/toast";
-import { useToast } from "~/components/ui/use-toast";
+import { useToast } from "~/hooks/use-toast";
 
 import { CSVDropZone } from "~/components/csv-drop-zone";
 import { TaskRunner } from "~/components/task-runner";
