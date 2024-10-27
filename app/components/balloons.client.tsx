@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types, react/no-unknown-property */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import * as THREE from "three";
+import { Vector3, MathUtils }  from "three";
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Lightformer } from "@react-three/drei";
@@ -100,9 +100,9 @@ export function Balloons(props) {
 function Sphere({
   //position,
   children,
-  vec = new THREE.Vector3(),
+  vec = new Vector3(),
   //scale,
-  r = THREE.MathUtils.randFloatSpread,
+  r = MathUtils.randFloatSpread,
   color = "white",
   ...props
 }) {
@@ -135,7 +135,7 @@ function Sphere({
   );
 }
 
-function Pointer({ vec = new THREE.Vector3() }) {
+function Pointer({ vec = new Vector3() }) {
   const ref = useRef();
   useFrame(({ mouse, viewport }) =>
     ref.current?.setNextKinematicTranslation(
