@@ -175,8 +175,8 @@ export default function Login() {
 						</CardTitle>
 						<CardDescription className="text-center text-balance">
 							{formAction === "login"
-								? "Enter your email and password below to log in to your account"
-								: "Enter your name and email and choose a password to register an account"}
+								? "Enter your email and password below to log in to your account and access your certificates."
+								: "Enter your name and email and choose a password to register an account and access your certificates."}
 						</CardDescription>
 					</CardHeader>
 

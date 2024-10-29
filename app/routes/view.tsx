@@ -3,11 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { SidebarParticipant } from "~/components/sidebar-participant";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "~/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 
 import { getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
@@ -68,20 +64,15 @@ export default function Index() {
 
   // @todo add subtle login link, legal and privacy
 
-  return user ? (
+  return (
     <div className="flex min-h-screen w-full bg-muted">
       <SidebarProvider defaultOpen={false}>
-        <SidebarParticipant />
+        {user && <SidebarParticipant />}
 
-        <SidebarInset className="flex flex-col gap-4 px-4 py-3">
-          <header className="sticky top-0 flex h-14 items-center gap-4 border-b sm:static sm:h-auto sm:border-0 sm:bg-transparent">
-            <SidebarTrigger className="-ml-1" />
-          </header>
+        <SidebarInset className="flex flex-col">
           <Outlet />
         </SidebarInset>
       </SidebarProvider>
     </div>
-  ) : (
-    <Outlet />
   );
 }
