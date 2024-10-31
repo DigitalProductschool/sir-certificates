@@ -1,7 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData, useRouteLoaderData } from "@remix-run/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Download, Share } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { prisma } from "~/lib/prisma.server";
@@ -54,7 +54,8 @@ export default function Index() {
             <span className="w-5"></span>
           )}
           <span className="text-sm">
-            {certificate.batch.program.name} &mdash; {certificate.batch.name}
+            <b>{certificate.batch.program.name}</b> &mdash;{" "}
+            {certificate.batch.name}
           </span>
         </header>
 
@@ -69,11 +70,28 @@ export default function Index() {
             working experience in a cross-fuctional and agile team.
           </p>
 
-          <Button className="mt-4" asChild>
-            <Link to={`/cert/${certificate.uuid}/download.pdf`} reloadDocument>
-              Download Certificate
-            </Link>
-          </Button>
+          <div className="flex mt-4 gap-4">
+            <Button asChild>
+              <Link
+                to={`/cert/${certificate.uuid}/download.pdf`}
+                reloadDocument
+              >
+                <Download />
+                Download Certificate
+              </Link>
+            </Button>
+            {user && (
+              <Button asChild>
+                <Link
+                  to={`/cert/${certificate.uuid}/download.pdf`}
+                  reloadDocument
+                >
+                  <Share />
+                  Share on Social Media
+                </Link>
+              </Button>
+            )}
+          </div>
 
           <div className="grow"></div>
 
@@ -98,9 +116,9 @@ export default function Index() {
             <ArrowRight /> digitalproductschool.io
           </a>
 
-          <p className="text-xs mt-8">
+          {/*<p className="text-xs mt-8">
             <b>Digital Product School</b> by UnternehmerTUM
-          </p>
+          </p>*/}
         </section>
       </div>
       <div className="flex flex-col p-8">

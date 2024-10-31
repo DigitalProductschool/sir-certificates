@@ -9,7 +9,7 @@ import { getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 // @todo refactor to remove duplicate type definition here and in sidebar-participants
-type CertificatesWithBatchAndProgram = Prisma.CertificateGetPayload<{
+export type CertificatesWithBatchAndProgram = Prisma.CertificateGetPayload<{
   include: {
     batch: {
       include: {

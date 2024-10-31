@@ -1,6 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { CertificatesWithBatchAndProgram } from "./view";
 import { json } from "@remix-run/node";
-import { Outlet, useLoaderData } from "@remix-run/react";
+import { Link, Outlet, useLoaderData } from "@remix-run/react";
 import { SidebarParticipant } from "~/components/sidebar-participant";
 import {
   SidebarInset,
@@ -56,7 +57,11 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function Index() {
-  const { user, org } = useLoaderData<typeof loader>();
+  const { user, org, certificates } = useLoaderData<typeof loader>();
+
+  // @todo fix unintended change of open/close state of the sidebar when navigating between _index and /view
+
+  // @todo version with no certificates yet --> show programs and application options?
 
   return (
     <div className="flex min-h-screen w-full">
@@ -68,9 +73,26 @@ export default function Index() {
             <SidebarTrigger className="-ml-1" />
           </header>
 
-          <h1 className="text-3xl">Welcome {user?.firstName}</h1>
+          <h1 className="text-5xl font-bold px-16">
+            Congratulations {user?.firstName}!
+          </h1>
 
-          <p>Happy to have you back at {org.name}</p>
+          <p className="px-16">
+            Here are all your certificates from {org.name}
+          </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 p-16 gap-16">
+            {certificates.map((cert: CertificatesWithBatchAndProgram) => (
+              <Link to={`/view/${cert.uuid}`} key={cert.id}>
+                <img
+                  className="w-full mb-4 drop-shadow-xl hover:drop-shadow-lg hover:opacity-85"
+                  src={`/cert/${cert.uuid}/preview.png?t=${cert.updatedAt}`}
+                  alt={`Preview of your ${cert.batch.program.name} certificate`}
+                />
+                <b>{cert.batch.program.name}</b> &mdash; {cert.batch.name}
+              </Link>
+            ))}
+          </div>
 
           <Outlet />
         </SidebarInset>
