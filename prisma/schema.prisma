@@ -61,6 +61,9 @@ model Organisation {
 model Program {
   id            Int       @id @default(autoincrement())
   name          String
+  about         String?    
+  achievement   String?
+  website       String?    
   batches       Batch[]
   templates     Template[]
 
