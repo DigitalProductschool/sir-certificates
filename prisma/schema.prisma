@@ -54,6 +54,8 @@ model UserPhoto {
 model Organisation {
   id            Int       @id @default(autoincrement())
   name          String
+  imprintUrl    String?   @db.VarChar(128)
+  privacyUrl    String?   @db.VarChar(128)
 
   @@map("organisation")  
 }
@@ -63,7 +65,7 @@ model Program {
   name          String
   about         String?    
   achievement   String?
-  website       String?    
+  website       String?   @db.VarChar(128) 
   batches       Batch[]
   templates     Template[]
 
