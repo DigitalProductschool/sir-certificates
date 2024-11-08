@@ -39,6 +39,8 @@ export const action: ActionFunction = async ({ request }) => {
     },
     data: {
       name: inputs.name,
+      imprintUrl: inputs.imprintUrl,
+      privacyUrl: inputs.privacyUrl,
     },
   });
 
@@ -100,6 +102,22 @@ export default function EditOrgDialog() {
           <div className="grid gap-4 py-4">
             <Label htmlFor="name">Name of your organisation</Label>
             <Input id="name" name="name" defaultValue={org.name} />
+
+            <Label htmlFor="imprintUrl">Imprint URL</Label>
+            <Input
+              id="imprintUrl"
+              name="imprintUrl"
+              defaultValue={org.imprintUrl}
+              placeholder="https://"
+            />
+
+            <Label htmlFor="privacyUrl">Privacy Policy URL</Label>
+            <Input
+              id="privacyUrl"
+              name="privacyUrl"
+              defaultValue={org.privacyUrl}
+              placeholder="https://"
+            />
           </div>
           <DialogFooter>
             <Button type="submit">Save changes</Button>

@@ -1,7 +1,13 @@
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { useEffect, useState } from "react";
 import { redirect, json } from "@remix-run/node";
-import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
+import {
+	Form,
+	Link,
+	useActionData,
+	useSearchParams,
+	useLoaderData,
+} from "@remix-run/react";
 import { CheckIcon } from "lucide-react";
 import { Balloons } from "~/components/balloons.client";
 import { FormField } from "~/components/form-field";
@@ -15,6 +21,7 @@ import {
 } from "~/components/ui/card";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { login, register, getUser } from "~/lib/auth.server";
+import { prisma } from "~/lib/prisma.server";
 import {
 	validateEmail,
 	validateName,
@@ -87,11 +94,17 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
 	// If there's already a user in the session, redirect to the home page
-	return (await getUser(request)) ? redirect("/") : null;
+	const user = await getUser(request);
+	if (user) return redirect("/");
+
+	const org = await prisma.organisation.findUnique({ where: { id: 1 } });
+
+	return json({ org });
 };
 
 export default function Login() {
 	const actionData = useActionData<typeof action>();
+	const { org } = useLoaderData<typeof loader>();
 	const [searchParams /*, setSearchParams */] = useSearchParams();
 	const [isClient, setIsClient] = useState(false);
 	const [formAction, setFormAction] = useState("login");
@@ -156,6 +169,7 @@ export default function Login() {
 			<div
 				className={`h-screen flex flex-col items-center justify-center px-4 dark:bg-black ${isMobile ? "col-span-2" : ""}`}
 			>
+				<div className="grow"></div>
 				{isMobile && (
 					<svg
 						className="w-12 h-12"
@@ -269,6 +283,26 @@ export default function Login() {
 						</CardContent>
 					</Form>
 				</Card>
+				<div className="grow flex flex-row justify-center items-end gap-4 pb-5 text-xs">
+					{org.imprintUrl && (
+						<a
+							href={org.imprintUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Imprint
+						</a>
+					)}
+					{org.privacyUrl && (
+						<a
+							href={org.privacyUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Privacy
+						</a>
+					)}
+				</div>
 			</div>
 			{searchParams.get("verification") === "done" && (
 				<div className="absolute top-8 flex p-2 px-4 gap-2 rounded-xl bg-green-600 text-primary-foreground">

@@ -33,7 +33,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   });
 
   if (!org) {
-    org = { id: 1, name: "Unknown Organisation" };
+    org = {
+      id: 1,
+      name: "Unknown Organisation",
+      imprintUrl: null,
+      privacyUrl: null,
+    };
   }
 
   const programs = await prisma.program.findMany({

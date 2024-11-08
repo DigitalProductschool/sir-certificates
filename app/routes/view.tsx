@@ -29,15 +29,11 @@ export const meta: MetaFunction = () => {
 export const loader: LoaderFunction = async ({ request }) => {
   const user = await getUser(request);
 
-  let org = await prisma.organisation.findUnique({
+  const org = await prisma.organisation.findUnique({
     where: {
       id: 1,
     },
   });
-
-  if (!org) {
-    org = { id: 1, name: "Unknown Organisation" };
-  }
 
   let certificates: CertificatesWithBatchAndProgram[] = [];
   if (user) {
