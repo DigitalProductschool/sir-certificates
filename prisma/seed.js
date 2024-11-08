@@ -47,6 +47,11 @@ async function main() {
     update: {},
     create: {
       name: "Digital Product School",
+      about: `Digital Product School is Europe's most successful training program for **cross-fuctional teams** building digital products.  
+
+Our participants experience a progressive start-up environment, learn by doing and taking action and use latest tech and methods to solve real challenges from our partners.`,
+      achievement: "You did this",
+      website: "https://digitalproductschool.io",
     },
   });
 

@@ -2,6 +2,7 @@ import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData, useRouteLoaderData } from "@remix-run/react";
 import { ArrowRight, Download, Share } from "lucide-react";
+import Markdown from "markdown-to-jsx";
 import { Button } from "~/components/ui/button";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { prisma } from "~/lib/prisma.server";
@@ -42,8 +43,6 @@ export default function Index() {
   const { certificate } = useLoaderData<typeof loader>();
   const { user } = useRouteLoaderData<typeof viewLoader>("routes/view");
 
-  // @todo make text and design configurable in program settings
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 h-screen">
       <div className="flex flex-col px-4 py-3 grow">
@@ -64,11 +63,9 @@ export default function Index() {
             {certificate.firstName} {certificate.lastName}
           </h1>
 
-          <p>
-            The Digital Product School certifies that Marcus Paeschke has{" "}
-            <b>successfully completed</b> our program and gained practical
-            working experience in a cross-fuctional and agile team.
-          </p>
+          {certificate.batch.program.achievement && (
+            <Markdown>{certificate.batch.program.achievement}</Markdown>
+          )}
 
           <div className="flex mt-4 gap-4">
             <Button asChild>
@@ -95,30 +92,25 @@ export default function Index() {
 
           <div className="grow"></div>
 
-          <h3 className="font-bold">About Digital Product School</h3>
-          <p>
-            Digital Product School is Europe&apos;s most successful training
-            program for cross-fuctional teams building digital products.
-          </p>
+          {certificate.batch.program.about && (
+            <>
+              <h3 className="font-bold">
+                About {certificate.batch.program.name}
+              </h3>
+              <Markdown>{certificate.batch.program.about}</Markdown>
+            </>
+          )}
 
-          <p>
-            Our participants experience a progressive start-up environment,
-            learn by doing and taking action and use the latest tech and methods
-            to solve real challenges from our partners.
-          </p>
-
-          <a
-            href="https://digitalproductschool.io"
-            className="self-start inline-flex underline underline-offset-2"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ArrowRight /> digitalproductschool.io
-          </a>
-
-          {/*<p className="text-xs mt-8">
-            <b>Digital Product School</b> by UnternehmerTUM
-          </p>*/}
+          {certificate.batch.program.website && (
+            <a
+              href={certificate.batch.program.website}
+              className="self-start inline-flex underline underline-offset-2"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ArrowRight /> {certificate.batch.program.website}
+            </a>
+          )}
         </section>
       </div>
       <div className="flex flex-col p-8">

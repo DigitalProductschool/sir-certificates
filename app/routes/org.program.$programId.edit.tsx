@@ -19,6 +19,7 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Textarea } from "~/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -45,6 +46,9 @@ export const action: ActionFunction = async ({ request, params }) => {
     },
     data: {
       name: inputs.name,
+      achievement: inputs.achievement,
+      about: inputs.about,
+      website: inputs.website
     },
   });
 
@@ -95,7 +99,7 @@ export default function EditBatchDialog() {
         if (!open) navigate(-1);
       }}
     >
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Program settings</DialogTitle>
           <DialogDescription>
@@ -106,6 +110,29 @@ export default function EditBatchDialog() {
           <div className="grid gap-4 py-4">
             <Label htmlFor="name">Name</Label>
             <Input id="name" name="name" defaultValue={program.name} />
+
+            <Label htmlFor="achievement">Achievement</Label>
+            <Textarea
+              id="achievement"
+              name="achievement"
+              defaultValue={program.achievement}
+            />
+
+            <Label htmlFor="about">About the program</Label>
+            <Textarea
+              id="about"
+              name="about"
+              defaultValue={program.about}
+              rows={6}
+            />
+
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              name="website"
+              defaultValue={program.website}
+              placeholder="https://"
+            />
           </div>
         </Form>
         <DialogFooter>
