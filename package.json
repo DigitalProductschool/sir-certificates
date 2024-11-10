@@ -60,6 +60,7 @@
     "react-dom": "^18.2.0",
     "react-easy-crop": "^5.1.0",
     "react-papaparse": "^4.4.0",
+    "sharp": "^0.33.5",
     "slug": "^9.1.0",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
