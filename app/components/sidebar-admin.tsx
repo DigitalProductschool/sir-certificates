@@ -12,6 +12,7 @@ import {
   LogOut,
   Plus,
   Settings2,
+  Share2,
   SquareUser,
   UsersIcon,
 } from "lucide-react";
@@ -204,15 +205,15 @@ export function SidebarAdmin() {
                   <span>Email</span>
                 </NavLink>
               </SidebarMenuButton>
-            </SidebarMenuItem>
+            </SidebarMenuItem>*/}
             <SidebarMenuItem>
               <SidebarMenuButton tooltip="Social Media" asChild>
-                <NavLink to={`/org/program/${activeProgram.id}/social`}>
+                <NavLink to={`/org/program/${activeProgram?.id}/social`}>
                   <Share2 />
                   <span>Social Media</span>
                 </NavLink>
               </SidebarMenuButton>
-            </SidebarMenuItem>*/}
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
 

@@ -473,6 +473,11 @@ export async function generatePdfPreview(
 	}
 }
 
+export async function readPreviewOfTemplate(template: Template) {
+	const previewFilePath = `${previewDir}/tpl-${template.id}.png`;
+	return readFileIfExists(previewFilePath);
+}
+
 export async function saveUploadedTemplate(
 	template: Template,
 	templatePDF: File,
