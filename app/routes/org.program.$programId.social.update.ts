@@ -1,0 +1,69 @@
+import type { ActionFunction } from "@remix-run/node";
+import { json } from "@remix-run/node";
+
+import { requireAdmin } from "~/lib/auth.server";
+import { addTemplateToPreview } from "~/lib/social.server";
+import { prisma, throwErrorResponse } from "~/lib/prisma.server";
+
+export const action: ActionFunction = async ({ request, params }) => {
+  await requireAdmin(request);
+
+  const formData = await request.formData();
+  const inputs = Object.fromEntries(formData);
+  let layoutJSON;
+
+  // @todo verify schema of incoming JSON as typeof SocialPreviewLayout
+  try {
+    layoutJSON = JSON.parse(inputs.layout);
+  } catch (error) {
+    throw new Response(null, {
+      status: 400,
+      statusText: "Invalid JSON layout",
+    });
+  }
+
+  // Create or update SocialPreview
+  const social = await prisma.socialPreview
+    .upsert({
+      where: {
+        programId: Number(params.programId),
+      },
+      update: {
+        layout: layoutJSON,
+      },
+      create: {
+        layout: inputs.layout,
+        contentType: "",
+        program: {
+          connect: { id: Number(params.programId) },
+        },
+      },
+    })
+    .catch((error) => {
+      console.error(error);
+      throwErrorResponse(
+        error,
+        "Could not create/update social preview layout",
+      );
+    });
+
+  if (!social) {
+    return new Response(null, {
+      status: 500,
+      statusText: "Missing social media preview record",
+    });
+  }
+
+  // Update preview image with new layout settings
+  const template = await prisma.template.findFirst({
+    where: {
+      programId: Number(params.programId),
+    },
+  });
+
+  if (template) {
+    await addTemplateToPreview(social, template);
+  }
+
+  return json({ social });
+};

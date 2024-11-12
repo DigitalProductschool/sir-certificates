@@ -1,3 +1,5 @@
+// @todo this was not a great idea, refactor to remove it
+
 export function Layout({
 	children,
 	type = "full",

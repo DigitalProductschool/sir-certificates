@@ -10,6 +10,8 @@ async function main() {
     update: {},
     create: {
       name: "UnternehmerTUM",
+      imprintUrl: "https://www.unternehmertum.de/impressum",
+      privacyUrl: "https://www.unternehmertum.de/datenschutz"
     },
   });
   console.log("Organisation:", org);

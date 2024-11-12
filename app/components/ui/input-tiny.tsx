@@ -14,6 +14,8 @@ export interface InputProps
   tooltip: string | React.ReactNode;
 }
 
+// @todo improve keyboard navigation (between multiple tiny inputs) while preserving accessibility
+
 const InputTiny = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, label, tooltip, ...props }, ref) => {
     const input = (
