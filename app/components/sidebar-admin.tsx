@@ -188,13 +188,13 @@ export function SidebarAdmin() {
           <SidebarGroupLabel>Templates</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton tooltip="PDF Templates" asChild>
+              <SidebarMenuButton tooltip="PDF Certificate Templates" asChild>
                 <NavLink
                   to={`/org/program/${activeProgram?.id}/templates/`}
                   className="aria-current:bg-sidebar-accent aria-current:font-bold"
                 >
                   <FileText className="w-6 h-6" size={24} />
-                  <span>PDF</span>
+                  <span>PDF Certificate</span>
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -210,7 +210,7 @@ export function SidebarAdmin() {
               <SidebarMenuButton tooltip="Social Media" asChild>
                 <NavLink to={`/org/program/${activeProgram?.id}/social`}>
                   <Share2 />
-                  <span>Social Media</span>
+                  <span>Social Media Preview</span>
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>

@@ -141,10 +141,11 @@ model Typeface {
 
 model SocialPreview {
   id            Int       @id @default(autoincrement())
+  layout        Json      @default("{}")
+  contentType   String    @db.VarChar(64)
+  updatedAt     DateTime  @updatedAt    
   program       Program   @relation(fields: [programId], references: [id])
   programId     Int       @unique
-  contentType   String    @db.VarChar(64)
-  updatedAt     DateTime  @updatedAt  
 
   @@map("social_previews")
 }

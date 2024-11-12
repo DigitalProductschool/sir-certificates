@@ -53,6 +53,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   const inputs = Object.fromEntries(formData);
   let layoutJSON;
 
+  // @todo verify schema of incoming JSON
   try {
     layoutJSON = JSON.parse(inputs.layout);
   } catch (error) {

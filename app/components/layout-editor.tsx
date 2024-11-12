@@ -1,4 +1,6 @@
 /* eslint-disable react/prop-types, @typescript-eslint/no-explicit-any */
+// This layout editor is for the PDF template layouts 
+// @todo rename component to clarify the function
 import type { Typeface } from "@prisma/client";
 import { HexColorPicker } from "react-colorful";
 import {

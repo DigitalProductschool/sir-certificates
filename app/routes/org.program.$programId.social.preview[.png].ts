@@ -2,7 +2,7 @@ import type { LoaderFunction } from "@remix-run/node";
 
 import { prisma } from "~/lib/prisma.server";
 import { requireAdmin } from "~/lib/auth.server";
-import { readCompositeImage } from "~/lib/social.server";
+import { readBackgroundImage, readCompositeImage } from "~/lib/social.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
 	await requireAdmin(request);
@@ -28,13 +28,23 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 		return new Response(imageBuffer, {
 			status: 200,
 			headers: {
-				"Content-Type": social.contentType,
+				"Content-Type": "image/png",
 			},
 		});
 	} else {
-		throw new Response(null, {
-			status: 404,
-			statusText: "File not Found",
-		});
+		const backgroundBuffer = await readBackgroundImage(social);
+		if (backgroundBuffer) {
+			return new Response(backgroundBuffer, {
+				status: 200,
+				headers: {
+					"Content-Type": social.contentType,
+				},
+			});
+		} else {
+			throw new Response(null, {
+				status: 404,
+				statusText: "File not Found",
+			});
+		}
 	}
 };

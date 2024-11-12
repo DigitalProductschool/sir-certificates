@@ -9,6 +9,7 @@ import { requireAdmin } from "~/lib/auth.server";
 import {
   saveSocialBackground,
   addTemplateToPreview,
+  defaultLayout,
 } from "~/lib/social.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
@@ -57,6 +58,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       },
       create: {
         contentType: backgroundImage.type,
+        layout: defaultLayout,
         program: {
           connect: { id: Number(params.programId) },
         },

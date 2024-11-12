@@ -8,10 +8,13 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { prisma } from "~/lib/prisma.server";
 import { loader as viewLoader } from "./view";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [
     { title: "Certificates" },
-    { name: "description", content: "Welcome to Remix!" },
+    {
+      name: "description",
+      content: data.certificate?.batch?.program?.achievement,
+    },
   ];
 };
 
@@ -36,7 +39,13 @@ export const loader: LoaderFunction = async ({ params }) => {
     });
   }
 
-  return json({ certificate });
+  const social = await prisma.socialPreview.findUnique({
+    where: {
+      programId: certificate.batch.program.id,
+    },
+  });
+
+  return json({ certificate, social });
 };
 
 export default function Index() {
@@ -64,7 +73,13 @@ export default function Index() {
           </h1>
 
           {certificate.batch.program.achievement && (
-            <Markdown>{certificate.batch.program.achievement}</Markdown>
+            /* @todo support all variable replacements */
+            <Markdown>
+              {certificate.batch.program.achievement.replaceAll(
+                "{certificate.fullName}",
+                certificate.firstName.concat(" ", certificate.lastName),
+              )}
+            </Markdown>
           )}
 
           <div className="flex mt-4 gap-4">
