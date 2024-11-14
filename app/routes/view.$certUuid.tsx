@@ -94,10 +94,7 @@ export default function Index() {
             </Button>
             {user && (
               <Button asChild>
-                <Link
-                  to={`/cert/${certificate.uuid}/download.pdf`}
-                  reloadDocument
-                >
+                <Link to={`/view/${certificate.uuid}/share`}>
                   <Share />
                   Share on Social Media
                 </Link>

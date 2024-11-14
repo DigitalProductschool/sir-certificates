@@ -100,8 +100,9 @@ export function SidebarAdmin() {
                 side="bottom"
                 sideOffset={4}
               >
+                {/* todo potentially build a Notion-inspired program switcher that includes a button for the settings */}
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Programs
+                  Other Programs
                 </DropdownMenuLabel>
                 {programs.map((program) => (
                   <DropdownMenuItem
