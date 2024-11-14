@@ -1,10 +1,20 @@
-import type { SocialPreview, Template, Prisma } from "@prisma/client";
+import type {
+	Certificate,
+	SocialPreview,
+	Template,
+	UserPhoto,
+	Prisma,
+} from "@prisma/client";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeFile } from "node:fs/promises";
 import sharp from "sharp";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
-import { readPreviewOfTemplate } from "./pdf.server";
+import {
+	generatePreviewOfCertificate,
+	readPreviewOfTemplate,
+} from "./pdf.server";
+import { readPhoto } from "./user.server";
 
 // @todo refactor to dry up filesystem functions across server libs
 // @todo dry up extension code
@@ -94,6 +104,33 @@ export async function addTemplateToPreview(
 		return true;
 	}
 	return false;
+}
+
+export async function generateSocialPreview(
+	social: SocialPreview,
+	certificate: Certificate,
+	userPhoto?: UserPhoto | null,
+) {
+	const background = await readBackgroundImage(social);
+	const certificatePreview = await generatePreviewOfCertificate(
+		certificate,
+		true,
+	);
+	const photo = userPhoto ? await readPhoto(userPhoto) : false;
+
+	if (background && certificatePreview) {
+		const certificateBuffer = Buffer.from(certificatePreview);
+
+		const composition = await composeImages(
+			social.layout as SocialPreviewLayout,
+			background,
+			certificateBuffer,
+			photo ? photo : undefined,
+		);
+
+		return composition;
+	}
+	return null;
 }
 
 export type SocialPreviewLayout = Prisma.JsonObject & {
