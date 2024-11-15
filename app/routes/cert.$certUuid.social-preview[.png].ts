@@ -3,7 +3,7 @@ import type { LoaderFunction } from "@remix-run/node";
 import { prisma } from "~/lib/prisma.server";
 import { generateSocialPreview } from "~/lib/social.server";
 
-export const loader: LoaderFunction = async ({ params }) => {
+export const loader: LoaderFunction = async ({ request, params }) => {
 	const certificate = await prisma.certificate.findUnique({
 		where: {
 			uuid: params.certUuid,
@@ -54,10 +54,16 @@ export const loader: LoaderFunction = async ({ params }) => {
 			})
 		: null;
 
+	const url = new URL(request.url);
+	const withPlaceholder = url.searchParams.get("withPlaceholder")
+		? true
+		: false;
+
 	const imageBuffer = await generateSocialPreview(
 		social,
 		certificate,
 		userPhoto,
+		withPlaceholder,
 	);
 
 	if (imageBuffer) {
