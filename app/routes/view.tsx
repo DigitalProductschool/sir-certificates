@@ -1,5 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, UserPhoto } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { SidebarParticipant } from "~/components/sidebar-participant";
@@ -36,6 +36,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   let certificates: CertificatesWithBatchAndProgram[] = [];
+  let userPhoto: UserPhoto | null = null;
   if (user) {
     certificates = await prisma.certificate.findMany({
       where: {
@@ -49,10 +50,15 @@ export const loader: LoaderFunction = async ({ request }) => {
         },
       },
     });
+    userPhoto = await prisma.userPhoto.findUnique({
+      where: {
+        userId: user.id,
+      },
+    });
   }
 
   // needed data for SidebarParticipant
-  return json({ user, org, certificates });
+  return json({ certificates, org, user, userPhoto });
 };
 
 export default function Index() {

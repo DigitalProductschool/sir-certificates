@@ -110,13 +110,18 @@ export async function generateSocialPreview(
 	social: SocialPreview,
 	certificate: Certificate,
 	userPhoto?: UserPhoto | null,
+	withPlaceholder: boolean = false, // use a placeholder as fallback when no user photo available?
 ) {
 	const background = await readBackgroundImage(social);
 	const certificatePreview = await generatePreviewOfCertificate(
 		certificate,
 		true,
 	);
-	const photo = userPhoto ? await readPhoto(userPhoto) : false;
+	const photo = userPhoto
+		? await readPhoto(userPhoto)
+		: withPlaceholder
+			? await readFileIfExists(`${assetsDir}/photo-placeholder.png`)
+			: false;
 
 	if (background && certificatePreview) {
 		const certificateBuffer = Buffer.from(certificatePreview);

@@ -1,6 +1,6 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useRouteLoaderData } from "@remix-run/react";
+import { Link, useLoaderData, useRouteLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
 import {
   Card,
@@ -13,6 +13,7 @@ import {
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { SidebarTrigger } from "~/components/ui/sidebar";
+import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { loader as viewLoader } from "./view";
 
@@ -26,8 +27,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   ];
 };
 
-export const loader: LoaderFunction = async ({ params }) => {
-  // @todo requireUser session
+export const loader: LoaderFunction = async ({ request, params }) => {
+  await requireUserId(request);
 
   const certificate = await prisma.certificate.findUnique({
     where: {
@@ -60,7 +61,8 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 export default function Index() {
   const { certificate, social } = useLoaderData<typeof loader>();
-  const { user } = useRouteLoaderData<typeof viewLoader>("routes/view");
+  const { user, userPhoto } =
+    useRouteLoaderData<typeof viewLoader>("routes/view");
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 h-screen">
@@ -85,6 +87,14 @@ export default function Index() {
             LinkedIn or other social media.
           </p>
 
+          {!userPhoto && (
+            <img
+              src="/assets/scribble-add-photo.svg"
+              alt="Add yourself to the preview here"
+              className="ml-[175px] w-[40%]"
+            />
+          )}
+
           <Card className="max-w-[650px]">
             <CardHeader>
               <CardTitle className="text-xl">
@@ -103,17 +113,40 @@ export default function Index() {
             <CardContent>
               {!social ? (
                 <div className="w-full max-w-[600px] aspect-[1.91/1] flex border border-dashed border-slate-500 justify-center items-center bg-muted"></div>
-              ) : (
+              ) : userPhoto ? (
                 <img
                   src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}`}
                   className="w-full max-w-[600px] aspect-[1.91/1]"
                   alt="Social media preview for shared certificates"
                 />
+              ) : (
+                <div className="grid grid-cols-1 grid-rows-1 w-full max-w-[600px]">
+                  <img
+                    src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}`}
+                    className="w-full aspect-[1.91/1] col-start-1 row-start-1"
+                    alt="Social media preview for shared certificates"
+                  />
+                  <Link
+                    to="/user/photo"
+                    className="col-start-1 row-start-1 opacity-0 hover:opacity-100"
+                  >
+                    <img
+                      src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}&withPlaceholder=1`}
+                      className="w-full aspect-[1.91/1]"
+                      alt="Social media preview for shared certificates with a placeholder where you could appear"
+                    />
+                  </Link>
+                </div>
               )}
             </CardContent>
             <CardFooter></CardFooter>
           </Card>
-          <div className="flex flex-row gap-2">
+          {userPhoto && (
+            <div className="text-sm text-slate-500 mt-[-10px] pl-1">
+              You can change your photo in the account settings.
+            </div>
+          )}
+          <div className="flex flex-row gap-2 max-w-[650px]">
             <Input
               defaultValue={`https://certificates.unternehmertum.de/view/${certificate.uuid}`}
               readOnly

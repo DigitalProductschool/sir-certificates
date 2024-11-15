@@ -3,11 +3,11 @@ import type { RegisterForm, InviteForm } from "./types.server";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { writeFile } from "node:fs/promises";
+import { writeFile, unlink } from "node:fs/promises";
 import bcrypt from "bcryptjs";
 import Mailjet from "node-mailjet";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
-import { prisma } from "./prisma.server";
+import { prisma, throwErrorResponse } from "./prisma.server";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const userPhotoDir = resolve(__dirname, "../../storage/user/photos");
@@ -134,7 +134,7 @@ export const sendInvitationEmail = async (
 	return true;
 };
 
-export async function saveUploadedPhoto(
+/* export async function saveUploadedPhoto(
 	userPhoto: UserPhoto,
 	userPhotoFile: File,
 ) {
@@ -160,7 +160,7 @@ export async function saveUploadedPhoto(
 		`${userPhotoDir}/${userPhoto.id}.${extension}`,
 		buffer,
 	);
-}
+} */
 
 export async function saveTransparentPhoto(
 	userPhoto: UserPhoto,
@@ -182,4 +182,18 @@ export async function readPhoto(userPhoto: UserPhoto) {
 	return await readFileIfExists(
 		`${userPhotoDir}/${userPhoto.id}.transparent.png`,
 	);
+}
+
+export async function deleteUserPhoto(userPhoto: UserPhoto) {
+	await unlink(`${userPhotoDir}/${userPhoto.id}.transparent.png`);
+	return await prisma.userPhoto
+		.delete({
+			where: {
+				id: userPhoto.id,
+			},
+		})
+		.catch((error) => {
+			console.error(error);
+			throwErrorResponse(error, "Could not delete user photo");
+		});
 }
