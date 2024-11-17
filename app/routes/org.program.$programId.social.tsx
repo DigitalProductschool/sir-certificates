@@ -1,4 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Prisma } from "@prisma/client";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher } from "@remix-run/react";
@@ -55,10 +56,16 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
+  // If layout was not initialized yet, return the default layout
+  let layout = social?.layout as Prisma.JsonObject | undefined;
+  if (!layout || !layout.photo || !layout.certificate) {
+    layout = defaultLayout;
+  }
+
   return json({
     program,
     social,
-    socialLayout: social?.layout ?? defaultLayout,
+    socialLayout: layout,
   });
 };
 
