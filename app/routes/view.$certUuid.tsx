@@ -6,18 +6,49 @@ import Markdown from "markdown-to-jsx";
 import { Button } from "~/components/ui/button";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { prisma } from "~/lib/prisma.server";
+import { replaceVariables } from "~/lib/text-variables";
 import { loader as viewLoader } from "./view";
 
+// @todo replace domain config
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [
-    { title: "Certificates" },
+    {
+      title: `${data.certificate.firstName} ${data.certificate.lastName} is certified by ${data.certificate.batch.program.name}`,
+    },
     {
       name: "description",
-      content: data.certificate?.batch?.program?.achievement,
+      content: replaceVariables(
+        data.certificate.batch.program.achievement,
+        data.certificate.template.locale,
+        data.certificate,
+        data.certificate.batch,
+      ),
+    },
+    {
+      name: "og:title",
+      content: `${data.certificate.firstName} ${data.certificate.lastName} is certified by ${data.certificate.batch.program.name}`,
+    },
+    {
+      name: "og:description",
+      content: replaceVariables(
+        data.certificate.batch.program.achievement,
+        data.certificate.template.locale,
+        data.certificate,
+        data.certificate.batch,
+      ),
+    },
+    {
+      name: "og:image",
+      content: `https://certificates.unternehmertum.de/cert/${data.certificate.uuid}/social-preview.png?t=${data.certificate.updatedAt}`,
+    },
+    {
+      name: "og:url",
+      content: `https://certificates.unternehmertum.de/view/${data.certificate.uuid}`,
     },
   ];
 };
 
+// @todo select relevant individual fields for certificate, batch and program
 export const loader: LoaderFunction = async ({ params }) => {
   const certificate = await prisma.certificate.findUnique({
     where: {
@@ -27,6 +58,11 @@ export const loader: LoaderFunction = async ({ params }) => {
       batch: {
         include: {
           program: true,
+        },
+      },
+      template: {
+        select: {
+          locale: true,
         },
       },
     },

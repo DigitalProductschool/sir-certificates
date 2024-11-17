@@ -11,6 +11,7 @@ import fontkit from "@pdf-lib/fontkit";
 
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
+import { replaceVariables } from "./text-variables";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -121,69 +122,16 @@ export async function generateCertificate(
 	);
 
 	// Modify page
-	// @todo refactor date formats to be configurable via template settings
 	const page = pdf.getPages()[0];
-	const startDate = batch.startDate.toLocaleString(template.locale, {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
-	const endDate = batch.endDate.toLocaleString(template.locale, {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
-	const signatureDate = batch.endDate.toLocaleString(template.locale, {
-		year: "numeric",
-		month: "numeric",
-		day: "numeric",
-	});
 
 	const texts = template.layout as any;
 	texts.forEach((text: TextOptions) => {
 		const lines = text.lines.map((line: Line) => {
-			let replacements = line.text;
-
-			// Certificate replacements
-			replacements = replacements.replaceAll(
-				"{certificate.fullName}",
-				`${certificate.firstName} ${certificate.lastName}`,
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.fullNameCaps}",
-				`${certificate.firstName.toUpperCase()} ${certificate.lastName.toUpperCase()}`,
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.firstName}",
-				certificate.firstName,
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.firstNameCaps}",
-				certificate.firstName.toUpperCase(),
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.lastName}",
-				certificate.lastName,
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.lastNameCaps}",
-				certificate.lastName.toUpperCase(),
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.teamName}",
-				certificate.teamName || "",
-			);
-
-			// Batch replacements
-			replacements = replacements.replaceAll("{batch.name}", batch.name);
-			replacements = replacements.replaceAll(
-				"{batch.startDate}",
-				startDate,
-			);
-			replacements = replacements.replaceAll("{batch.endDate}", endDate);
-			replacements = replacements.replaceAll(
-				"{batch.signatureDate}",
-				signatureDate,
+			const replacements = replaceVariables(
+				line.text,
+				template.locale,
+				certificate,
+				batch,
 			);
 
 			return {

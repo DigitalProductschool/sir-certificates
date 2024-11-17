@@ -1,7 +1,9 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import { useState } from "react";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData, useRouteLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
+import { ClipboardCopy, ClipboardCheck } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -15,15 +17,31 @@ import { Input } from "~/components/ui/input";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { replaceVariables } from "~/lib/text-variables";
+
 import { loader as viewLoader } from "./view";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [
-    { title: "Certificates" },
+    {
+      title: `${data.certificate.firstName} ${data.certificate.lastName} is certified by ${data.certificate.batch.program.name}`,
+    },
     {
       name: "description",
-      content: data.certificate?.batch?.program?.achievement,
+      content: replaceVariables(
+        data.certificate.batch.program.achievement,
+        data.certificate.template.locale,
+        data.certificate,
+        data.certificate.batch,
+      ),
     },
+
+    /* 
+  <meta property='og:title' content='Title of the article'/>
+  <meta property='og:image' content='//media.example.com/ 1234567.jpg'/>
+  <meta property='og:description' content='Description that will show in the preview'/>
+  <meta property='og:url' content='//www.example.com/URL of the article' /> 
+*/
   ];
 };
 
@@ -38,6 +56,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       batch: {
         include: {
           program: true,
+        },
+      },
+      template: {
+        select: {
+          locale: true,
         },
       },
     },
@@ -63,6 +86,19 @@ export default function Index() {
   const { certificate, social } = useLoaderData<typeof loader>();
   const { user, userPhoto } =
     useRouteLoaderData<typeof viewLoader>("routes/view");
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+
+  const certificateUrl = `https://certificates.unternehmertum.de/view/${certificate.uuid}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(certificateUrl);
+      setCopiedToClipboard(true);
+      setTimeout(() => setCopiedToClipboard(false), 3000);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 h-screen">
@@ -105,7 +141,12 @@ export default function Index() {
                 <Markdown>
                   {
                     /* @todo add variable replacements and Markdown render */
-                    certificate.batch.program.achievement ?? ""
+                    replaceVariables(
+                      certificate.batch.program.achievement,
+                      certificate.template.locale,
+                      certificate,
+                      certificate.batch,
+                    ) ?? ""
                   }
                 </Markdown>
               </CardDescription>
@@ -147,12 +188,28 @@ export default function Index() {
             </div>
           )}
           <div className="flex flex-row gap-2 max-w-[650px]">
-            <Input
-              defaultValue={`https://certificates.unternehmertum.de/view/${certificate.uuid}`}
-              readOnly
-            />
-            <Button>Copy URL</Button>
+            <Input defaultValue={certificateUrl} readOnly />
+            <Button onClick={handleCopy} className="w-40 justify-start">
+              {copiedToClipboard ? (
+                <>
+                  <ClipboardCheck />
+                  Done
+                </>
+              ) : (
+                <>
+                  <ClipboardCopy />
+                  Copy URL
+                </>
+              )}
+            </Button>
           </div>
+          <a
+            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificateUrl)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Share on LinkedIn
+          </a>
         </section>
       </div>
     </div>

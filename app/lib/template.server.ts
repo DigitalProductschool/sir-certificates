@@ -34,3 +34,5 @@ export async function deleteTemplate(templateId: number) {
 
 	return deletedTemplate;
 }
+
+
