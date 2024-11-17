@@ -25,11 +25,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
       ),
     },
     {
-      name: "og:title",
+      property: "og:title",
       content: `${data.certificate.firstName} ${data.certificate.lastName} is certified by ${data.certificate.batch.program.name}`,
     },
     {
-      name: "og:description",
+      property: "og:description",
       content: replaceVariables(
         data.certificate.batch.program.achievement,
         data.certificate.template.locale,
@@ -38,11 +38,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
       ),
     },
     {
-      name: "og:image",
+      property: "og:image",
       content: `https://certificates.unternehmertum.de/cert/${data.certificate.uuid}/social-preview.png?t=${data.certificate.updatedAt}`,
     },
     {
-      name: "og:url",
+      property: "og:url",
       content: `https://certificates.unternehmertum.de/view/${data.certificate.uuid}`,
     },
   ];
