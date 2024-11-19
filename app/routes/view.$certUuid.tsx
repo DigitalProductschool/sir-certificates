@@ -54,10 +54,24 @@ export const loader: LoaderFunction = async ({ params }) => {
     where: {
       uuid: params.certUuid,
     },
-    include: {
+    select: {
+      uuid: true,
+      firstName: true,
+      lastName: true,
+      updatedAt: true,
       batch: {
-        include: {
-          program: true,
+        select: {
+          name: true,
+          startDate: true,
+          endDate: true,
+          program: {
+            select: {
+              name: true,
+              about: true,
+              achievement: true,
+              website: true,
+            },
+          },
         },
       },
       template: {
@@ -75,13 +89,7 @@ export const loader: LoaderFunction = async ({ params }) => {
     });
   }
 
-  const social = await prisma.socialPreview.findUnique({
-    where: {
-      programId: certificate.batch.program.id,
-    },
-  });
-
-  return json({ certificate, social });
+  return json({ certificate });
 };
 
 export default function Index() {
