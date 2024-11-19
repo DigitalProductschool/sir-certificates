@@ -103,7 +103,7 @@ export default function Index() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 h-screen">
       <div className="flex flex-col px-4 py-3 grow">
-        <header className="sticky top-0 flex items-center h-14 gap-4 border-b sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
+        <header className="flex items-center h-14 gap-4 border-b sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
           {user ? (
             <SidebarTrigger className="-ml-1" />
           ) : (

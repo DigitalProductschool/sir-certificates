@@ -89,21 +89,27 @@ export default function Index() {
   const { user } = useRouteLoaderData<typeof viewLoader>("routes/view");
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 h-screen">
-      <div className="flex flex-col px-4 py-3 grow">
-        <header className="sticky top-0 flex items-center h-14 gap-4 border-b sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
+    <div className="grid grid-cols-1 xl:grid-cols-2 min-h-screen">
+      <div className="col-start-1 row-start-1 flex flex-col px-2 sm:px-4 py-3">
+        <header className="flex items-center h-14 gap-4 border-b pb-2.5 sm:pb-0 sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
           {user ? (
             <SidebarTrigger className="-ml-1" />
           ) : (
             <span className="w-5"></span>
           )}
-          <span className="text-sm">
-            <b>{certificate.batch.program.name}</b> &mdash;{" "}
+          <div className="text-sm grow flex flex-col sm:flex-row">
+            <b>{certificate.batch.program.name}</b>
+            <div className="hidden sm:block px-2">&mdash;</div>
             {certificate.batch.name}
-          </span>
+          </div>
+          {!user && (
+            <Button variant="outline" asChild>
+              <Link to={`/user/login`}>Sign in</Link>
+            </Button>
+          )}
         </header>
 
-        <section className="flex flex-col p-8 gap-4 grow">
+        <section className="flex flex-col p-8 gap-4 max-w-[80ch]">
           <h1 className="text-5xl font-bold mb-4">
             {certificate.firstName} {certificate.lastName}
           </h1>
@@ -118,10 +124,11 @@ export default function Index() {
             </Markdown>
           )}
 
-          <div className="flex mt-4 gap-4">
+          <div className="flex flex-col sm:flex-row mt-4 gap-4">
             <Button asChild>
               <Link
                 to={`/cert/${certificate.uuid}/download.pdf`}
+                className="grow sm:grow-0"
                 reloadDocument
               >
                 <Download />
@@ -137,33 +144,32 @@ export default function Index() {
               </Button>
             )}
           </div>
-
-          <div className="grow"></div>
-
-          {certificate.batch.program.about && (
-            <>
-              <h3 className="font-bold">
-                About {certificate.batch.program.name}
-              </h3>
-              <Markdown>{certificate.batch.program.about}</Markdown>
-            </>
-          )}
-
-          {certificate.batch.program.website && (
-            <a
-              href={certificate.batch.program.website}
-              className="self-start inline-flex underline underline-offset-2"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ArrowRight /> {certificate.batch.program.website}
-            </a>
-          )}
         </section>
       </div>
-      <div className="flex flex-col p-8">
+      <div className="col-start-1 row-start-3 xl:row-start-2 flex flex-col p-12 gap-4 justify-end max-w-[80ch]">
+        {certificate.batch.program.about && (
+          <>
+            <h3 className="font-bold">
+              About {certificate.batch.program.name}
+            </h3>
+            <Markdown>{certificate.batch.program.about}</Markdown>
+          </>
+        )}
+
+        {certificate.batch.program.website && (
+          <a
+            href={certificate.batch.program.website}
+            className="self-start inline-flex underline underline-offset-2"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ArrowRight /> {certificate.batch.program.website}
+          </a>
+        )}
+      </div>
+      <div className="col-start-1 row-start-2 xl:col-start-2 xl:row-span-2 xl:row-start-1 px-12 pt-4 pb-12">
         <img
-          className="drop-shadow-xl w-full h-full max-h-[calc(100vh-64px)] object-contain"
+          className="drop-shadow-xl h-full max-h-[calc(100vh-64px)] object-contain"
           src={`/cert/${certificate.uuid}/preview.png?t=${certificate.updatedAt}`}
           alt="Preview of the certificate"
         />
