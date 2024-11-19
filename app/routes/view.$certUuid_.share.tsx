@@ -21,27 +21,11 @@ import { replaceVariables } from "~/lib/text-variables";
 
 import { loader as viewLoader } from "./view";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction = () => {
   return [
     {
-      title: `${data.certificate.firstName} ${data.certificate.lastName} is certified by ${data.certificate.batch.program.name}`,
+      title: "Share certificate",
     },
-    {
-      name: "description",
-      content: replaceVariables(
-        data.certificate.batch.program.achievement,
-        data.certificate.template.locale,
-        data.certificate,
-        data.certificate.batch,
-      ),
-    },
-
-    /* 
-  <meta property='og:title' content='Title of the article'/>
-  <meta property='og:image' content='//media.example.com/ 1234567.jpg'/>
-  <meta property='og:description' content='Description that will show in the preview'/>
-  <meta property='og:url' content='//www.example.com/URL of the article' /> 
-*/
   ];
 };
 
