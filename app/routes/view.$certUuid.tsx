@@ -94,7 +94,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 export default function Index() {
   const { certificate } = useLoaderData<typeof loader>();
-  const { user } = useRouteLoaderData<typeof viewLoader>("routes/view");
+  const { org, user } = useRouteLoaderData<typeof viewLoader>("routes/view");
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 min-h-screen">
@@ -164,16 +164,35 @@ export default function Index() {
           </>
         )}
 
-        {certificate.batch.program.website && (
-          <a
-            href={certificate.batch.program.website}
-            className="self-start inline-flex underline underline-offset-2"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ArrowRight /> {certificate.batch.program.website}
-          </a>
-        )}
+        {
+          /* @todo improve word breaks with <wbr> in links */
+          certificate.batch.program.website && (
+            <a
+              href={certificate.batch.program.website}
+              className="self-start inline-flex underline underline-offset-2 break-all"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ArrowRight className="mr-2" />
+              {certificate.batch.program.website}
+            </a>
+          )
+        }
+
+        <div className="text-xs mt-8">
+          {org.name}&emsp;&middot;&emsp;
+          {org.imprintUrl && (
+            <a href={org.imprintUrl} target="_blank" rel="noopener noreferrer">
+              Imprint
+            </a>
+          )}
+          &emsp;&middot;&emsp;
+          {org.privacyUrl && (
+            <a href={org.privacyUrl} target="_blank" rel="noopener noreferrer">
+              Privacy
+            </a>
+          )}
+        </div>
       </div>
       <div className="col-start-1 row-start-2 xl:col-start-2 xl:row-span-2 xl:row-start-1 px-12 pt-4 pb-12">
         <img
