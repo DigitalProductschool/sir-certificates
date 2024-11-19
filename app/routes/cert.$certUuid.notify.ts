@@ -31,6 +31,25 @@ export const action: ActionFunction = async ({ request, params }) => {
 		});
 	}
 
+	const org = await prisma.organisation.findUnique({
+		where: {
+			id: 1,
+		},
+	});
+
+	if (!org) {
+		throw new Response(null, {
+			status: 500,
+			statusText: "Missing organisation",
+		});
+	}
+
+	const social = await prisma.socialPreview.findUnique({
+		where: {
+			programId: certificate.batch.programId,
+		},
+	});
+
 	// @todo refactor to singleton/import
 	const mailjet = new Mailjet({
 		apiKey: process.env.MJ_APIKEY_PUBLIC,
@@ -48,6 +67,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 		pdfBase64 = pdf.toString("base64");
 	}
 
+	const mailText = social
+		? `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\nYou can download and share your certificate with this link:\nhttps://certificates.unternehmertum.de/view/${certificate.uuid}\n\nCongratulations!`
+		: `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.\n\nAll the best!`;
+	const mailHTML = social
+		? `<p>Dear ${certificate.firstName} ${certificate.lastName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.</p><p>You can download and share your certificate with this link:<br /><a href="https://certificates.unternehmertum.de/view/${certificate.uuid}">https://certificates.unternehmertum.de/view/${certificate.uuid}</a></p><p>Congratulations!</p>`
+		: `<p>Dear ${certificate.firstName} ${certificate.lastName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.</p><p>All the best!</p>`;
+
+	// @todo sender email, domain and links need to be configurable
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const response: any = await mailjet
 		.post("send", { version: "v3.1" })
@@ -58,7 +85,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					CustomId: certificate.uuid,
 					From: {
 						Email: "notifications@certificates.unternehmertum.de",
-						Name: "UnternehmerTUM Certificates",
+						Name: `${org.name} Certificates`,
 					},
 					To: [
 						{
@@ -67,8 +94,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 						},
 					],
 					Subject: `Your certificate from ${certificate.batch.program.name} is ready`,
-					TextPart: `Dear ${certificate.firstName} ${certificate.lastName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\nYou can download and share your certificate with this link:\nhttps://certificates.unternehmertum.de/view/${certificate.uuid}\n\nCongratulations!`,
-					HTMLPart: `<p>Dear ${certificate.firstName} ${certificate.lastName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.</p><p>You can download and share your certificate with this link:<br /><a href="https://certificates.unternehmertum.de/view/${certificate.uuid}">https://certificates.unternehmertum.de/view/${certificate.uuid}</a></p><p>Congratulations!</p>`,
+					TextPart: mailText,
+					HTMLPart: mailHTML,
 					Attachments: [
 						{
 							ContentType: "application/pdf",
