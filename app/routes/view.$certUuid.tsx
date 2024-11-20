@@ -5,6 +5,7 @@ import { ArrowRight, Download, Share } from "lucide-react";
 import Markdown from "markdown-to-jsx";
 import { Button } from "~/components/ui/button";
 import { SidebarTrigger } from "~/components/ui/sidebar";
+import { domain } from "~/lib/config.server";
 import { prisma } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/text-variables";
 import { loader as viewLoader } from "./view";
@@ -39,11 +40,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     },
     {
       property: "og:image",
-      content: `https://certificates.unternehmertum.de/cert/${data.certificate.uuid}/social-preview.png?t=${data.certificate.updatedAt}`,
+      content: `${domain}/cert/${data.certificate.uuid}/social-preview.png?t=${data.certificate.updatedAt}`,
     },
     {
       property: "og:url",
-      content: `https://certificates.unternehmertum.de/view/${data.certificate.uuid}`,
+      content: `${domain}/view/${data.certificate.uuid}`,
     },
   ];
 };
