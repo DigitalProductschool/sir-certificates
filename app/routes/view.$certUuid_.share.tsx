@@ -63,7 +63,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
-  const domain = process.env.HOST;
+  // @todo refactor to DRY up (cert...notify.js)
+  const domain = process.env.DOMAIN_ROOT;
 
   return json({ certificate, social, domain });
 };
@@ -87,7 +88,7 @@ export default function Index() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 h-screen">
+    <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
       <div className="flex flex-col px-4 py-3 grow">
         <header className="flex items-center h-14 gap-4 border-b sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
           {user ? (
