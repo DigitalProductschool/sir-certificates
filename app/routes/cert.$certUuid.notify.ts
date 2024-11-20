@@ -67,11 +67,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 		pdfBase64 = pdf.toString("base64");
 	}
 
+	const domain = process.env.HOST;
+
 	const mailText = social
-		? `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\nYou can download and share your certificate with this link:\nhttps://certificates.unternehmertum.de/view/${certificate.uuid}\n\nCongratulations!`
+		? `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\nYou can download and share your certificate with this link:\n${domain}/view/${certificate.uuid}\n\nCongratulations!`
 		: `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.\n\nAll the best!`;
 	const mailHTML = social
-		? `<p>Dear ${certificate.firstName} ${certificate.lastName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.</p><p>You can download and share your certificate with this link:<br /><a href="https://certificates.unternehmertum.de/view/${certificate.uuid}">https://certificates.unternehmertum.de/view/${certificate.uuid}</a></p><p>Congratulations!</p>`
+		? `<p>Dear ${certificate.firstName} ${certificate.lastName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.</p><p>You can download and share your certificate with this link:<br /><a href="${domain}/view/${certificate.uuid}">${domain}/view/${certificate.uuid}</a></p><p>Congratulations!</p>`
 		: `<p>Dear ${certificate.firstName} ${certificate.lastName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.</p><p>All the best!</p>`;
 
 	// @todo sender email, domain and links need to be configurable
