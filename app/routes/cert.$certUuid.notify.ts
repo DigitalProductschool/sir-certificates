@@ -69,11 +69,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 	}
 
 	const mailText = social
-		? `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\nYou can download and share your certificate with this link:\n${domain}/view/${certificate.uuid}\n\nCongratulations!`
+		? `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\n\nDownload your certificate from this link:\n${domain}/view/${certificate.uuid}\n\n\nShare your certificate on social media with your personal link:\n1. Sign up to our certificate tool at the link above\n2. Insert your photo into the social media preview\n3. Share it across your platforms\n\n\nCongratulations!`
 		: `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.\n\nAll the best!`;
 	const mailHTML = social
-		? `<p>Dear ${certificate.firstName} ${certificate.lastName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.</p><p>You can download and share your certificate with this link:<br /><a href="${domain}/view/${certificate.uuid}">${domain}/view/${certificate.uuid}</a></p><p>Congratulations!</p>`
-		: `<p>Dear ${certificate.firstName} ${certificate.lastName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.</p><p>All the best!</p>`;
+		? `<p>Dear ${certificate.firstName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.</p><p>Download your certificate from this link:<br/><a href="${domain}/view/${certificate.uuid}" rel="notrack">${domain}/view/${certificate.uuid}</a></p><p>Share your certificate on social media with your personal link:<ol><li><a href="${domain}/user/login" rel="notrack">Sign up</a> to our certificate tool at the link above</li><li>Insert your photo into the social media preview</li><li>Share it across your platforms</li></ol></p><p>Congratulations!</p><br/>`
+		: `<p>Dear ${certificate.firstName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.</p><p>All the best!</p>`;
 
 	// @todo sender email, domain and links need to be configurable
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
