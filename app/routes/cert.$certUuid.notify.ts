@@ -4,6 +4,7 @@ import Mailjet from "node-mailjet";
 import slug from "slug";
 
 import { requireAdmin } from "~/lib/auth.server";
+import { domain } from "~/lib/config.server";
 import { generateCertificate } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
 
@@ -66,8 +67,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 	if (pdf) {
 		pdfBase64 = pdf.toString("base64");
 	}
-
-	const domain = process.env.DOMAIN_ROOT;
 
 	const mailText = social
 		? `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\nYou can download and share your certificate with this link:\n${domain}/view/${certificate.uuid}\n\nCongratulations!`
