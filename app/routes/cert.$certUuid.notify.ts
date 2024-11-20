@@ -67,7 +67,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		pdfBase64 = pdf.toString("base64");
 	}
 
-	const domain = process.env.HOST;
+	const domain = process.env.DOMAIN_ROOT;
 
 	const mailText = social
 		? `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\nYou can download and share your certificate with this link:\n${domain}/view/${certificate.uuid}\n\nCongratulations!`
