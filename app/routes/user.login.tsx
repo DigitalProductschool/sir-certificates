@@ -169,6 +169,13 @@ export default function Login() {
 			<div
 				className={`h-screen flex flex-col items-center justify-center px-4 dark:bg-black ${isMobile ? "col-span-2" : ""}`}
 			>
+				{searchParams.get("verification") === "done" && (
+					<div className="absolute top-10 flex mx-8 p-2 px-4 gap-2 rounded-xl bg-green-600 text-primary-foreground">
+						<CheckIcon /> Email successfully verified. You can now
+						sign in.
+					</div>
+				)}
+
 				<div className="grow"></div>
 				{isMobile && (
 					<svg
@@ -304,12 +311,6 @@ export default function Login() {
 					)}
 				</div>
 			</div>
-			{searchParams.get("verification") === "done" && (
-				<div className="absolute top-8 flex p-2 px-4 gap-2 rounded-xl bg-green-600 text-primary-foreground">
-					<CheckIcon /> Email successfully verified. You can now
-					login.
-				</div>
-			)}
 		</div>
 	);
 }
