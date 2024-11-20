@@ -172,7 +172,7 @@ export default function Index() {
               You can change your photo in the account settings.
             </div>
           )}
-          <div className="flex flex-row gap-2 max-w-[650px]">
+          <div className="flex flex-row gap-2 max-w-[650px] mb-8">
             <Input defaultValue={certificateUrl} readOnly />
             <Button onClick={handleCopy} className="w-40 justify-start">
               {copiedToClipboard ? (
@@ -187,14 +187,16 @@ export default function Index() {
                 </>
               )}
             </Button>
+            <Button asChild>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificateUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Share on LinkedIn
+              </a>
+            </Button>
           </div>
-          <a
-            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificateUrl)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Share on LinkedIn
-          </a>
         </section>
       </div>
     </div>
