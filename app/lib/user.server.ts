@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { writeFile, unlink } from "node:fs/promises";
 import bcrypt from "bcryptjs";
 import Mailjet from "node-mailjet";
+import { domain } from "./config.server";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 
@@ -53,9 +54,9 @@ export const sendVerificationEmail = async (user: User) => {
 		apiSecret: process.env.MJ_APIKEY_PRIVATE,
 	});
 
-	// @todo dynamic domain and org name (from settings?)
-	const verificationUrl = `https://certificates.unternehmertum.de/user/verify/${user.id}/${user.verifyCode}`;
+	const verificationUrl = `${domain}/user/verify/${user.id}/${user.verifyCode}`;
 
+	// @todo dynamic org name (from settings?)
 	await mailjet
 		.post("send", { version: "v3.1" })
 		.request({
@@ -97,8 +98,8 @@ export const sendInvitationEmail = async (
 		apiSecret: process.env.MJ_APIKEY_PRIVATE,
 	});
 
-	// @todo dynamic domain (from settings?) // @todo replace org names
-	const acceptUrl = `https://certificates.unternehmertum.de/user/accept-invite/${invite.id}/${invite.verifyCode}`;
+	// @todo dynamic org name from database
+	const acceptUrl = `${domain}/user/accept-invite/${invite.id}/${invite.verifyCode}`;
 
 	const text = `Dear ${invite.firstName} ${invite.lastName},\n\n${from ? `${from.firstName} ${from.lastName} is inviting you` : "you have been invited"} to become an admiminstrator for the UnternehmerTUM certificates tool.\n\nTo accept the invitation, please click on the following link:\n${acceptUrl}\n\nThank you!`;
 	const html = `<p>Dear ${invite.firstName} ${invite.lastName},</p><p>${from ? `${from.firstName} ${from.lastName} is inviting you` : "you have been invited"} to become an admiminstrator for the UnternehmerTUM certificates tool.</p><p>To accept the invitation, please click on the following link:<br /><a href="${acceptUrl}">${acceptUrl}</a></p><p>Thank you!</p>`;
