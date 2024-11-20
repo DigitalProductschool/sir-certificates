@@ -40,11 +40,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     },
     {
       property: "og:image",
-      content: `${domain}/cert/${data.certificate.uuid}/social-preview.png?t=${data.certificate.updatedAt}`,
+      content: `${data.domain}/cert/${data.certificate.uuid}/social-preview.png?t=${data.certificate.updatedAt}`,
     },
     {
       property: "og:url",
-      content: `${domain}/view/${data.certificate.uuid}`,
+      content: `${data.domain}/view/${data.certificate.uuid}`,
     },
   ];
 };
@@ -90,7 +90,7 @@ export const loader: LoaderFunction = async ({ params }) => {
     });
   }
 
-  return json({ certificate });
+  return json({ certificate, domain });
 };
 
 export default function Index() {
