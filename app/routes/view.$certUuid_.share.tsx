@@ -63,16 +63,18 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
-  return json({ certificate, social });
+  const domain = process.env.HOST;
+
+  return json({ certificate, social, domain });
 };
 
 export default function Index() {
-  const { certificate, social } = useLoaderData<typeof loader>();
+  const { certificate, social, domain } = useLoaderData<typeof loader>();
   const { user, userPhoto } =
     useRouteLoaderData<typeof viewLoader>("routes/view");
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
-  const certificateUrl = `https://certificates.unternehmertum.de/view/${certificate.uuid}`;
+  const certificateUrl = `${domain}/view/${certificate.uuid}`;
 
   const handleCopy = async () => {
     try {
