@@ -309,6 +309,9 @@ export default function UserUploadPictureDialog() {
 			setCroppedAreaPixels(null);
 			setIsLoading(false);
 			setError(null);
+
+			// Close the dialog
+			navigate(-1);
 		}
 	}, [fetcher.data]);
 
@@ -493,11 +496,9 @@ export default function UserUploadPictureDialog() {
 								</TooltipContent>
 							</Tooltip>
 						</Form>
-
 						<Button type="button" variant="outline" asChild>
 							<Link to={-1}>Back</Link>
 						</Button>
-
 						<Button
 							type="button"
 							disabled={

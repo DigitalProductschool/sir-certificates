@@ -3,7 +3,7 @@ import { useState } from "react";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData, useRouteLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
-import { ClipboardCopy, ClipboardCheck } from "lucide-react";
+import { ClipboardCopy, ClipboardCheck, SquareUserRound } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -108,13 +108,21 @@ export default function Index() {
             LinkedIn or other social media.
           </p>
 
-          {!userPhoto && (
-            <img
-              src="/assets/scribble-add-photo.svg"
-              alt="Add yourself to the preview here"
-              className="ml-[175px] w-[40%]"
-            />
-          )}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <Button asChild>
+              <Link to="/user/photo">
+                <SquareUserRound />
+                {userPhoto ? "Change" : "Add"} photo
+              </Link>
+            </Button>
+            {!userPhoto && (
+              <img
+                src="/assets/scribble-add-photo.svg"
+                alt="Add yourself to the preview here"
+                className="ml-[75px] w-[60%] sm:w-[40%]"
+              />
+            )}
+          </div>
 
           <Card className="max-w-[650px]">
             <CardHeader>
@@ -167,14 +175,9 @@ export default function Index() {
             </CardContent>
             <CardFooter></CardFooter>
           </Card>
-          {userPhoto && (
-            <div className="text-sm text-slate-500 mt-[-10px] pl-1">
-              You can change your photo in the account settings.
-            </div>
-          )}
-          <div className="flex flex-row gap-2 max-w-[650px] mb-8">
+          <div className="flex flex-col sm:flex-row gap-2 max-w-[650px] mb-8">
             <Input defaultValue={certificateUrl} readOnly />
-            <Button onClick={handleCopy} className="w-40 justify-start">
+            <Button onClick={handleCopy} className="sm:w-40 sm:justify-start">
               {copiedToClipboard ? (
                 <>
                   <ClipboardCheck />
@@ -193,7 +196,7 @@ export default function Index() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Share on LinkedIn
+                Post on LinkedIn
               </a>
             </Button>
           </div>
