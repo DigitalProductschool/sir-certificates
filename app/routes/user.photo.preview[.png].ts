@@ -20,6 +20,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 		});
 	}
 
+	// @todo support resizing the photo on the fly (i.e. for user icon sizes)?
 	const photoBuffer = await readPhoto(userPhoto);
 	if (photoBuffer) {
 		return new Response(photoBuffer, {

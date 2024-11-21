@@ -61,7 +61,7 @@ export const action: ActionFunction = async ({ request }) => {
 		if (userPhoto) {
 			const photoBuffer = await photo.arrayBuffer();
 			await saveTransparentPhoto(userPhoto, photoBuffer);
-			return json({ userPhoto });
+			return json({ userPhoto: { updatedAt: userPhoto.updatedAt } });
 		}
 	} else {
 		return new Response(null, {

@@ -97,7 +97,14 @@ export const loader: LoaderFunction = async ({ request }) => {
 	const user = await getUser(request);
 	if (user) return redirect("/");
 
-	const org = await prisma.organisation.findUnique({ where: { id: 1 } });
+	const org = await prisma.organisation.findUnique({
+		where: { id: 1 },
+		select: {
+			name: true,
+			imprintUrl: true,
+			privacyUrl: true,
+		},
+	});
 
 	return json({ org });
 };
