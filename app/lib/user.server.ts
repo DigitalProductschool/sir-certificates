@@ -14,11 +14,12 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const userPhotoDir = resolve(__dirname, "../../storage/user/photos");
 
 export const createUser = async (user: RegisterForm) => {
+	const emailLowerCase = user.email.toLowerCase();
 	const passwordHash = await bcrypt.hash(user.password, 10);
 	const verifyCode = randomUUID();
 	const newUser = await prisma.user.create({
 		data: {
-			email: user.email,
+			email: emailLowerCase,
 			password: passwordHash,
 			firstName: user.firstName,
 			lastName: user.lastName,
@@ -26,7 +27,7 @@ export const createUser = async (user: RegisterForm) => {
 		},
 	});
 	await sendVerificationEmail(newUser);
-	return { id: newUser.id, email: user.email };
+	return { id: newUser.id, email: emailLowerCase };
 };
 
 export const createUserInvitation = async (
@@ -34,9 +35,10 @@ export const createUserInvitation = async (
 	from: User | null,
 ) => {
 	const verifyCode = randomUUID();
+	const emailLowerCase = user.email.toLowerCase();
 	const invite = await prisma.userInvitation.create({
 		data: {
-			email: user.email,
+			email: emailLowerCase,
 			firstName: user.firstName,
 			lastName: user.lastName,
 			isAdmin: true,
@@ -44,7 +46,7 @@ export const createUserInvitation = async (
 		},
 	});
 	await sendInvitationEmail(invite, from);
-	return { id: invite.id, email: user.email };
+	return { id: invite.id, email: emailLowerCase };
 };
 
 export const sendVerificationEmail = async (user: User) => {

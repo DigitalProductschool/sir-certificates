@@ -34,7 +34,11 @@ async function getUserId(request: Request) {
 }
 
 export async function register(user: RegisterForm) {
-	const exists = await prisma.user.count({ where: { email: user.email } });
+	const emailLowerCase = user.email.toLowerCase();
+
+	const exists = await prisma.user.count({
+		where: { email: emailLowerCase },
+	});
 	if (exists) {
 		return json(
 			{ error: `User already exists with that email` },
@@ -58,7 +62,7 @@ export async function register(user: RegisterForm) {
 
 export async function login({ email, password }: LoginForm) {
 	const user = await prisma.user.findUnique({
-		where: { email },
+		where: { email: email.toLowerCase() },
 	});
 
 	if (!user || !(await bcrypt.compare(password, user.password)))
