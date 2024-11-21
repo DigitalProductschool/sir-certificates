@@ -136,6 +136,18 @@ export default function Login() {
 	};
 
 	useEffect(() => {
+		if (searchParams.get("sign") === "up") {
+			setFormAction("register");
+		}
+		if (searchParams.get("email")) {
+			setFormData({
+				...formData,
+				email: searchParams.get("email"),
+			});
+		}
+	}, [searchParams]);
+
+	useEffect(() => {
 		setIsClient(true);
 	}, []);
 
