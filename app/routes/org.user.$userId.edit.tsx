@@ -53,10 +53,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 export const loader: LoaderFunction = async ({ request, params }) => {
   await requireAdmin(request);
 
-  // @todo explicitly select necessary fields (don't send password, etc.)
   const user = await prisma.user.findUnique({
     where: {
       id: Number(params.userId),
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      isAdmin: true,
     },
   });
 
