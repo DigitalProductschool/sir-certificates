@@ -71,7 +71,7 @@ export default function UserIndexPage() {
   const { user, invitations } = useLoaderData<typeof loader>();
 
   return (
-    <>
+    <div className="flex flex-col gap-4">
       <div>
         <Button asChild>
           <Link to="invite">Invite Admin</Link>
@@ -140,6 +140,6 @@ export default function UserIndexPage() {
           )}
         </TableBody>
       </Table>
-    </>
+    </div>
   );
 }
