@@ -68,7 +68,7 @@ export default function TypefaceIndexPage() {
   const { typefaces } = useLoaderData<typeof loader>();
 
   return (
-    <>
+    <div className="flex flex-col gap-4">
       <div>
         <Button asChild>
           <Link to="create">Add Typeface</Link>
@@ -113,6 +113,6 @@ export default function TypefaceIndexPage() {
           )}
         </TableBody>
       </Table>
-    </>
+    </div>
   );
 }
