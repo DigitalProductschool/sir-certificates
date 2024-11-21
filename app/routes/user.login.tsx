@@ -118,8 +118,10 @@ export default function Login() {
 	const [formData, setFormData] = useState({
 		email: actionData?.fields?.email || "",
 		password: actionData?.fields?.password || "",
-		firstName: actionData?.fields?.lastName || "",
-		lastName: actionData?.fields?.firstName || "",
+		firstName:
+			actionData?.fields?.lastName || searchParams.get("firstName") || "",
+		lastName:
+			actionData?.fields?.firstName || searchParams.get("lastName") || "",
 	});
 
 	const isMobile = useIsMobile();

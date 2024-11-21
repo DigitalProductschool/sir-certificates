@@ -1,10 +1,22 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import { useEffect, useState } from "react";
 import { json } from "@remix-run/node";
-import { Link, useLoaderData, useRouteLoaderData } from "@remix-run/react";
+import {
+  Link,
+  useLoaderData,
+  useRouteLoaderData,
+  useSearchParams,
+} from "@remix-run/react";
 import { ArrowRight, Download, Share } from "lucide-react";
 import Markdown from "markdown-to-jsx";
 import { Button } from "~/components/ui/button";
 import { SidebarTrigger } from "~/components/ui/sidebar";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { domain } from "~/lib/config.server";
 import { prisma } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/text-variables";
@@ -96,66 +108,100 @@ export const loader: LoaderFunction = async ({ params }) => {
 export default function Index() {
   const { certificate } = useLoaderData<typeof loader>();
   const { org, user } = useRouteLoaderData<typeof viewLoader>("routes/view");
+  const [signUpMail, setSignUpMail] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("signup")) {
+      setSignUpMail(searchParams.get("signup"));
+      setSearchParams({});
+    }
+  }, [searchParams]);
+
+  console.log(signUpMail);
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 min-h-screen">
-      <div className="col-start-1 row-start-1 flex flex-col px-2 sm:px-4 py-3">
-        <header className="flex items-center h-14 gap-4 border-b pb-2.5 sm:pb-0 sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
-          {user ? (
-            <SidebarTrigger className="-ml-1" />
-          ) : (
-            <span className="w-5"></span>
-          )}
-          <div className="text-sm grow flex flex-col sm:flex-row">
-            <b>{certificate.batch.program.name}</b>
-            <div className="hidden sm:block px-2">&mdash;</div>
-            {certificate.batch.name}
-          </div>
-          {!user && (
-            <Button variant="outline" asChild>
-              <Link to={`/user/login`}>Sign in</Link>
-            </Button>
-          )}
-        </header>
-
-        <section className="flex flex-col p-8 gap-4 max-w-[80ch]">
-          <h1 className="text-5xl font-bold mb-4">
-            {certificate.firstName} {certificate.lastName}
-          </h1>
-
-          {certificate.batch.program.achievement && (
-            <Markdown>
-              {replaceVariables(
-                certificate.batch.program.achievement,
-                certificate.template.locale,
-                certificate,
-                certificate.batch,
-              )}
-            </Markdown>
-          )}
-
-          <div className="flex flex-col sm:flex-row mt-4 gap-4">
-            <Button asChild>
-              <Link
-                to={`/cert/${certificate.uuid}/download.pdf`}
-                className="grow sm:grow-0"
-                reloadDocument
-              >
-                <Download />
-                Download Certificate
-              </Link>
-            </Button>
-            {user && (
-              <Button asChild>
-                <Link to={`/view/${certificate.uuid}/share`}>
-                  <Share />
-                  Share on Social Media
-                </Link>
+      <TooltipProvider delayDuration={0}>
+        <div className="col-start-1 row-start-1 flex flex-col px-2 sm:px-4 py-3">
+          <header className="flex items-center h-14 gap-4 border-b pb-2.5 sm:pb-0 sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
+            {user ? (
+              <SidebarTrigger className="-ml-1" />
+            ) : (
+              <span className="w-5"></span>
+            )}
+            <div className="text-sm grow flex flex-col sm:flex-row">
+              <b>{certificate.batch.program.name}</b>
+              <div className="hidden sm:block px-2">&mdash;</div>
+              {certificate.batch.name}
+            </div>
+            {!user && (
+              <Button variant={signUpMail ? "default" : "outline"} asChild>
+                {signUpMail ? (
+                  <Link to={`/user/login?sign=up&email=${signUpMail}`}>
+                    Sign up
+                  </Link>
+                ) : (
+                  <Link to={`/user/login`}>Sign in</Link>
+                )}
               </Button>
             )}
-          </div>
-        </section>
-      </div>
+          </header>
+
+          <section className="flex flex-col p-8 gap-4 max-w-[80ch]">
+            <h1 className="text-5xl font-bold mb-4">
+              {certificate.firstName} {certificate.lastName}
+            </h1>
+
+            {certificate.batch.program.achievement && (
+              <Markdown>
+                {replaceVariables(
+                  certificate.batch.program.achievement,
+                  certificate.template.locale,
+                  certificate,
+                  certificate.batch,
+                )}
+              </Markdown>
+            )}
+
+            <div className="flex flex-col sm:flex-row mt-4 gap-4">
+              <Button asChild>
+                <Link
+                  to={`/cert/${certificate.uuid}/download.pdf`}
+                  className="grow sm:grow-0"
+                  reloadDocument
+                >
+                  <Download />
+                  Download Certificate
+                </Link>
+              </Button>
+              {user && (
+                <Button asChild>
+                  <Link to={`/view/${certificate.uuid}/share`}>
+                    <Share />
+                    Share on Social Media
+                  </Link>
+                </Button>
+              )}
+              {!user && signUpMail && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button asChild>
+                      <Link to={`/user/login?sign=up&email=${signUpMail}`}>
+                        <Share />
+                        Share on Social Media
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    Sign up to share a personalized preview with your photo
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </section>
+        </div>
+      </TooltipProvider>
       <div className="col-start-1 row-start-3 xl:row-start-2 flex flex-col p-12 gap-4 justify-end max-w-[80ch]">
         {certificate.batch.program.about && (
           <>
