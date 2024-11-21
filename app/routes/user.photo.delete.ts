@@ -21,10 +21,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	await deleteUserPhoto(userPhoto);
 
-	const url = new URL(request.url);
-	const redirectTo = url.searchParams.get("redirectTo");
-
-	return redirect(redirectTo ? redirectTo : `/user/photo`);
+	return redirect(`/user/photo`);
 };
 
 // @todo improve user-facing error handling with an ErrorBoundary and a Dialog
