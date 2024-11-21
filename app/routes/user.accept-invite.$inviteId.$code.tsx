@@ -81,11 +81,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 export const loader: LoaderFunction = async ({ params }) => {
 	if (params.inviteId && params.code) {
-		// @todo explicitly select necessary fields (don't send internals)
 		const invite = await prisma.userInvitation.findUnique({
 			where: {
 				id: Number(params.inviteId),
 				verifyCode: params.code,
+			},
+			select: {
+				email: true,
 			},
 		});
 

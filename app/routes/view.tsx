@@ -27,6 +27,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
+  // @todo refactor the loader into the subroutes, based on public/private access, with strict select statements
   const user = await getUser(request);
 
   const org = await prisma.organisation.findUnique({

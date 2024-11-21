@@ -124,11 +124,12 @@ export default function Index() {
           </h1>
 
           {certificate.batch.program.achievement && (
-            /* @todo support all variable replacements */
             <Markdown>
-              {certificate.batch.program.achievement.replaceAll(
-                "{certificate.fullName}",
-                certificate.firstName.concat(" ", certificate.lastName),
+              {replaceVariables(
+                certificate.batch.program.achievement,
+                certificate.template.locale,
+                certificate,
+                certificate.batch,
               )}
             </Markdown>
           )}
