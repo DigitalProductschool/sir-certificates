@@ -98,8 +98,16 @@ export const loader: LoaderFunction = async ({ params }) => {
 			});
 		}
 
-		return json({ invite });
+		const org = await prisma.organisation.findUnique({
+			where: {
+				id: 1,
+			},
+		});
+
+		return json({ invite, org });
 	}
+
+	// @todo load org and add imprint/privacy footer
 
 	// Got here?
 	throw new Response(null, {
@@ -109,10 +117,21 @@ export const loader: LoaderFunction = async ({ params }) => {
 };
 
 export default function AcceptInvitationPage() {
-	const { invite } = useLoaderData<typeof loader>();
+	const { invite, org } = useLoaderData<typeof loader>();
 
 	return (
 		<Layout type="modal">
+			<svg
+				className="w-12 h-12 grow"
+				width="120"
+				height="120"
+				viewBox="0 0 120 120"
+				fill="currentColor"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<path d="M39.9792 71.8087V0.309998H10.0082V71.8087C9.88754 78.7518 11.0948 85.654 13.5649 92.144C15.7741 97.81 19.1859 102.929 23.5651 107.149C28.0804 111.375 33.4587 114.572 39.3289 116.519C45.9974 118.74 52.9908 119.829 60.0189 119.741V92.3115C54.1075 92.2721 49.3061 90.4987 45.6147 86.9912C41.9234 83.4838 40.0448 78.4229 39.9792 71.8087ZM109.931 0.309998H79.9995V67.7594H110L109.931 0.309998ZM106.374 92.4297C104.165 86.7608 100.754 81.6381 96.3742 77.4147C91.8583 73.1915 86.48 69.9982 80.6104 68.0549C73.9424 65.8306 66.949 64.7383 59.9204 64.8234V92.3115C65.8318 92.3115 70.6365 94.0849 74.3344 97.6318C78.0323 101.179 79.8944 106.236 79.9207 112.804V118.164H109.921V112.804C110.074 105.853 108.893 98.9368 106.443 92.4297H106.374Z" />
+			</svg>
+
 			<Card className="mx-auto max-w-sm">
 				<CardHeader>
 					<CardTitle className="text-2xl">
@@ -139,6 +158,11 @@ export default function AcceptInvitationPage() {
 					</CardFooter>
 				</Form>
 			</Card>
+			<div className="text-xs grow flex flex-row items-end pb-12">
+				{org?.name}&emsp;&middot;&emsp;
+				<a href={org?.imprintUrl}>Imprint</a>&emsp;&middot;&emsp;
+				<a href={org?.privacyUrl}>Privacy</a>
+			</div>
 		</Layout>
 	);
 }
