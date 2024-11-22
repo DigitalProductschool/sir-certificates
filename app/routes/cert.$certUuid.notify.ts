@@ -51,6 +51,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 		},
 	});
 
+	const participant = await prisma.user.findUnique({
+		where: {
+			email: certificate.email,
+		},
+	});
+
 	// @todo refactor to singleton/import
 	const mailjet = new Mailjet({
 		apiKey: process.env.MJ_APIKEY_PUBLIC,
@@ -68,15 +74,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 		pdfBase64 = pdf.toString("base64");
 	}
 
-	const certUrl = `${domain}/view/${certificate.uuid}?signup=${certificate.email}`;
-
-	// @todo – for the sign-up or sign-in link, check if a user with that email exists and use the correct link
+	const certUrl = `${domain}/view/${certificate.uuid}?sign${participant ? "in" : "up"}=${certificate.email}`;
+	const loginUrl = participant
+		? `${domain}/user/login?email=${certificate.email}`
+		: `${domain}/user/login?sign=up&email=${certificate.email}&firstName=${certificate.firstName}&lastName=${certificate.lastName}`;
 
 	const mailText = social
 		? `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\n\nDownload your certificate from this link:\n${certUrl}\n\n\nShare your certificate on social media with your personal link:\n1. Sign up to our certificate tool with this email address at the link above\n2. Insert your photo into the social media preview\n3. Share it across your platforms\n\n\nCongratulations!`
 		: `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.\n\nAll the best!`;
 	const mailHTML = social
-		? `<p>Dear ${certificate.firstName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.</p><p>Download your certificate from this link:<br/><a href="${certUrl}" rel="notrack">${certUrl}</a></p><p>Share your certificate on social media with your personal link:<ol><li><a href="${domain}/user/login?sign=up&email=${certificate.email}&firstName=${certificate.firstName}&lastName=${certificate.lastName}" rel="notrack">Sign up</a> to our certificate tool with this email address at the link above</li><li>Insert your photo into the social media preview</li><li>Share it across your platforms</li></ol></p><p>Congratulations!</p><br/>`
+		? `<p>Dear ${certificate.firstName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.</p><p>Download your certificate from this link:<br/><a href="${certUrl}" rel="notrack">${certUrl}</a></p><p>Share your certificate on social media with your personal link:<ol><li><a href="${loginUrl}" rel="notrack">Sign ${participant ? "in" : "up"}</a> to our certificate tool with this email address at the link above</li><li>Insert your photo into the social media preview</li><li>Share it across your platforms</li></ol></p><p>Congratulations!</p><br/>`
 		: `<p>Dear ${certificate.firstName},</p><p>your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.</p><p>All the best!</p>`;
 
 	// @todo sender email, domain and links need to be configurable
