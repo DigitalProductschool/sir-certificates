@@ -37,6 +37,8 @@ export const loader: LoaderFunction = async ({ params }) => {
 		}
 	}
 
+	// @todo create a one-time-password for the verification process and start a logged-in user session immediately
+
 	// Got here?
 	throw new Response(null, {
 		status: 400,

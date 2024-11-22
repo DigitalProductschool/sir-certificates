@@ -75,8 +75,8 @@ export const sendVerificationEmail = async (user: User) => {
 						},
 					],
 					Subject: `Please verify your email`,
-					TextPart: `Dear ${user.firstName} ${user.lastName},\n\nto complete your sign up for UnternehmerTUM Certificates, please click on the following link:\n${verificationUrl}\n\nIf you haven't signed up yourself, please ignore or report this email.\n\nThank you!`,
-					HTMLPart: `<p>Dear ${user.firstName} ${user.lastName},</p><p>to complete your sign up for UnternehmerTUM Certificates, please click on the following link:<br /><a href="${verificationUrl}">${verificationUrl}</a></p><p>If you haven't signed up yourself, please ignore or report this email.</p><p>Thank you!</p>`,
+					TextPart: `Dear ${user.firstName} ${user.lastName},\n\nTo complete your sign up for UnternehmerTUM Certificates, please click on the following link:\n${verificationUrl}\n\nIf you haven't signed up yourself, please ignore or report this email.\n\nThank you!`,
+					HTMLPart: `<p>Dear ${user.firstName} ${user.lastName},</p><p>To complete your sign up for UnternehmerTUM Certificates, please click on the following link:<br /><a href="${verificationUrl}">${verificationUrl}</a></p><p>If you haven't signed up yourself, please ignore or report this email.</p><p>Thank you!</p>`,
 				},
 			],
 		})
@@ -103,8 +103,8 @@ export const sendInvitationEmail = async (
 	// @todo dynamic org name from database
 	const acceptUrl = `${domain}/user/accept-invite/${invite.id}/${invite.verifyCode}`;
 
-	const text = `Dear ${invite.firstName} ${invite.lastName},\n\n${from ? `${from.firstName} ${from.lastName} is inviting you` : "you have been invited"} to become an admiminstrator for the UnternehmerTUM certificates tool.\n\nTo accept the invitation, please click on the following link:\n${acceptUrl}\n\nThank you!`;
-	const html = `<p>Dear ${invite.firstName} ${invite.lastName},</p><p>${from ? `${from.firstName} ${from.lastName} is inviting you` : "you have been invited"} to become an admiminstrator for the UnternehmerTUM certificates tool.</p><p>To accept the invitation, please click on the following link:<br /><a href="${acceptUrl}">${acceptUrl}</a></p><p>Thank you!</p>`;
+	const text = `Dear ${invite.firstName} ${invite.lastName},\n\n${from ? `${from.firstName} ${from.lastName} is inviting you` : "You have been invited"} to become an admiminstrator for the UnternehmerTUM certificates tool.\n\nTo accept the invitation, please click on the following link:\n${acceptUrl}\n\nThank you!`;
+	const html = `<p>Dear ${invite.firstName} ${invite.lastName},</p><p>${from ? `${from.firstName} ${from.lastName} is inviting you` : "You have been invited"} to become an admiminstrator for the UnternehmerTUM certificates tool.</p><p>To accept the invitation, please click on the following link:<br /><a href="${acceptUrl}">${acceptUrl}</a></p><p>Thank you!</p>`;
 
 	await mailjet
 		.post("send", { version: "v3.1" })
