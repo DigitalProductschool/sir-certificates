@@ -1,7 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Program } from "@prisma/client";
 import type { CertificatesWithBatchAndProgram } from "./view";
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
 import { SidebarParticipant } from "~/components/sidebar-participant";
@@ -80,6 +80,10 @@ export const loader: LoaderFunction = async ({ request }) => {
       },
     },
   });
+
+  if (certificates && certificates.length === 1) {
+    return redirect(`/view/${certificates[0].uuid}`);
+  }
 
   return json({ user, org, programs, certificates });
 };
