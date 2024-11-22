@@ -70,6 +70,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	const certUrl = `${domain}/view/${certificate.uuid}?signup=${certificate.email}`;
 
+	// @todo – for the sign-up or sign-in link, check if a user with that email exists and use the correct link
+
 	const mailText = social
 		? `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\n\nDownload your certificate from this link:\n${certUrl}\n\n\nShare your certificate on social media with your personal link:\n1. Sign up to our certificate tool with this email address at the link above\n2. Insert your photo into the social media preview\n3. Share it across your platforms\n\n\nCongratulations!`
 		: `Dear ${certificate.firstName},\n\nyour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.\n\nAll the best!`;
