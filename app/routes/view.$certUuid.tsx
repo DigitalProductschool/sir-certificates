@@ -109,11 +109,16 @@ export default function Index() {
   const { certificate } = useLoaderData<typeof loader>();
   const { org, user } = useRouteLoaderData<typeof viewLoader>("routes/view");
   const [signUpMail, setSignUpMail] = useState<string | null>(null);
+  const [signInMail, setSignInMail] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     if (searchParams.get("signup")) {
       setSignUpMail(searchParams.get("signup"));
+      setSearchParams({});
+    }
+    if (searchParams.get("signin")) {
+      setSignInMail(searchParams.get("signin"));
       setSearchParams({});
     }
   }, [searchParams]);
@@ -142,7 +147,11 @@ export default function Index() {
                     Sign up
                   </Link>
                 ) : (
-                  <Link to={`/user/login`}>Sign in</Link>
+                  <Link
+                    to={`/user/login${signInMail ? "?email=".concat(signInMail) : ""}`}
+                  >
+                    Sign in
+                  </Link>
                 )}
               </Button>
             )}
@@ -183,18 +192,25 @@ export default function Index() {
                   </Link>
                 </Button>
               )}
-              {!user && signUpMail && (
+              {!user && (signUpMail || signInMail) && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button asChild>
-                      <Link to={`/user/login?sign=up&email=${signUpMail}`}>
+                      <Link
+                        to={
+                          signUpMail
+                            ? `/user/login?sign=up&email=${signUpMail}`
+                            : `/user/login${signInMail ? "?email=".concat(signInMail) : ""}`
+                        }
+                      >
                         <Share />
                         Share on Social Media
                       </Link>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    Sign up to share a personalized preview with your photo
+                    Sign {signInMail ? "in" : "up"} to share a personalized
+                    preview with your photo
                   </TooltipContent>
                 </Tooltip>
               )}

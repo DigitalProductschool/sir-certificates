@@ -23,12 +23,14 @@ export const action: ActionFunction = async ({ request }) => {
 		});
 	}
 
+	const email = inputs.email.toLowerCase();
+
 	// If this email exists already for this batch, update instead of create
 	const certificate = await prisma.certificate
 		.upsert({
 			where: {
 				certId: {
-					email: inputs.email,
+					email: email,
 					batchId: Number(inputs.batchId),
 				},
 			},
@@ -47,7 +49,7 @@ export const action: ActionFunction = async ({ request }) => {
 				firstName: inputs.firstName,
 				lastName: inputs.lastName,
 				teamName: inputs.team || undefined,
-				email: inputs.email,
+				email: email,
 				batch: {
 					connect: { id: Number(inputs.batchId) },
 				},
