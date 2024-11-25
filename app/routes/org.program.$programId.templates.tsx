@@ -45,7 +45,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       id: Number(params.programId),
     },
     include: {
-      templates: true,
+      templates: {
+        orderBy: {
+          name: "asc",
+        },
+      },
     },
   });
 

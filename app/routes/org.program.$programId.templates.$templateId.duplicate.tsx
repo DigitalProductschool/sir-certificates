@@ -9,7 +9,6 @@ import {
 } from "@remix-run/node";
 import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
 
-import { Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -28,11 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
 
 import { requireAdmin } from "~/lib/auth.server";
 import {
@@ -199,22 +193,11 @@ export default function DuplicateTemplateDialog() {
           <Input id="pdf" name="pdf" type="file" />
         </Form>
         <DialogFooter>
-          <Form
-            action={`../${template.id}/delete`}
-            method="POST"
-            className="flex grow"
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button type="submit" variant="destructive" size="icon">
-                  <Trash2Icon className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Delete this template</TooltipContent>
-            </Tooltip>
-          </Form>
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            Back
+          </Button>
           <Button onClick={() => formRef.current?.submit()}>
-            Save changes
+            Create duplicate
           </Button>
         </DialogFooter>
       </DialogContent>
