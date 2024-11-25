@@ -1,12 +1,13 @@
 import type { Batch, Certificate } from "@prisma/client";
 
 export function replaceVariables(
-	text: string = "",
+	text: string,
 	locale: string = "de-DE",
 	certificate: Certificate,
 	batch: Batch,
 ) {
-	let replacements = text;
+	let replacements = text || "";
+
 
 	// @todo refactor date formats to be configurable via template settings
 	const startDate = batch.startDate.toLocaleString(locale, {
