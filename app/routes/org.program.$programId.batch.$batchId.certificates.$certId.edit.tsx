@@ -110,6 +110,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         },
       },
     },
+    orderBy: {
+      name: "asc",
+    },
   });
 
   return json({ certificate, templates });
