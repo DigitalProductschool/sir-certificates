@@ -129,6 +129,14 @@ export default function ProgramTemplatesPage() {
           </Tooltip>
         )}
 
+        {params.templateId && (
+          <Button variant="outline" asChild>
+            <Link to={`${params.templateId}/duplicate`}>
+              Duplicate template
+            </Link>
+          </Button>
+        )}
+
         <Button variant="outline" asChild>
           <Link to="create">Add Template</Link>
         </Button>

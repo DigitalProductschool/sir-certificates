@@ -3,7 +3,7 @@ import type { Batch, Certificate, Template } from "@prisma/client";
 
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { writeFile, readFile, unlink } from "node:fs/promises";
+import { writeFile, readFile, unlink, copyFile } from "node:fs/promises";
 
 import { convert } from "pdf-img-convert";
 import { PDFDocument, PDFPage, PDFFont, Color, rgb } from "pdf-lib";
@@ -437,6 +437,25 @@ export async function saveUploadedTemplate(
 
 	const buffer = Buffer.from(await templatePDF.arrayBuffer());
 	return await writeFile(`${templateDir}/${template.id}.pdf`, buffer);
+}
+
+export async function duplicateTemplate(
+	existingTpl: Template,
+	duplicatedTpl: Template,
+) {
+	await copyFile(
+		`${templateDir}/${existingTpl.id}.pdf`,
+		`${templateDir}/${duplicatedTpl.id}.pdf`,
+	);
+	await copyFile(
+		`${templateDir}/${existingTpl.id}.sample.pdf`,
+		`${templateDir}/${duplicatedTpl.id}.sample.pdf`,
+	);
+	await copyFile(
+		`${previewDir}/tpl-${existingTpl.id}.png`,
+		`${previewDir}/tpl-${duplicatedTpl.id}.png`,
+	);
+	return true;
 }
 
 export async function deleteCertificatePreview(certificateId: number) {
