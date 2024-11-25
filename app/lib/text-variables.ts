@@ -1,8 +1,8 @@
 import type { Batch, Certificate } from "@prisma/client";
 
 export function replaceVariables(
-	text: string,
-	locale: string,
+	text: string = "",
+	locale: string = "de-DE",
 	certificate: Certificate,
 	batch: Batch,
 ) {
@@ -28,27 +28,27 @@ export function replaceVariables(
 	// Certificate replacements
 	replacements = replacements.replaceAll(
 		"{certificate.fullName}",
-		`${certificate.firstName} ${certificate.lastName}`,
+		`${certificate.firstName || ""} ${certificate.lastName || ""}`,
 	);
 	replacements = replacements.replaceAll(
 		"{certificate.fullNameCaps}",
-		`${certificate.firstName.toUpperCase()} ${certificate.lastName.toUpperCase()}`,
+		`${certificate.firstName.toUpperCase() || ""} ${certificate.lastName.toUpperCase() || ""}`,
 	);
 	replacements = replacements.replaceAll(
 		"{certificate.firstName}",
-		certificate.firstName,
+		certificate.firstName || "",
 	);
 	replacements = replacements.replaceAll(
 		"{certificate.firstNameCaps}",
-		certificate.firstName.toUpperCase(),
+		certificate.firstName.toUpperCase() || "",
 	);
 	replacements = replacements.replaceAll(
 		"{certificate.lastName}",
-		certificate.lastName,
+		certificate.lastName || "",
 	);
 	replacements = replacements.replaceAll(
 		"{certificate.lastNameCaps}",
-		certificate.lastName.toUpperCase(),
+		certificate.lastName.toUpperCase() || "",
 	);
 	replacements = replacements.replaceAll(
 		"{certificate.teamName}",
@@ -56,7 +56,7 @@ export function replaceVariables(
 	);
 
 	// Batch replacements
-	replacements = replacements.replaceAll("{batch.name}", batch.name);
+	replacements = replacements.replaceAll("{batch.name}", batch.name || "");
 	replacements = replacements.replaceAll("{batch.startDate}", startDate);
 	replacements = replacements.replaceAll("{batch.endDate}", endDate);
 	replacements = replacements.replaceAll(
