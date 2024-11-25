@@ -16,7 +16,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { domain } from "~/lib/config.server";
-import { requireUserId } from "~/lib/auth.server";
+import { requireUserId, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/text-variables";
 
@@ -32,6 +32,7 @@ export const meta: MetaFunction = () => {
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   await requireUserId(request);
+  const user = await getUser(request);
 
   const certificate = await prisma.certificate.findUnique({
     where: {
@@ -55,6 +56,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     throw new Response(null, {
       status: 404,
       statusText: "Not Found",
+    });
+  }
+
+  if(user?.email !== certificate.email) {
+    throw new Response(null, {
+      status: 403,
+      statusText: "Forbidden",
     });
   }
 

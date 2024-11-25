@@ -112,6 +112,8 @@ export default function Index() {
   const [signInMail, setSignInMail] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const isOwner = user.email === certificate.email;
+
   useEffect(() => {
     if (searchParams.get("signup")) {
       setSignUpMail(searchParams.get("signup"));
@@ -182,7 +184,7 @@ export default function Index() {
                   Download Certificate
                 </Link>
               </Button>
-              {user && (
+              {isOwner && (
                 <Button asChild>
                   <Link to={`/view/${certificate.uuid}/share`}>
                     <Share />
