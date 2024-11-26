@@ -8,6 +8,8 @@ import { domain } from "~/lib/config.server";
 import { generateCertificate } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
 
+// @todo refactor to route org.program.$programId.batch.batchId.certificates.$certId.notify.ts
+
 export const action: ActionFunction = async ({ request, params }) => {
 	await requireAdmin(request);
 

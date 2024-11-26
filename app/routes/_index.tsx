@@ -142,7 +142,7 @@ export default function Index() {
                 </h3>
                 <p className="text-sm   px-16">
                   If you are interested in receiving more certifications, have a
-                  look at our other program(s).
+                  look at our other programs.
                 </p>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 p-16 pt-2 gap-8">

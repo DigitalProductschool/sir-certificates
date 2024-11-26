@@ -100,6 +100,8 @@ export default function UserUploadPictureDialog() {
 		const formData = new FormData();
 		formData.append("photo", file);
 
+		// @todo resize image before sending it to the background removal API
+
 		const response = await fetch("/user/photo/remove-background", {
 			method: "POST",
 			cache: "no-cache",
