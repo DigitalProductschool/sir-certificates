@@ -17,6 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { getUser } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
 import { prisma } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/text-variables";
@@ -62,7 +63,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 // @todo select relevant individual fields for certificate, batch and program
-export const loader: LoaderFunction = async ({ params }) => {
+export const loader: LoaderFunction = async ({ request, params }) => {
+  const user = await getUser(request);
+
   const certificate = await prisma.certificate.findUnique({
     where: {
       uuid: params.certUuid,
@@ -71,6 +74,7 @@ export const loader: LoaderFunction = async ({ params }) => {
       uuid: true,
       firstName: true,
       lastName: true,
+      email: true,
       updatedAt: true,
       batch: {
         select: {
@@ -102,17 +106,22 @@ export const loader: LoaderFunction = async ({ params }) => {
     });
   }
 
-  return json({ certificate, domain });
+  let userIsOwner = false;
+  if (user && user.email === certificate.email) {
+    userIsOwner = true;
+  }
+
+  // Remove certificate email to prevent exposure // @todo Improve type safety for this
+  certificate.email = "";
+  return json({ certificate, userIsOwner, domain });
 };
 
 export default function Index() {
-  const { certificate } = useLoaderData<typeof loader>();
+  const { certificate, userIsOwner } = useLoaderData<typeof loader>();
   const { org, user } = useRouteLoaderData<typeof viewLoader>("routes/view");
   const [signUpMail, setSignUpMail] = useState<string | null>(null);
   const [signInMail, setSignInMail] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-
-  const isOwner = user.email === certificate.email;
 
   useEffect(() => {
     if (searchParams.get("signup")) {
@@ -184,7 +193,7 @@ export default function Index() {
                   Download Certificate
                 </Link>
               </Button>
-              {isOwner && (
+              {userIsOwner && (
                 <Button asChild>
                   <Link to={`/view/${certificate.uuid}/share`}>
                     <Share />
