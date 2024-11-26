@@ -28,11 +28,8 @@ import {
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = () => {
-  return [
-    { title: "Certificates" },
-    { name: "description", content: "Welcome to Remix!" },
-  ];
+export const meta: MetaFunction = () => {
+  return [{ title: "Certificates" }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {

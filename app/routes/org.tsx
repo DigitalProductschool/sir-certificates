@@ -18,8 +18,7 @@ import { requireAdmin, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const title = `${data.org?.name} Certificates`;
-  return [{ title }, { name: "description", content: "Welcome to Remix!" }];
+  return [{ title: `${data.org?.name} Certificates` }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -61,26 +60,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
   return json({ user, org, programs, latestBatch });
 };
-
-/* type LoaderReturnType = {
-  user: User;
-  org: Organisation;
-};
-
-type Match = {
-  id: string;
-  pathname: string;
-  data: LoaderReturnType;
-  params: Record<string, string>;
-};
-
-export const handle = {
-  breadcrumb: (match: Match) => (
-    <Link to="/org/program">
-      {match.data.org ? match.data.org.name : "Organisation"}
-    </Link>
-  ),
-}; */
 
 export default function OrgDashboard() {
   return (

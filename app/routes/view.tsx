@@ -20,10 +20,7 @@ export type CertificatesWithBatchAndProgram = Prisma.CertificateGetPayload<{
 }>;
 
 export const meta: MetaFunction = () => {
-  return [
-    { title: "Certificates" },
-    { name: "description", content: "Welcome to Remix!" },
-  ];
+  return [{ title: "Certificates" }];
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -64,8 +61,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export default function Index() {
   const { user } = useLoaderData<typeof loader>();
-
-  // @todo add subtle login link, legal and privacy
 
   return (
     <div className="flex min-h-screen w-full bg-muted">

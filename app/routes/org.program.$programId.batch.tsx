@@ -35,8 +35,7 @@ type ProgramWithBatches = Prisma.ProgramGetPayload<{
 }>;
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const title = `${data.program?.name} Batches`;
-  return [{ title }, { name: "description", content: "Welcome to Remix!" }];
+  return [{ title: `${data.program?.name} Batches` }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {

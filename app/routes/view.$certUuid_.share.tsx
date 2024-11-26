@@ -23,11 +23,7 @@ import { replaceVariables } from "~/lib/text-variables";
 import { loader as viewLoader } from "./view";
 
 export const meta: MetaFunction = () => {
-  return [
-    {
-      title: "Share certificate",
-    },
-  ];
+  return [{ title: "Share certificate" }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -59,7 +55,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  if(user?.email !== certificate.email) {
+  if (user?.email !== certificate.email) {
     throw new Response(null, {
       status: 403,
       statusText: "Forbidden",

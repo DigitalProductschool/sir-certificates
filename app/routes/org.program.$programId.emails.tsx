@@ -3,9 +3,8 @@ import { json } from "@remix-run/node";
 
 import { requireAdmin } from "~/lib/auth.server";
 
-export const meta: MetaFunction<typeof loader> = () => {
-  const title = "Email Templates";
-  return [{ title }];
+export const meta: MetaFunction = () => {
+  return [{ title: "Email Templates" }];
 };
 
 export const loader: LoaderFunction = async ({ request }) => {

@@ -21,8 +21,7 @@ import { prisma } from "~/lib/prisma.server";
 import { createUserInvitation } from "~/lib/user.server";
 
 export const meta: MetaFunction = () => {
-  const title = "Invite Admin";
-  return [{ title }];
+  return [{ title: "Invite Admin" }];
 };
 
 export const action: ActionFunction = async ({ request }) => {

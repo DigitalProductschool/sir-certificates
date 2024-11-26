@@ -12,11 +12,8 @@ import { Button } from "~/components/ui/button";
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = () => {
-  return [
-    { title: "Certificates" },
-    { name: "description", content: "Welcome to Remix!" },
-  ];
+export const meta: MetaFunction = () => {
+  return [{ title: "Preview Certificate" }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -46,8 +43,8 @@ type Match = {
   id: string;
   pathname: string;
   data: LoaderReturnType;
-  params: Record<string,string>
-}
+  params: Record<string, string>;
+};
 
 export const handle = {
   breadcrumb: (match: Match) => (
@@ -80,11 +77,8 @@ export default function CertificatePage() {
           </Link>
         </Button>
         <Button variant="link" asChild>
-          <Link to={`/view/${certificate.uuid}`}>
-            View public page
-          </Link>
+          <Link to={`/view/${certificate.uuid}`}>View public page</Link>
         </Button>
-
       </div>
 
       <img

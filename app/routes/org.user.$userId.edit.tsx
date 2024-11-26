@@ -25,8 +25,7 @@ import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
-  const title = `Edit User XXX`;
-  return [{ title }, { name: "description", content: "Welcome to Remix!" }];
+  return [{ title: "Edit User" }];
 };
 
 export const action: ActionFunction = async ({ request, params }) => {

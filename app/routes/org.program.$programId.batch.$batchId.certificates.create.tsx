@@ -36,8 +36,7 @@ import {
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction = () => {
-  const title = "Add Certificate";
-  return [{ title }];
+  return [{ title: "Add Certificate" }];
 };
 
 export const action: ActionFunction = async ({ request, params }) => {

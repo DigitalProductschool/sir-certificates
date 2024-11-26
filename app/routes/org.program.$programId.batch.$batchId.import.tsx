@@ -46,7 +46,7 @@ import {
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = () => {
+export const meta: MetaFunction = () => {
   return [{ title: "Import Participants" }];
 };
 

@@ -33,8 +33,7 @@ import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const title = `${data.program?.name} Templates`;
-  return [{ title }, { name: "description", content: "Welcome to Remix!" }];
+  return [{ title: `${data.program?.name} Templates` }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {

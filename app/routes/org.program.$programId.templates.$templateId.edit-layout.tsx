@@ -42,8 +42,7 @@ import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import { LayoutEditor } from "~/components/layout-editor";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const title = `Template ${data?.template?.name}`;
-  return [{ title }];
+  return [{ title: `Template ${data?.template?.name}` }];
 };
 
 export const action: ActionFunction = async ({ request, params }) => {

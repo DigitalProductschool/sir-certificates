@@ -29,9 +29,8 @@ function calculateCertificateHeight(width: number, top: number) {
   return h;
 }
 
-export const meta: MetaFunction<typeof loader> = () => {
-  const title = "Social Preview";
-  return [{ title }];
+export const meta: MetaFunction = () => {
+  return [{ title: "Social Preview" }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {

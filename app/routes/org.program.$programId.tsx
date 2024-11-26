@@ -6,11 +6,8 @@ import { Link, Outlet } from "@remix-run/react";
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = () => {
-  return [
-    { title: "Programs" },
-    { name: "description", content: "Welcome to Remix!" },
-  ];
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [{ title: `${data.program.name}` }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -47,12 +44,10 @@ type Match = {
 };
 
 export const handle = {
-  breadcrumb: (match: Match) => (
-    <Link to="#">
-      {match.data.program.name}
-    </Link>
-  ),
+  breadcrumb: (match: Match) => <Link to="#">{match.data.program.name}</Link>,
 };
+
+// @todo add a program index page with an overview?
 
 export default function ProgramPage() {
   return <Outlet />;

@@ -22,9 +22,8 @@ import { Label } from "~/components/ui/label";
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = () => {
-  const title = `Edit Program`;
-  return [{ title }];
+export const meta: MetaFunction = () => {
+  return [{ title: "Edit Organisation" }];
 };
 
 export const action: ActionFunction = async ({ request }) => {

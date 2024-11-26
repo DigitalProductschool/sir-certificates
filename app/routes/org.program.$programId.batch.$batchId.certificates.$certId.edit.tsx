@@ -40,9 +40,8 @@ import {
 } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = () => {
-  const title = `Edit Certificate`;
-  return [{ title }];
+export const meta: MetaFunction = () => {
+  return [{ title: "Edit Certificate" }];
 };
 
 export const action: ActionFunction = async ({ request, params }) => {

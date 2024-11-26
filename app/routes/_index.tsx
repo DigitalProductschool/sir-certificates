@@ -22,10 +22,13 @@ import {
 import { requireUserId, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [
-    { title: "Certificates" },
-    { name: "description", content: "Welcome to Remix!" },
+    { title: `${data.org.name} Certificates` },
+    {
+      name: "description",
+      content: `All of your certificates from ${data.org.name} in one place.`,
+    },
   ];
 };
 

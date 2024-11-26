@@ -35,7 +35,7 @@ function capitalizeFirst(string: string) {
   return string[0].toUpperCase() + string.slice(1);
 }
 
-export const meta: MetaFunction<typeof loader> = () => {
+export const meta: MetaFunction = () => {
   return [{ title: "Typefaces" }];
 };
 
