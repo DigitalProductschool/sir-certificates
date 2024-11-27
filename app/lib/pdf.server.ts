@@ -4,10 +4,13 @@ import type { Batch, Certificate, Template } from "@prisma/client";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeFile, readFile, unlink, copyFile } from "node:fs/promises";
+import { PassThrough } from "stream";
 
+import archiver from "archiver";
 import { convert } from "pdf-img-convert";
 import { PDFDocument, PDFPage, PDFFont, Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import slug from "slug";
 
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
@@ -492,3 +495,38 @@ export const sampleLayout: any = [
 		lines: [],
 	},
 ];
+
+export function downloadCertificates(certificates: Certificate[]) {
+	// PassThrough stream for piping the archive directly to the response
+	const stream = new PassThrough();
+	const archive = archiver("zip", {
+		zlib: { level: 9 }, // Sets the compression level.
+	});
+	const zipFilename = "certificates.zip";
+
+	archive.on("error", (err: any) => {
+		console.error("Error creating archive:", err);
+		stream.emit("error", err);
+	});
+
+	// Pipe archive data into the PassThrough stream
+	archive.pipe(stream);
+
+	// Add files to the archive
+	certificates.forEach((cert) => {
+		archive.file(`${certDir}/${cert.id}.pdf`, {
+			name: `${slug(cert.firstName)} ${slug(cert.lastName)}.certificate.pdf`,
+		});
+	});
+
+	// Finalize the archive (starts streaming to the response)
+	archive.finalize();
+
+	// Return the streaming response
+	return new Response(stream as unknown as BodyInit, {
+		headers: {
+			"Content-Type": "application/zip",
+			"Content-Disposition": `attachment; filename="${zipFilename}"`,
+		},
+	});
+}
