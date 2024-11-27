@@ -190,6 +190,15 @@ export default function BatchPage() {
           </Button>
         )}
 
+        {currentBatch && (
+          <Button variant="outline" asChild>
+            <Link to={`${params.batchId}/certificates/download.zip`} reloadDocument>
+              Download Certificates
+            </Link>
+          </Button>
+        )}
+
+
         {program.batches.length === 0 && (
           <div>No batches added yet. Create your first batch.</div>
         )}
