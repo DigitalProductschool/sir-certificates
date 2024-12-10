@@ -12,10 +12,11 @@ RUN apk add --no-cache \
 	g++ \
 	pango-dev \
 	python3 \
+	openssl \
 	;
 
 # Install openssl
-RUN apt-get update && apt-get install -y openssl
+#RUN apt-get update && apt-get install -y openssl
 
 # Install all node_modules, including dev dependencies
 FROM base as deps
