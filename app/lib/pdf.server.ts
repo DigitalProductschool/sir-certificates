@@ -196,67 +196,40 @@ export async function generateTemplateSample(template: Template) {
 
 	// Modify page
 	const page = pdf.getPages()[0];
-	const startDate = new Date().toLocaleString(template.locale, {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
-	const endDate = new Date().toLocaleString(template.locale, {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
-	const signatureDate = new Date().toLocaleString(template.locale, {
-		year: "numeric",
-		month: "numeric",
-		day: "numeric",
-	});
+
+	const yesterday = new Date();
+	yesterday.setDate(yesterday.getDate() - 1);
+
+	const mockBatch: Batch = {
+		id: 1,
+		programId: 1,
+		name: "BatchName",
+		startDate: yesterday,
+		endDate: new Date(),
+	};
+
+	const mockCertificate: Certificate = {
+		id: 1,
+		batchId: 1,
+		templateId: template.id,
+		firstName: "FirstName",
+		lastName: "LastName",
+		teamName: "TeamName",
+		uuid: "1234-5678-ABCD-EDGH-1234-5678",
+		email: "mock-user@dpschool.io",
+		updatedAt: new Date(),
+		notifiedAt: null,
+		mjResponse: {},
+	};
 
 	const texts = template.layout as any;
 	texts.forEach((text: TextOptions) => {
 		const lines = text.lines.map((line: Line) => {
-			let replacements = line.text;
-
-			// Certificate replacements
-			replacements = replacements.replaceAll(
-				"{certificate.fullName}",
-				`FirstName LastName`,
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.fullNameCaps}",
-				`FIRSTNAME LASTNAME`,
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.firstName}",
-				"FirstName",
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.firstNameCaps}",
-				"FIRSTNAME",
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.lastName}",
-				"LastName",
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.lastNameCaps}",
-				"LASTNAME",
-			);
-			replacements = replacements.replaceAll(
-				"{certificate.teamName}",
-				"TeamName",
-			);
-
-			// Batch replacements
-			replacements = replacements.replaceAll("{batch.name}", "BatchName");
-			replacements = replacements.replaceAll(
-				"{batch.startDate}",
-				startDate,
-			);
-			replacements = replacements.replaceAll("{batch.endDate}", endDate);
-			replacements = replacements.replaceAll(
-				"{batch.signatureDate}",
-				signatureDate,
+			const replacements = replaceVariables(
+				line.text,
+				template.locale,
+				mockCertificate,
+				mockBatch,
 			);
 
 			return {

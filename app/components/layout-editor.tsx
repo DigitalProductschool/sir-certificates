@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types, @typescript-eslint/no-explicit-any */
-// This layout editor is for the PDF template layouts 
+// This layout editor is for the PDF template layouts
 // @todo rename component to clarify the function
 import type { Typeface } from "@prisma/client";
 import { HexColorPicker } from "react-colorful";
@@ -326,6 +326,23 @@ function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
                   onSelect={() => addVariable("{certificate.firstNameCaps}")}
                 >
                   LAST NAME
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Date</DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{datetime.currentDate}")}
+                >
+                  Current date
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{datetime.currentMonth}")}
+                >
+                  Current month
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
