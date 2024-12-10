@@ -121,7 +121,7 @@ model Template {
   id            Int       @id @default(autoincrement())
   name          String
   layout        Json      
-  locale        String    @default("de-DE")
+  locale        String    @default("en-US")
   updatedAt     DateTime  @updatedAt    
   certificates  Certificate[]
   program       Program   @relation(fields: [programId], references: [id])  
