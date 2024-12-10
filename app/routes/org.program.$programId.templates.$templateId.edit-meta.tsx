@@ -168,8 +168,9 @@ export default function EditTemplateDialog() {
               <SelectValue placeholder="Select a date format" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="de-DE">German</SelectItem>
+              <SelectItem value="en-US">English US</SelectItem>
               <SelectItem value="en-GB">English UK</SelectItem>
+              <SelectItem value="de-DE">German</SelectItem>
             </SelectContent>
           </Select>
 
