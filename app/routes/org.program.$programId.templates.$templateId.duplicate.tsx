@@ -153,6 +153,8 @@ export default function DuplicateTemplateDialog() {
     return () => document.removeEventListener("keydown", down);
   }, [navigate]);
 
+  // @todo refactor date locale options to a single source of thruth here and in edit-meta
+
   return (
     <Dialog
       open={open}
@@ -184,8 +186,9 @@ export default function DuplicateTemplateDialog() {
               <SelectValue placeholder="Select a date format" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="de-DE">German</SelectItem>
+              <SelectItem value="en-US">English US</SelectItem>
               <SelectItem value="en-GB">English UK</SelectItem>
+              <SelectItem value="de-DE">German</SelectItem>
             </SelectContent>
           </Select>
 
