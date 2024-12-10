@@ -8,7 +8,6 @@ export function replaceVariables(
 ) {
 	let replacements = text || "";
 
-
 	// @todo refactor date formats to be configurable via template settings
 	const startDate = batch.startDate.toLocaleString(locale, {
 		year: "numeric",
@@ -24,6 +23,17 @@ export function replaceVariables(
 		year: "numeric",
 		month: "numeric",
 		day: "numeric",
+	});
+
+	const currentDate = new Date().toLocaleString(locale, {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	});
+
+	const currentMonth = new Date().toLocaleString(locale, {
+		year: "numeric",
+		month: "long",
 	});
 
 	// Certificate replacements
@@ -63,6 +73,14 @@ export function replaceVariables(
 	replacements = replacements.replaceAll(
 		"{batch.signatureDate}",
 		signatureDate,
+	);
+	replacements = replacements.replaceAll(
+		"{datetime.currentDate}",
+		currentDate,
+	);
+	replacements = replacements.replaceAll(
+		"{datetime.currentMonth}",
+		currentMonth,
 	);
 
 	return replacements;
