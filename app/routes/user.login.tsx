@@ -128,6 +128,7 @@ export default function Login() {
 
 	const errors = actionData?.errors || {};
 	const formError = actionData?.error;
+	const formErrorCode = actionData?.errorCode;
 
 	// Updates the form data when an input changes
 	const handleInputChange = (
@@ -222,11 +223,33 @@ export default function Login() {
 						</CardDescription>
 					</CardHeader>
 
-					<Form method="POST">
-						<CardContent className="grid gap-4">
-							<div className="text-xs font-semibold text-center tracking-wide text-red-500 w-full">
+					<CardContent className="grid gap-4">
+						{formError && (
+							<div className="w-full font-semibold text-sm tracking-wide text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2">
 								{formError}
+								{formErrorCode &&
+									formErrorCode === "verify-email" && (
+										<Form
+											action="/user/verification/resend"
+											method="POST"
+										>
+											<input
+												type="hidden"
+												name="email"
+												value={formData.email}
+											/>
+											<Button
+												variant="outline"
+												size="sm"
+												type="submit"
+											>
+												Resend email
+											</Button>
+										</Form>
+									)}
 							</div>
+						)}
+						<Form method="POST">
 							<FormField
 								htmlFor="email"
 								label="Email"
@@ -308,8 +331,8 @@ export default function Login() {
 										: "Sign In"}
 								</Button>
 							</div>
-						</CardContent>
-					</Form>
+						</Form>
+					</CardContent>
 				</Card>
 				<div className="grow flex flex-row justify-center items-end gap-4 pb-5 text-xs">
 					{org.imprintUrl && (

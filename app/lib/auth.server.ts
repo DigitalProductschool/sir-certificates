@@ -70,7 +70,10 @@ export async function login({ email, password }: LoginForm) {
 
 	if (!user.isVerified) {
 		return json(
-			{ error: `You still need to verify your email` },
+			{
+				error: `You still need to verify your email address.`,
+				errorCode: "verify-email",
+			},
 			{ status: 400 },
 		);
 	}
