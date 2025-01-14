@@ -8,7 +8,9 @@ import {
 import { requireAdmin } from "~/lib/auth.server";
 import {
   saveSocialBackground,
-  addTemplateToPreview,
+  deleteSocialBackground,
+  addPhotoToPreview,
+  addTemplateAndPhotoToPreview,
   defaultLayout,
 } from "~/lib/social.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
@@ -45,6 +47,16 @@ export const action: ActionFunction = async ({ request, params }) => {
       status: 400,
       statusText: "Missing uploaded image",
     });
+  }
+
+  // Clean up existing background image
+  const existingSocial = await prisma.socialPreview.findFirst({
+    where: {
+      programId: Number(params.programId),
+    },
+  });
+  if (existingSocial) {
+    await deleteSocialBackground(existingSocial);
   }
 
   // Create or update SocialPreview
@@ -90,7 +102,9 @@ export const action: ActionFunction = async ({ request, params }) => {
   });
 
   if (template) {
-    await addTemplateToPreview(social, template);
+    await addTemplateAndPhotoToPreview(social, template);
+  } else {
+    await addPhotoToPreview(social);
   }
 
   return json({ social });

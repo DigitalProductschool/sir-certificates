@@ -2,7 +2,10 @@ import type { ActionFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
 import { requireAdmin } from "~/lib/auth.server";
-import { addTemplateToPreview } from "~/lib/social.server";
+import {
+  addPhotoToPreview,
+  addTemplateAndPhotoToPreview,
+} from "~/lib/social.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -60,9 +63,10 @@ export const action: ActionFunction = async ({ request, params }) => {
       programId: Number(params.programId),
     },
   });
-
   if (template) {
-    await addTemplateToPreview(social, template);
+    await addTemplateAndPhotoToPreview(social, template);
+  } else {
+    addPhotoToPreview(social);
   }
 
   return json({ social });

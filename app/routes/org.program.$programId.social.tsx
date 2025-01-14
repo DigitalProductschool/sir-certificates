@@ -2,8 +2,8 @@ import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Prisma } from "@prisma/client";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { json } from "@remix-run/node";
-import { useLoaderData, useFetcher } from "@remix-run/react";
-import { ImageUp, Paintbrush } from "lucide-react";
+import { Form, useLoaderData, useFetcher } from "@remix-run/react";
+import { ImageUp, Paintbrush, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -86,6 +86,9 @@ export default function ProgramSocialPage() {
         method: "POST",
         encType: "multipart/form-data",
       });
+      window.setTimeout(() => {
+        event.target.value = "";
+      }, 100);
     }
   };
 
@@ -94,7 +97,14 @@ export default function ProgramSocialPage() {
   }, [social?.id, socialLayout]);
 
   return (
-    <div className="h-full flex flex-row justify-center items-center">
+    <div className="h-full flex flex-col justify-center items-start gap-4">
+      {social && (
+        <Form action="delete" method="POST">
+          <Button variant="outline" type="submit">
+            <Trash2 /> Remove Social Preview
+          </Button>
+        </Form>
+      )}
       <div className="flex flex-row gap-4">
         <Card className="max-w-[650px]">
           <CardHeader>
@@ -131,9 +141,13 @@ export default function ProgramSocialPage() {
                 hidden
                 onChange={handleFileChanged}
               />
-              <Button type="button" onClick={handleUploadClick}>
+              <Button
+                type="button"
+                onClick={handleUploadClick}
+                disabled={fetcherImage.state !== "idle"}
+              >
                 <ImageUp />
-                Upload background image
+                {social ? "Replace" : "Upload"} background image
               </Button>
             </fetcherImage.Form>
             <div className="flex flex-row justify-between items-center">
@@ -318,7 +332,7 @@ export default function ProgramSocialPage() {
                 name="layout"
                 value={JSON.stringify(layout)}
               />
-              <Button type="submit">
+              <Button type="submit" disabled={fetcherLayout.state !== "idle"}>
                 <Paintbrush />
                 Update layout
               </Button>
