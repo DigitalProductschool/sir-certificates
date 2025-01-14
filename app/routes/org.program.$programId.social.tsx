@@ -111,11 +111,18 @@ export default function ProgramSocialPage() {
             <CardTitle className="text-xl">
               Firstname Lastname is certified by {program.name}
             </CardTitle>
-            <CardDescription>{program.achievement ?? ""}</CardDescription>
+            <CardDescription>
+              {program.achievement ??
+                "[Please add a description of the achievement in the program settings.]"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {!social ? (
-              <div className="w-full max-w-[600px] aspect-[1.91/1] flex border border-dashed border-slate-500 justify-center items-center bg-muted"></div>
+              <div className="w-full max-w-[600px] aspect-[1.91/1] flex border border-dashed border-slate-500 justify-center items-center bg-muted p-8">
+                Please upload the background layer for the social media preview.
+                Image formats PNG and JPEG are supported. Image size should be
+                1200 x 630 pixels.
+              </div>
             ) : (
               <img
                 src={`social/preview.png?t=${social.updatedAt}${previewWithPhoto ? "&withPhoto=1" : ""}`}
@@ -149,6 +156,7 @@ export default function ProgramSocialPage() {
                 <ImageUp />
                 {social ? "Replace" : "Upload"} background image
               </Button>
+              <p className="text-xs text-muted-foreground mt-1 text-center"> 1200x630 pixel, PNG or JPEG</p>
             </fetcherImage.Form>
             <div className="flex flex-row justify-between items-center">
               <Label htmlFor="previewWithPhoto">Preview with Photo</Label>
