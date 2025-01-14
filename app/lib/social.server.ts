@@ -7,7 +7,7 @@ import type {
 } from "@prisma/client";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { writeFile } from "node:fs/promises";
+import { writeFile, unlink } from "node:fs/promises";
 import sharp from "sharp";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import {
@@ -75,7 +75,33 @@ export async function readCompositeImage(
 	);
 }
 
-export async function addTemplateToPreview(
+export async function addPhotoToPreview(social: SocialPreview) {
+	const background = await readBackgroundImage(social);
+	const photo = await readFileIfExists(`${assetsDir}/photo-placeholder.png`);
+
+	if (background && photo) {
+		const composition = await composeImages(
+			social.layout as SocialPreviewLayout,
+			background,
+		);
+		await writeFile(`${socialDir}/${social.id}.noPhoto.png`, composition);
+
+		const compositionWithPhoto = await composeImages(
+			social.layout as SocialPreviewLayout,
+			background,
+			undefined,
+			photo,
+		);
+		await writeFile(
+			`${socialDir}/${social.id}.withPhoto.png`,
+			compositionWithPhoto,
+		);
+		return true;
+	}
+	return false;
+}
+
+export async function addTemplateAndPhotoToPreview(
 	social: SocialPreview,
 	template: Template,
 ) {
@@ -138,6 +164,27 @@ export async function generateSocialPreview(
 	return null;
 }
 
+export async function deleteSocialBackground(social: SocialPreview) {
+	let extension: "jpg" | "png" | "unkown";
+	switch (social.contentType) {
+		case "image/png":
+			extension = "png";
+			break;
+		case "image/jpeg":
+			extension = "jpg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	return await unlink(`${socialDir}/${social.id}.background.${extension}`);
+}
+
+export async function deleteSocialComposites(socialId: number) {
+	await unlink(`${socialDir}/${socialId}.noPhoto.png`);
+	return await unlink(`${socialDir}/${socialId}.withPhoto.png`);
+}
+
 export type SocialPreviewLayout = Prisma.JsonObject & {
 	photo: { x: number; y: number; size: number };
 	certificate: {
@@ -171,7 +218,7 @@ export const defaultLayout = {
 async function composeImages(
 	layout: SocialPreviewLayout,
 	background: Buffer,
-	certificate: Buffer,
+	certificate?: Buffer,
 	photo?: Buffer,
 ) {
 	const imageComposition = [];
@@ -194,36 +241,39 @@ async function composeImages(
 		});
 	}
 
-	const certPos = withPhoto
-		? layout?.certificate?.withPhoto || defaultLayout.certificate.withPhoto
-		: layout?.certificate?.noPhoto || defaultLayout.certificate.noPhoto;
+	if (certificate) {
+		const certPos = withPhoto
+			? layout?.certificate?.withPhoto ||
+				defaultLayout.certificate.withPhoto
+			: layout?.certificate?.noPhoto || defaultLayout.certificate.noPhoto;
 
-	const shadowBlur = 10;
-	const shadowMargin = 20;
+		const shadowBlur = 10;
+		const shadowMargin = 20;
 
-	const dropShadow = Buffer.from(
-		`<svg width="${certPos.w + shadowMargin * 2}" height="${certPos.h + shadowMargin}">
+		const dropShadow = Buffer.from(
+			`<svg width="${certPos.w + shadowMargin * 2}" height="${certPos.h + shadowMargin}">
         		<rect x="${shadowMargin}" y="${shadowMargin}" width="${certPos.w}" height="${certPos.h + shadowMargin}" rx="5" fill="black" filter="drop-shadow(0px 0px ${shadowBlur}px rgb(0 0 0 / 0.25))" />
     		</svg>`,
-	);
+		);
 
-	imageComposition.push({
-		input: dropShadow,
-		top: certPos.y - shadowMargin,
-		left: certPos.x - shadowMargin,
-	});
+		imageComposition.push({
+			input: dropShadow,
+			top: certPos.y - shadowMargin,
+			left: certPos.x - shadowMargin,
+		});
 
-	const scaledCertificate = await sharp(certificate)
-		.resize(certPos.w, certPos.h, {
-			position: "left top",
-		})
-		.toBuffer();
+		const scaledCertificate = await sharp(certificate)
+			.resize(certPos.w, certPos.h, {
+				position: "left top",
+			})
+			.toBuffer();
 
-	imageComposition.push({
-		input: scaledCertificate,
-		top: certPos.y,
-		left: certPos.x,
-	});
+		imageComposition.push({
+			input: scaledCertificate,
+			top: certPos.y,
+			left: certPos.x,
+		});
+	}
 
 	const composition = await sharp(background)
 		.composite(imageComposition)
