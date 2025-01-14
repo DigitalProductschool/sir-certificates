@@ -18,8 +18,16 @@ export const action: ActionFunction = async ({ request, params }) => {
     },
   });
   if (existingSocial) {
-    await deleteSocialBackground(existingSocial);
-    await deleteSocialComposites(existingSocial.id);
+    try {
+      await deleteSocialBackground(existingSocial);
+    } catch (error) {
+      // If the file was not on disk, we ignore that and proceed with deleting the record
+    }
+    try {
+      await deleteSocialComposites(existingSocial.id);
+    } catch (error) {
+      // If the file was not on disk, we ignore that and proceed with deleting the record
+    }
 
     await prisma.socialPreview.delete({
       where: {
