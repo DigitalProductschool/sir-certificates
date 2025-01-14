@@ -54,6 +54,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				password: passwordHash,
 				verifyCode: invite.verifyCode,
 				isAdmin: invite.isAdmin,
+				isVerified: true,
 			},
 		});
 
