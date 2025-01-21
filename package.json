@@ -53,6 +53,7 @@
     "lucide-react": "^0.436.0",
     "markdown-to-jsx": "^7.5.0",
     "node-mailjet": "^6.0.6",
+    "papaparse": "^5.5.1",
     "pdf-img-convert": "^1.2.1",
     "pdf-lib": "^1.17.1",
     "postprocessing": "^6.36.3",
@@ -91,6 +92,11 @@
     "typescript": "^5.1.6",
     "vite": "^5.1.0",
     "vite-tsconfig-paths": "^4.2.1"
+  },
+  "overrides": {
+    "react-papaparse": {
+      "papaparse": "5.4.1"
+    }
   },
   "engines": {
     "node": ">=20.0.0"
