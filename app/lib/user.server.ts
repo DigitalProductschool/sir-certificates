@@ -5,8 +5,8 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeFile, unlink } from "node:fs/promises";
 import bcrypt from "bcryptjs";
-import Mailjet from "node-mailjet";
 import { domain } from "./config.server";
+import { mailjetSend } from "./email.server";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 
@@ -50,42 +50,34 @@ export const createUserInvitation = async (
 };
 
 export const sendVerificationEmail = async (user: User) => {
-	// @todo refactor to singleton/import
-	const mailjet = new Mailjet({
-		apiKey: process.env.MJ_APIKEY_PUBLIC,
-		apiSecret: process.env.MJ_APIKEY_PRIVATE,
-	});
-
+	// @todo test for user-enumeration vulnerability
 	const verificationUrl = `${domain}/user/verify/${user.id}/${user.verifyCode}`;
 
 	// @todo dynamic org name (from settings?)
-	await mailjet
-		.post("send", { version: "v3.1" })
-		.request({
-			Messages: [
-				{
-					From: {
-						Email: "registrations@certificates.unternehmertum.de",
-						Name: "UnternehmerTUM Certificates",
-					},
-					To: [
-						{
-							Email: user.email,
-							Name: `${user.firstName} ${user.lastName}`,
-						},
-					],
-					Subject: `Please verify your email`,
-					TextPart: `Dear ${user.firstName} ${user.lastName},\n\nTo complete your sign up for UnternehmerTUM Certificates, please click on the following link:\n${verificationUrl}\n\nIf you haven't signed up yourself, please ignore or report this email.\n\nThank you!`,
-					HTMLPart: `<p>Dear ${user.firstName} ${user.lastName},</p><p>To complete your sign up for UnternehmerTUM Certificates, please click on the following link:<br /><a href="${verificationUrl}">${verificationUrl}</a></p><p>If you haven't signed up yourself, please ignore or report this email.</p><p>Thank you!</p>`,
+	await mailjetSend({
+		Messages: [
+			{
+				From: {
+					Email: "registrations@certificates.unternehmertum.de",
+					Name: "UnternehmerTUM Certificates",
 				},
-			],
-		})
-		.catch((error) => {
-			throw new Response(error.message, {
-				status: 500,
-				statusText: error.statusCode,
-			});
+				To: [
+					{
+						Email: user.email,
+						Name: `${user.firstName} ${user.lastName}`,
+					},
+				],
+				Subject: `Please verify your email`,
+				TextPart: `Dear ${user.firstName} ${user.lastName},\n\nTo complete your sign up for UnternehmerTUM Certificates, please click on the following link:\n${verificationUrl}\n\nIf you haven't signed up yourself, please ignore or report this email.\n\nThank you!`,
+				HTMLPart: `<p>Dear ${user.firstName} ${user.lastName},</p><p>To complete your sign up for UnternehmerTUM Certificates, please click on the following link:<br /><a href="${verificationUrl}">${verificationUrl}</a></p><p>If you haven't signed up yourself, please ignore or report this email.</p><p>Thank you!</p>`,
+			},
+		],
+	}).catch((error) => {
+		throw new Response(error.message, {
+			status: 500,
+			statusText: error.statusCode,
 		});
+	});
 
 	return true;
 };
@@ -94,45 +86,36 @@ export const sendInvitationEmail = async (
 	invite: UserInvitation,
 	from: User | null,
 ) => {
-	// @todo refactor into a singleton/import
-	const mailjet = new Mailjet({
-		apiKey: process.env.MJ_APIKEY_PUBLIC,
-		apiSecret: process.env.MJ_APIKEY_PRIVATE,
-	});
-
 	// @todo dynamic org name from database
 	const acceptUrl = `${domain}/user/accept-invite/${invite.id}/${invite.verifyCode}`;
 
 	const text = `Dear ${invite.firstName} ${invite.lastName},\n\n${from ? `${from.firstName} ${from.lastName} is inviting you` : "You have been invited"} to become an admiminstrator for the UnternehmerTUM certificates tool.\n\nTo accept the invitation, please click on the following link:\n${acceptUrl}\n\nThank you!`;
 	const html = `<p>Dear ${invite.firstName} ${invite.lastName},</p><p>${from ? `${from.firstName} ${from.lastName} is inviting you` : "You have been invited"} to become an admiminstrator for the UnternehmerTUM certificates tool.</p><p>To accept the invitation, please click on the following link:<br /><a href="${acceptUrl}">${acceptUrl}</a></p><p>Thank you!</p>`;
 
-	await mailjet
-		.post("send", { version: "v3.1" })
-		.request({
-			Messages: [
-				{
-					From: {
-						Email: "invitation@certificates.unternehmertum.de",
-						Name: "UnternehmerTUM Certificates",
-					},
-					To: [
-						{
-							Email: invite.email,
-							Name: `${invite.firstName} ${invite.lastName}`,
-						},
-					],
-					Subject: `You have been invited to UnternehmerTUM Certificates`,
-					TextPart: text,
-					HTMLPart: html,
+	await mailjetSend({
+		Messages: [
+			{
+				From: {
+					Email: "invitation@certificates.unternehmertum.de",
+					Name: "UnternehmerTUM Certificates",
 				},
-			],
-		})
-		.catch((error) => {
-			throw new Response(error.message, {
-				status: 500,
-				statusText: error.statusCode,
-			});
+				To: [
+					{
+						Email: invite.email,
+						Name: `${invite.firstName} ${invite.lastName}`,
+					},
+				],
+				Subject: `You have been invited to UnternehmerTUM Certificates`,
+				TextPart: text,
+				HTMLPart: html,
+			},
+		],
+	}).catch((error) => {
+		throw new Response(error.message, {
+			status: 500,
+			statusText: error.statusCode,
 		});
+	});
 
 	return true;
 };

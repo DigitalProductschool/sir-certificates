@@ -52,7 +52,7 @@
     "isbot": "^4.1.0",
     "lucide-react": "^0.436.0",
     "markdown-to-jsx": "^7.5.0",
-    "node-mailjet": "^6.0.6",
+    "node-mailjet": "^6.0.8",
     "papaparse": "^5.5.1",
     "pdf-img-convert": "^1.2.1",
     "pdf-lib": "^1.17.1",
