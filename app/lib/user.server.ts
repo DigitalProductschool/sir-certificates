@@ -30,6 +30,19 @@ export const createUser = async (user: RegisterForm) => {
 	return { id: newUser.id, email: emailLowerCase };
 };
 
+export const changePassword = async (user: User, newPassword: string) => {
+	const passwordHash = await bcrypt.hash(newPassword, 10);
+	const updatedUser = await prisma.user.update({
+		where: {
+			id: user.id,
+		},
+		data: {
+			password: passwordHash,
+		},
+	});
+	return updatedUser;
+};
+
 export const createUserInvitation = async (
 	user: InviteForm,
 	from: User | null,

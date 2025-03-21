@@ -148,7 +148,7 @@ export default function Login() {
 				email: searchParams.get("email"),
 			});
 		}
-	}, [searchParams]);
+	}, [searchParams, formData]);
 
 	useEffect(() => {
 		setIsClient(true);
@@ -195,6 +195,13 @@ export default function Login() {
 					<div className="absolute top-10 flex mx-8 p-2 px-4 gap-2 rounded-xl bg-green-600 text-primary-foreground">
 						<CheckIcon /> Email successfully verified. You can now
 						sign in.
+					</div>
+				)}
+
+				{searchParams.get("reset") === "done" && (
+					<div className="absolute top-10 flex mx-8 p-2 px-4 gap-2 rounded-xl bg-green-600 text-primary-foreground">
+						<CheckIcon /> Your password has been changed. You can
+						now sign in with your new password.
 					</div>
 				)}
 
@@ -269,7 +276,7 @@ export default function Login() {
 								hint={
 									formAction === "login" && (
 										<Link
-											to="#"
+											to={`/user/forgot-password${formData.email !== "" ? `?email=${formData.email}` : ""}`}
 											className="ml-auto inline-block text-sm underline"
 										>
 											Forgot your password?
