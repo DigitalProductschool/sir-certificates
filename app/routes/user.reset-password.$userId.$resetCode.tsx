@@ -48,6 +48,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	}
 
 	// @todo – check time of reset, if more than 30 minutes it should be considered expired and deleted
+	// @todo – add password strength indicator to "accept invite" + "sign up" pages
 
 	await changePassword(reset.user, password);
 
