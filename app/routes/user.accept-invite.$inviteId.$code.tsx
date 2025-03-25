@@ -120,6 +120,8 @@ export const loader: LoaderFunction = async ({ params }) => {
 export default function AcceptInvitationPage() {
 	const { invite, org } = useLoaderData<typeof loader>();
 
+	// @todo – add password strength indicator to "accept invite" 
+
 	return (
 		<Layout type="modal">
 			<svg
