@@ -154,6 +154,8 @@ export default function Login() {
 		setIsClient(true);
 	}, []);
 
+	// @todo – add password strength indicator to "sign up" pages
+
 	return (
 		<div className="h-screen grid grid-cols-2">
 			{!isMobile && (
