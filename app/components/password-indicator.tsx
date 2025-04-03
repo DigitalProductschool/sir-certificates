@@ -1,4 +1,4 @@
-import { ZXCVBNResult } from "zxcvbn";
+import zxcvbn, { ZXCVBNResult } from "zxcvbn";
 import {
 	Tooltip,
 	TooltipContent,
@@ -8,10 +8,6 @@ import {
 
 import { SquareAsterisk } from "lucide-react";
 
-interface PasswordIndicatorProps {
-	passwordStrength?: ZXCVBNResult;
-}
-
 const scoreToColor = [
 	"bg-red-500",
 	"bg-red-500",
@@ -19,6 +15,29 @@ const scoreToColor = [
 	"bg-yellow-500",
 	"bg-green-500",
 ];
+
+interface PasswordIndicatorProps {
+	passwordStrength?: ZXCVBNResult;
+}
+
+interface PasswordAssessment {
+	result: ZXCVBNResult;
+	enough: boolean;
+}
+
+export type { PasswordAssessment };
+
+export function assessPassword(password: string): PasswordAssessment {
+	let passwordStrengthEnough = false;
+	const passwordStrength = zxcvbn(password);
+	if (passwordStrength.score >= 3) {
+		passwordStrengthEnough = true;
+	}
+	return {
+		result: passwordStrength,
+		enough: passwordStrengthEnough,
+	};
+}
 
 export function PasswordIndicator({
 	passwordStrength,
