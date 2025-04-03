@@ -148,7 +148,7 @@ export function SidebarParticipant() {
                 <DropdownMenuGroup>
                   {user.isAdmin && (
                     <DropdownMenuItem asChild>
-                      <Link to="/org">
+                      <Link to="/org/program">
                         <TowerControl className="ml-0.5 mr-3.5 w-5 h-5" />
                         Administration
                       </Link>
