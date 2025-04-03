@@ -1,5 +1,5 @@
 import type { User, Organisation, Program, Batch } from "@prisma/client";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Link, NavLink, useLoaderData, useParams } from "@remix-run/react";
 import {
   BadgeCheck,
@@ -39,6 +39,8 @@ import {
   SidebarMenuItem,
 } from "~/components/ui/sidebar";
 
+import { useStickyState } from "~/hooks/use-sticky-state";
+
 import { pickCapitalLetters } from "~/lib/utils";
 
 // Loader from /org route
@@ -54,15 +56,19 @@ export function SidebarAdmin() {
   const { org, user, programs, latestBatch } =
     useLoaderData<LoaderReturnType>();
 
-  const [activeProgram, setActiveProgram] = useState(
-    programId ? programs.find((p) => p.id === Number(programId)) : programs[0],
+  const [lastProgramId, setLastProgramId] = useStickyState(
+    "lastActiveProgram",
+    programId ? Number(programId) : 0,
   );
 
+  const activeProgramId = programId ? Number(programId) : lastProgramId;
+
+  const activeProgram = programs.find((p) => p.id === activeProgramId);
   const activeBatchId = batchId ? batchId : latestBatch ? latestBatch.id : null;
 
   useEffect(() => {
-    if (programId) {
-      setActiveProgram(programs.find((p) => p.id === Number(programId)));
+    if (programId !== undefined) {
+      setLastProgramId(Number(programId));
     }
   }, [programId, programs]);
 
@@ -107,7 +113,6 @@ export function SidebarAdmin() {
                 {programs.map((program) => (
                   <DropdownMenuItem
                     key={program.name}
-                    onClick={() => setActiveProgram(program)}
                     className="gap-2 p-2"
                     asChild
                   >
