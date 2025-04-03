@@ -1,8 +1,16 @@
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
+import type { PasswordAssessment } from "~/components/password-indicator";
 import bcrypt from "bcryptjs";
+import { useState } from "react";
 import { json } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { Layout } from "~/components/layout";
+
+import {
+	PasswordIndicator,
+	assessPassword,
+} from "~/components/password-indicator";
+
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
@@ -36,6 +44,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 		const formData = await request.formData();
 		const inputs = Object.fromEntries(formData);
+
+		// @todo check that password is strong enough
 
 		const passwordHash = await bcrypt.hash(inputs.password, 10);
 
@@ -119,8 +129,17 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 export default function AcceptInvitationPage() {
 	const { invite, org } = useLoaderData<typeof loader>();
+	const [password, setPassword] = useState("");
 
-	// @todo – add password strength indicator to "accept invite" 
+	// @todo – add password strength indicator to "accept invite"
+
+	let passwordStrength: PasswordAssessment | undefined = undefined;
+	let passwordStrengthEnough = false;
+
+	if (password !== "") {
+		passwordStrength = assessPassword(password);
+		passwordStrengthEnough = passwordStrength.enough;
+	}
 
 	return (
 		<Layout type="modal">
@@ -152,10 +171,27 @@ export default function AcceptInvitationPage() {
 						<Label>Email</Label>
 						<Input disabled defaultValue={invite.email} />
 						<Label htmlFor="password">Password</Label>
-						<Input id="password" name="password" type="password" />
+						<Input
+							id="password"
+							name="password"
+							type="password"
+							onChange={(event) => {
+								setPassword(event.target.value);
+							}}
+						/>
+						<Label>
+							Password strength
+							<PasswordIndicator
+								passwordStrength={passwordStrength?.result}
+							/>
+						</Label>
 					</CardContent>
 					<CardFooter>
-						<Button type="submit" className="w-full">
+						<Button
+							type="submit"
+							className="w-full"
+							disabled={!passwordStrengthEnough}
+						>
 							Accept Invite
 						</Button>
 					</CardFooter>

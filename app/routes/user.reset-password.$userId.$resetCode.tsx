@@ -4,6 +4,8 @@ import type {
 	ErrorResponse,
 } from "@remix-run/node";
 import type { UserPasswordReset } from "@prisma/client";
+import type { PasswordAssessment } from "~/components/password-indicator";
+
 import { useState } from "react";
 import { redirect, json } from "@remix-run/node";
 import {
@@ -13,9 +15,11 @@ import {
 	useRouteError,
 	isRouteErrorResponse,
 } from "@remix-run/react";
-import zxcvbn, { ZXCVBNResult } from "zxcvbn";
 import { FormField } from "~/components/form-field";
-import { PasswordIndicator } from "~/components/password-indicator";
+import {
+	PasswordIndicator,
+	assessPassword,
+} from "~/components/password-indicator";
 import { Button } from "~/components/ui/button";
 import {
 	Card,
@@ -43,6 +47,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 	if (typeof password !== "string") {
 		return json({ error: `Invalid Form Data` }, { status: 400 });
 	}
+
+	// @todo check that password is strong enough
+
 	if (!params.resetCode) {
 		throw new Response(null, {
 			status: 400,
@@ -151,13 +158,12 @@ export default function ResetPassword() {
 		setFormData((form) => ({ ...form, [field]: event.target.value }));
 	};
 
-	let passwordStrength: ZXCVBNResult | undefined = undefined;
+	let passwordStrength: PasswordAssessment | undefined = undefined;
 	let passwordStrengthEnough = false;
+
 	if (formData.password !== "") {
-		passwordStrength = zxcvbn(formData.password);
-		if (passwordStrength.score >= 3) {
-			passwordStrengthEnough = true;
-		}
+		passwordStrength = assessPassword(formData.password);
+		passwordStrengthEnough = passwordStrength.enough;
 	}
 
 	return (
@@ -204,7 +210,7 @@ export default function ResetPassword() {
 						<Label>
 							Password strength
 							<PasswordIndicator
-								passwordStrength={passwordStrength}
+								passwordStrength={passwordStrength?.result}
 							/>
 						</Label>
 
