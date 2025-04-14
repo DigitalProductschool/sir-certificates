@@ -488,7 +488,9 @@ export function downloadCertificates(certificates: Certificate[]) {
 	// Add files to the archive
 	certificates.forEach((cert) => {
 		archive.file(`${certDir}/${cert.id}.pdf`, {
-			name: `${slug(cert.firstName)} ${slug(cert.lastName)}.certificate.pdf`,
+			name: cert.teamName
+				? `${slug(cert.teamName)}/${slug(cert.firstName)} ${slug(cert.lastName)}.certificate.pdf`
+				: `${slug(cert.firstName)} ${slug(cert.lastName)}.certificate.pdf`,
 		});
 	});
 
