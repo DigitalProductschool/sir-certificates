@@ -41,6 +41,7 @@ import {
   saveUploadedTemplate,
 } from "~/lib/pdf.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
+import { locales } from "~/lib/template-locales";
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdmin(request);
@@ -168,9 +169,11 @@ export default function EditTemplateDialog() {
               <SelectValue placeholder="Select a date format" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="en-US">English US</SelectItem>
-              <SelectItem value="en-GB">English UK</SelectItem>
-              <SelectItem value="de-DE">German</SelectItem>
+              {locales.map((locale) => (
+                <SelectItem key={locale.code} value={locale.code}>
+                  {locale.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 

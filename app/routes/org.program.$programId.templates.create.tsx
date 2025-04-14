@@ -35,6 +35,7 @@ import {
   generateTemplateSample,
   generatePreviewOfTemplate,
 } from "~/lib/pdf.server";
+import { locales } from "~/lib/template-locales";
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdmin(request);
@@ -157,13 +158,16 @@ export default function CreateTemplateDialog() {
               onChange={(e) => setTemplateName(e.target.value)}
             />
             <Label htmlFor="locale">Date format</Label>
-            <Select name="locale" defaultValue="de-DE">
+            <Select name="locale" defaultValue="en-US">
               <SelectTrigger>
                 <SelectValue placeholder="Select a date format" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="de-DE">German</SelectItem>
-                <SelectItem value="en-GB">English UK</SelectItem>
+                {locales.map((locale) => (
+                  <SelectItem key={locale.code} value={locale.code}>
+                    {locale.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
