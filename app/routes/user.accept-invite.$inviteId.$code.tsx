@@ -3,7 +3,7 @@ import type { PasswordAssessment } from "~/components/password-indicator";
 import bcrypt from "bcryptjs";
 import { useState } from "react";
 import { json } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { Layout } from "~/components/layout";
 
 import {
@@ -45,7 +45,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 		const formData = await request.formData();
 		const inputs = Object.fromEntries(formData);
 
-		// @todo check that password is strong enough
+		const strength = assessPassword(inputs.password);
+		if (!strength.enough) {
+			return json(
+				{ error: "Please choose a stronger password." },
+				{ status: 400 },
+			);
+		}
 
 		const passwordHash = await bcrypt.hash(inputs.password, 10);
 
@@ -128,10 +134,11 @@ export const loader: LoaderFunction = async ({ params }) => {
 };
 
 export default function AcceptInvitationPage() {
+	const actionData = useActionData<typeof action>();
 	const { invite, org } = useLoaderData<typeof loader>();
 	const [password, setPassword] = useState("");
 
-	// @todo – add password strength indicator to "accept invite"
+	const formError = actionData?.error;
 
 	let passwordStrength: PasswordAssessment | undefined = undefined;
 	let passwordStrengthEnough = false;
@@ -140,6 +147,8 @@ export default function AcceptInvitationPage() {
 		passwordStrength = assessPassword(password);
 		passwordStrengthEnough = passwordStrength.enough;
 	}
+
+	console.log(actionData);
 
 	return (
 		<Layout type="modal">
@@ -168,6 +177,11 @@ export default function AcceptInvitationPage() {
 
 				<Form method="POST">
 					<CardContent className="grid gap-4">
+						{formError && (
+							<div className="w-full font-semibold text-sm tracking-wide text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2">
+								{formError}
+							</div>
+						)}
 						<Label>Email</Label>
 						<Input disabled defaultValue={invite.email} />
 						<Label htmlFor="password">Password</Label>

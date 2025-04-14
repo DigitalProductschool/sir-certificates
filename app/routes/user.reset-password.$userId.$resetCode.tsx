@@ -48,12 +48,18 @@ export const action: ActionFunction = async ({ request, params }) => {
 		return json({ error: `Invalid Form Data` }, { status: 400 });
 	}
 
-	// @todo check that password is strong enough
+	const strength = assessPassword(password);
+	if (!strength.enough) {
+		return json(
+			{ error: "Please choose a stronger password." },
+			{ status: 400 },
+		);
+	}
 
 	if (!params.resetCode) {
 		throw new Response(null, {
 			status: 400,
-			statusText: "Missing reset code",
+			statusText: "Missing reset code.",
 		});
 	}
 
@@ -69,7 +75,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	if (!reset) {
 		throw new Response(null, {
 			status: 404,
-			statusText: "Password reset request not found",
+			statusText: "Password reset request not found.",
 		});
 	}
 
