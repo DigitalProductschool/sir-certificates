@@ -24,6 +24,11 @@ export function replaceVariables(
 		month: "numeric",
 		day: "numeric",
 	});
+	const signatureDateLong = batch.endDate.toLocaleString(locale, {
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
 
 	const currentDate = new Date().toLocaleString(locale, {
 		year: "numeric",
@@ -73,6 +78,10 @@ export function replaceVariables(
 	replacements = replacements.replaceAll(
 		"{batch.signatureDate}",
 		signatureDate,
+	);
+	replacements = replacements.replaceAll(
+		"{batch.signatureDateLong}",
+		signatureDateLong,
 	);
 	replacements = replacements.replaceAll(
 		"{datetime.currentDate}",

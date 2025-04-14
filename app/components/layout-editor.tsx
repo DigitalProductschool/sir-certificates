@@ -284,6 +284,11 @@ function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
                 >
                   Signature date
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => addVariable("{batch.signatureDateLong}")}
+                >
+                  Signature date (long)
+                </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
