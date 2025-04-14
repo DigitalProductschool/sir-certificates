@@ -58,7 +58,7 @@ export function SidebarAdmin() {
 
   const [lastProgramId, setLastProgramId] = useStickyState(
     "lastActiveProgram",
-    programId ? Number(programId) : 0,
+    programId ? Number(programId) : programs[0]?.id,
   );
 
   const activeProgramId = programId ? Number(programId) : lastProgramId;
