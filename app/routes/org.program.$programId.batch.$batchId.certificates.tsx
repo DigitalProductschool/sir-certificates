@@ -92,7 +92,6 @@ export default function BatchCertificatesPage() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead></TableHead>
             <TableHead>Name</TableHead>
             <TableHead className="font-medium">Email</TableHead>
             <TableHead>Team</TableHead>
@@ -115,6 +114,7 @@ export default function BatchCertificatesPage() {
               </div>
             </TableHead>
             <TableHead colSpan={2}>Actions</TableHead>
+            <TableHead></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -122,18 +122,6 @@ export default function BatchCertificatesPage() {
             const template = templatesMap.get(cert.templateId);
             return (
               <TableRow key={cert.email}>
-                <TableCell>
-                  {cert.notifiedAt && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <MailCheck />
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        {new Date(cert.notifiedAt).toLocaleString()}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </TableCell>
                 <TableCell>
                   {cert.firstName} {cert.lastName}
                 </TableCell>
@@ -176,6 +164,20 @@ export default function BatchCertificatesPage() {
                 </TableCell>
                 <TableCell>
                   <CertificateSendNotification certificate={cert} />
+                </TableCell>
+                <TableCell>
+                  {cert.notifiedAt ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <MailCheck />
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        {new Date(cert.notifiedAt).toLocaleString()}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <>&emsp;</>
+                  )}
                 </TableCell>
               </TableRow>
             );
