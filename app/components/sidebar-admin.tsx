@@ -9,6 +9,7 @@ import {
   FileBadge,
   FileText,
   Home,
+  LayoutGrid,
   LogOut,
   Plus,
   Settings2,
@@ -107,8 +108,29 @@ export function SidebarAdmin() {
                 sideOffset={4}
               >
                 {/* todo potentially build a Notion-inspired program switcher that includes a button for the settings */}
+                <DropdownMenuItem className="gap-2 p-2" asChild>
+                  <NavLink to="/org/program">
+                    <div className="flex size-6 items-center justify-center rounded-md border bg-background">
+                      <LayoutGrid className="size-4" />
+                    </div>
+                    <div className="font-medium text-muted-foreground">
+                      Show all programs
+                    </div>
+                  </NavLink>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 p-2" asChild>
+                  <NavLink to="/org/program/create">
+                    <div className="flex size-6 items-center justify-center rounded-md border bg-background">
+                      <Plus className="size-4" />
+                    </div>
+                    <div className="font-medium text-muted-foreground">
+                      Add program
+                    </div>
+                  </NavLink>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Other Programs
+                  Open another program
                 </DropdownMenuLabel>
                 {programs.map((program) => (
                   <DropdownMenuItem
@@ -124,17 +146,6 @@ export function SidebarAdmin() {
                     </Link>
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-2 p-2" asChild>
-                  <NavLink to="/org/program/create">
-                    <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                      <Plus className="size-4" />
-                    </div>
-                    <div className="font-medium text-muted-foreground">
-                      Add program
-                    </div>
-                  </NavLink>
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
