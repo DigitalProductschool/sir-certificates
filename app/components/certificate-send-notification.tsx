@@ -7,17 +7,24 @@ interface SendNotificationProps {
 	certificate: Certificate;
 }
 
-export function CertificateSendNotification({ certificate }: SendNotificationProps) {
+export function CertificateSendNotification({
+	certificate,
+}: SendNotificationProps) {
 	const fetcher = useFetcher();
+	const wasSent = certificate.notifiedAt ? true : false;
 	return (
 		<fetcher.Form action={`/cert/${certificate.uuid}/notify`} method="POST">
-			<Button type="submit" disabled={fetcher.state !== "idle"}>
+			<Button
+				type="submit"
+				disabled={fetcher.state !== "idle"}
+				variant={wasSent ? "outline" : "default"}
+			>
 				{fetcher.state !== "idle" ? (
 					<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 				) : (
 					<SendIcon className="mr-2 h-4 w-4" />
 				)}
-				Send
+				{wasSent ? "Resend" : "Send"}
 			</Button>
 		</fetcher.Form>
 	);
