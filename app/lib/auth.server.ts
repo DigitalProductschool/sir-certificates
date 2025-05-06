@@ -81,7 +81,9 @@ export async function login({ email, password }: LoginForm) {
 		);
 	}
 
-	return createUserSessionAndRedirect(user, "/");
+	const redirectTo = user.isAdmin ? "/org/program" : "/";
+
+	return createUserSessionAndRedirect(user, redirectTo);
 }
 
 export async function createUserSessionAndRedirect(
