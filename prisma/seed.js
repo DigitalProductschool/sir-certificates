@@ -28,6 +28,7 @@ async function main() {
       firstName: process.env.SEED_ADMIN_FIRSTNAME,
       lastName: process.env.SEED_ADMIN_LASTNAME,
       isAdmin: true,
+      isSuperAdmin: true,
       isVerified: true,
     },
     create: {
@@ -37,6 +38,7 @@ async function main() {
       lastName: process.env.SEED_ADMIN_LASTNAME,
       verifyCode: randomUUID(),
       isAdmin: true,
+      isSuperAdmin: true,
       isVerified: true,
     },
   });
