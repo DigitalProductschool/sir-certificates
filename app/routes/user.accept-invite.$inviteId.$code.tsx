@@ -148,8 +148,6 @@ export default function AcceptInvitationPage() {
 		passwordStrengthEnough = passwordStrength.enough;
 	}
 
-	console.log(actionData);
-
 	return (
 		<Layout type="modal">
 			<svg

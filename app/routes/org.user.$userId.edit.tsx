@@ -3,7 +3,7 @@ import type {
   LoaderFunction,
   MetaFunction,
 } from "@remix-run/node";
-// import type { User } from "@prisma/client";
+import type { Program } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
@@ -19,6 +19,7 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { MultiSelect } from "~/components/ui/multi-select";
 import { Switch } from "~/components/ui/switch";
 
 import { requireAdmin } from "~/lib/auth.server";
@@ -29,28 +30,67 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  const adminId = await requireAdmin(request);
+  const admin = await prisma.user.findUnique({
+    where: {
+      id: adminId,
+    },
+  });
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
 
+  // console.log(inputs);
+
   // @todo add error handling (i.e. user not found)
+
+  // @todo add access-control, program managers can only edit users associated with their programs
+
+  const update: {
+    firstName: string;
+    lastName: string;
+    isAdmin: boolean;
+    isSuperAdmin?: boolean;
+  } = {
+    firstName: inputs.firstName,
+    lastName: inputs.lastName,
+    isAdmin:
+      inputs.isAdmin === "yes" ||
+      (admin?.isSuperAdmin && inputs.isSuperAdmin === "yes") // automatically set isAdmin true for super admins
+        ? true
+        : false,
+  };
+
+  if (admin?.isSuperAdmin) {
+    // only allow updating this for super admins
+    update.isSuperAdmin = inputs.isSuperAdmin === "yes" ? true : false;
+  }
+
   await prisma.user.update({
     where: {
       id: Number(params.userId),
     },
-    data: {
-      firstName: inputs.firstName,
-      lastName: inputs.lastName,
-      isAdmin: inputs.isAdmin === "yes" ? true : false,
-    },
+    data: update,
   });
 
   return redirect(`/org/user`);
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  const adminId = await requireAdmin(request);
+  const admin = await prisma.user.findUnique({
+    where: {
+      id: adminId,
+    },
+    select: {
+      id: true,
+      isAdmin: true,
+      isSuperAdmin: true,
+      adminOfPrograms: true,
+    },
+  });
+
+  // @todo add access-control, program managers can only edit users associated with their programs
 
   const user = await prisma.user.findUnique({
     where: {
@@ -62,6 +102,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       lastName: true,
       email: true,
       isAdmin: true,
+      isSuperAdmin: true,
+      adminOfPrograms: true,
     },
   });
 
@@ -72,7 +114,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ user });
+  const programs = await prisma.program.findMany();
+
+  return json({ admin, user, programs });
 };
 
 export const handle = {
@@ -80,9 +124,19 @@ export const handle = {
 };
 
 export default function EditUserDialog() {
-  const { user } = useLoaderData<typeof loader>();
+  const { admin, user, programs } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(user.isAdmin);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(user.isSuperAdmin);
+
+  const programList = programs.map((p: Program) => {
+    return { value: p.id, label: p.name };
+  });
+
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>(
+    programs.map((p: Program) => p.id),
+  );
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -103,7 +157,7 @@ export default function EditUserDialog() {
         if (!open) navigate(-1);
       }}
     >
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[625px] pointer-events-auto">
         <Form method="POST">
           <DialogHeader>
             <DialogTitle>User settings</DialogTitle>
@@ -120,23 +174,74 @@ export default function EditUserDialog() {
             />
             <Label htmlFor="lastName">Last name</Label>
             <Input id="lastName" name="lastName" defaultValue={user.lastName} />
-            <div className="flex items-end">
+            {admin.isSuperAdmin && (
+              <div className="flex items-end">
+                <Label
+                  htmlFor="isSuperAdmin"
+                  className="flex flex-col flex-1 leading-6"
+                >
+                  Super admin permissions
+                  <span className="text-muted-foreground font-normal">
+                    Give full access to all organisation and program settings
+                  </span>
+                </Label>
+                <Switch
+                  key={user.id}
+                  id="isSuperAdmin"
+                  name="isSuperAdmin"
+                  value="yes"
+                  checked={isSuperAdmin}
+                  onCheckedChange={setIsSuperAdmin}
+                />
+              </div>
+            )}
+            {isSuperAdmin ? (
               <Label
                 htmlFor="isAdmin"
                 className="flex flex-col flex-1 leading-6"
               >
-                Admin permissions
+                Program manager permissions
                 <span className="text-muted-foreground font-normal">
-                  Give full access to all settings
+                  Super admins automatically have full access to all programs
                 </span>
               </Label>
-              <Switch
-                id="isAdmin"
-                name="isAdmin"
-                value="yes"
-                defaultChecked={user.isAdmin}
-              />
-            </div>
+            ) : (
+              <>
+                <div className="flex items-end">
+                  <Label
+                    htmlFor="isAdmin"
+                    className="flex flex-col flex-1 leading-6"
+                  >
+                    Program manager permissions
+                    <span className="text-muted-foreground font-normal">
+                      Give access to the following programs
+                    </span>
+                  </Label>
+                  <Switch
+                    id="isAdmin"
+                    name="isAdmin"
+                    value="yes"
+                    checked={isAdmin}
+                    onCheckedChange={setIsAdmin}
+                  />
+                </div>
+
+                {isAdmin && (
+                  <MultiSelect
+                    options={programList}
+                    onValueChange={setSelectedPrograms}
+                    defaultValue={selectedPrograms}
+                    placeholder="Select programs"
+                    variant="inverted"
+                    animation={0}
+                    maxCount={3}
+                    disabled={!isAdmin}
+                  />
+                )}
+              </>
+            )}
+
+            {/* @todo list of programs the user is managing */}
           </div>
           <DialogFooter className="pt-4">
             <Button type="submit">Save changes</Button>

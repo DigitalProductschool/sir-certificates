@@ -14,29 +14,32 @@ datasource db {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt  
-  email         String    @unique
-  password      String
-  firstName     String
-  lastName      String
-  verifyCode    String    @db.Uuid
-  isAdmin       Boolean   @default(false)
-  isVerified    Boolean   @default(false)
-  photo         UserPhoto?
-  passwordReset UserPasswordReset?
+  id               Int       @id @default(autoincrement())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt  
+  email            String    @unique
+  password         String
+  firstName        String
+  lastName         String
+  verifyCode       String    @db.Uuid
+  isAdmin          Boolean   @default(false)
+  isSuperAdmin     Boolean   @default(false)
+  isVerified       Boolean   @default(false)
+  adminOfPrograms  Program[]
+  photo            UserPhoto?
+  passwordReset    UserPasswordReset?
   @@map("user")  
 }
 
 model UserInvitation {
-  id            Int       @id @default(autoincrement())
-  createdAt     DateTime  @default(now())
-  email         String    @unique
-  firstName     String
-  lastName      String
-  verifyCode    String    @db.Uuid
-  isAdmin       Boolean   @default(false)
+  id              Int       @id @default(autoincrement())
+  createdAt       DateTime  @default(now())
+  email           String    @unique
+  firstName       String
+  lastName        String
+  verifyCode      String    @db.Uuid
+  isAdmin         Boolean   @default(false)
+  adminOfPrograms Int[]
 
   @@map("user_invitations")  
 }
@@ -77,9 +80,10 @@ model Program {
   about         String?    
   achievement   String?
   website       String?   @db.VarChar(128) 
+  admins        User[]
   batches       Batch[]
   templates     Template[]
-  socialPreview SocialPreview?
+  socialPreview SocialPreview?  
 
   @@map("programs")
 }

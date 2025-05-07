@@ -39,6 +39,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       lastName: true,
       email: true,
       isAdmin: true,
+      isSuperAdmin: true,
     },
   });
   const invitations = await prisma.userInvitation.findMany({
@@ -113,7 +114,13 @@ export default function UserIndexPage() {
                 {u.firstName} {u.lastName}
               </TableCell>
               <TableCell className="font-medium">{u.email}</TableCell>
-              <TableCell>{u.isAdmin ? "Admin" : "Viewer"}</TableCell>
+              <TableCell>
+                {u.isSuperAdmin
+                  ? "Super Admin"
+                  : u.isAdmin
+                    ? "Program Manager"
+                    : "View Certificates"}
+              </TableCell>
               <TableCell>
                 <Tooltip>
                   <TooltipTrigger asChild>
