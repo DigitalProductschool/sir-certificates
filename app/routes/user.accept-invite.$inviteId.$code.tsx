@@ -55,6 +55,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 		const passwordHash = await bcrypt.hash(inputs.password, 10);
 
+		// @todo add access control for valid programs of invite sender
+
+		const setAdminOfPrograms = invite.adminOfPrograms
+			? invite.adminOfPrograms.map((pId) => ({ id: pId }))
+			: [];
+
 		const user = await prisma.user.upsert({
 			where: {
 				email: invite.email,
@@ -62,6 +68,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			update: {
 				isAdmin: invite.isAdmin,
 				password: passwordHash,
+				adminOfPrograms: { set: setAdminOfPrograms },
 			},
 			create: {
 				firstName: invite.firstName,
@@ -70,12 +77,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 				password: passwordHash,
 				verifyCode: invite.verifyCode,
 				isAdmin: invite.isAdmin,
+				adminOfPrograms: { connect: setAdminOfPrograms },
 				isVerified: true,
 			},
 		});
 
 		if (user) {
-			// clean up the used invite code
+			// @todo instead of deleting it, mark it as used and give user feedback when the link is clicked again
+			// @todo clean up the used invite codes after a certain time period
 			await prisma.userInvitation.delete({
 				where: {
 					id: Number(params.inviteId),

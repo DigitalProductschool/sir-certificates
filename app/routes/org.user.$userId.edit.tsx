@@ -24,6 +24,7 @@ import { Switch } from "~/components/ui/switch";
 
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { getProgramsByAdmin } from "~/lib/program.server";
 
 export const meta: MetaFunction<typeof loader> = () => {
   return [{ title: "Edit User" }];
@@ -40,7 +41,14 @@ export const action: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
 
-  // console.log(inputs);
+  // @todo check access control
+  const userIsAdmin = inputs.isAdmin === "yes";
+
+  const setAdminOfPrograms: number[] = inputs.adminOfPrograms
+    ? inputs.adminOfPrograms.split(",").map((id: string) => {
+        return { id: Number(id) };
+      })
+    : [];
 
   // @todo add error handling (i.e. user not found)
 
@@ -51,12 +59,12 @@ export const action: ActionFunction = async ({ request, params }) => {
     lastName: string;
     isAdmin: boolean;
     isSuperAdmin?: boolean;
+    adminOfPrograms?: object;
   } = {
     firstName: inputs.firstName,
     lastName: inputs.lastName,
     isAdmin:
-      inputs.isAdmin === "yes" ||
-      (admin?.isSuperAdmin && inputs.isSuperAdmin === "yes") // automatically set isAdmin true for super admins
+      userIsAdmin || (admin?.isSuperAdmin && inputs.isSuperAdmin === "yes") // automatically set isAdmin true for super admins
         ? true
         : false,
   };
@@ -64,6 +72,12 @@ export const action: ActionFunction = async ({ request, params }) => {
   if (admin?.isSuperAdmin) {
     // only allow updating this for super admins
     update.isSuperAdmin = inputs.isSuperAdmin === "yes" ? true : false;
+  }
+
+  if (userIsAdmin) {
+    update.adminOfPrograms = {
+      set: setAdminOfPrograms,
+    };
   }
 
   await prisma.user.update({
@@ -114,7 +128,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  const programs = await prisma.program.findMany();
+  const programs = await getProgramsByAdmin(adminId);
 
   return json({ admin, user, programs });
 };
@@ -135,7 +149,7 @@ export default function EditUserDialog() {
   });
 
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>(
-    programs.map((p: Program) => p.id),
+    user.adminOfPrograms.map((p: Program) => p.id),
   );
 
   useEffect(() => {
@@ -227,16 +241,23 @@ export default function EditUserDialog() {
                 </div>
 
                 {isAdmin && (
-                  <MultiSelect
-                    options={programList}
-                    onValueChange={setSelectedPrograms}
-                    defaultValue={selectedPrograms}
-                    placeholder="Select programs"
-                    variant="inverted"
-                    animation={0}
-                    maxCount={3}
-                    disabled={!isAdmin}
-                  />
+                  <>
+                    <MultiSelect
+                      options={programList}
+                      onValueChange={setSelectedPrograms}
+                      defaultValue={selectedPrograms}
+                      placeholder="Select programs"
+                      variant="inverted"
+                      animation={0}
+                      maxCount={3}
+                      disabled={!isAdmin}
+                    />
+                    <input
+                      type="hidden"
+                      name="adminOfPrograms"
+                      value={selectedPrograms.join(",")}
+                    />
+                  </>
                 )}
               </>
             )}

@@ -55,6 +55,7 @@ export const createUserInvitation = async (
 			firstName: user.firstName,
 			lastName: user.lastName,
 			isAdmin: true,
+			adminOfPrograms: user.adminOfPrograms,
 			verifyCode,
 		},
 	});

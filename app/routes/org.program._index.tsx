@@ -11,21 +11,15 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { requireAdmin } from "~/lib/auth.server";
-import { prisma } from "~/lib/prisma.server";
+import { getProgramsByAdmin } from "~/lib/program.server";
 
 export const meta: MetaFunction = () => {
   return [{ title: "Programs" }];
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  await requireAdmin(request);
-
-  const programs = await prisma.program.findMany({
-    orderBy: {
-      name: "asc",
-    },
-  });
-
+  const adminId = await requireAdmin(request);
+  const programs = await getProgramsByAdmin(adminId);
   return json({ programs });
 };
 

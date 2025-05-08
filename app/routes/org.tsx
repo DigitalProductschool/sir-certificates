@@ -15,6 +15,7 @@ import {
 import { Separator } from "~/components/ui/separator";
 import { TooltipProvider } from "~/components/ui/tooltip";
 import { requireAdmin, getUser } from "~/lib/auth.server";
+import { getProgramsByAdmin } from "~/lib/program.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -22,7 +23,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  const adminId = await requireAdmin(request);
   const user = await getUser(request);
 
   let org = await prisma.organisation.findUnique({
@@ -40,11 +41,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     };
   }
 
-  const programs = await prisma.program.findMany({
-    orderBy: {
-      name: "asc",
-    },
-  });
+  const programs = await getProgramsByAdmin(adminId);
 
   let latestBatch: Batch | null = null;
   if (params.programId) {
