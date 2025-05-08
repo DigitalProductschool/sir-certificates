@@ -163,7 +163,7 @@ export function SidebarAdmin() {
                       className="aria-current:bg-sidebar-accent aria-current:font-bold"
                     >
                       <Settings />
-                      <span>Settings</span>
+                      <span>Program Settings</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
