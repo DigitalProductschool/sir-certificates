@@ -153,6 +153,8 @@ export async function getUser(request: Request) {
 				firstName: true,
 				lastName: true,
 				isAdmin: true,
+				isSuperAdmin: true,
+				adminOfPrograms: true,
 			},
 		});
 		return user;

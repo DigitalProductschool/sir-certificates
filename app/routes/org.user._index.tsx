@@ -122,6 +122,7 @@ export default function UserIndexPage() {
                     : "View Certificates"}
               </TableCell>
               <TableCell>
+                {/* @todo show edit only if permissions are there / show this view only to super-admins, create a separate user view per program? */}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="outline" size="icon" asChild>
