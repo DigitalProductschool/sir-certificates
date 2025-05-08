@@ -183,15 +183,17 @@ export default function BatchPage() {
         </Button>
 
         {currentBatch && (
-          <Button variant="outline" asChild>
-            <Link to={`${params.batchId}/certificates/create`}>
-              Add Certificate
-            </Link>
-          </Button>
-        )}
-
-        {currentBatch && (
           <>
+            <Button variant="outline" asChild>
+              <Link to={`${params.batchId}/certificates/create`}>
+                Add Certificate
+              </Link>
+            </Button>
+
+            <Button variant="outline" asChild>
+              <Link to={`${params.batchId}/import`}>Import Certificates</Link>
+            </Button>
+
             <Button variant="outline" asChild>
               <Link
                 to={`${params.batchId}/certificates/download.zip`}
