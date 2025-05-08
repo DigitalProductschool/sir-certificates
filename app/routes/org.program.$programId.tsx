@@ -1,17 +1,25 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { ErrorResponse } from "@remix-run/react";
 import type { Program } from "@prisma/client";
 import { json } from "@remix-run/node";
-import { Link, Outlet } from "@remix-run/react";
+import {
+  Link,
+  Outlet,
+  isRouteErrorResponse,
+  useRouteError,
+} from "@remix-run/react";
 
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { requireAccessToProgram } from "~/lib/program.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  return [{ title: `${data.program.name}` }];
+  return [{ title: `${data?.program?.name}` }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  const adminId = await requireAdmin(request);
+  await requireAccessToProgram(adminId, Number(params.programId));
 
   const program = await prisma.program.findUnique({
     where: {
@@ -51,4 +59,36 @@ export const handle = {
 
 export default function ProgramPage() {
   return <Outlet />;
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  let errorInfo;
+
+  if (isRouteErrorResponse(error)) {
+    const response = error as ErrorResponse;
+    errorInfo = (
+      <div>
+        <h1>
+          {response.status} {response.statusText}
+        </h1>
+        <p>{response.data}</p>
+      </div>
+    );
+  } else if (error instanceof Error) {
+    errorInfo = (
+      <div>
+        <h1>Error</h1>
+        <p>{error.message}</p>
+      </div>
+    );
+  } else {
+    errorInfo = <h1>Unknown Error</h1>;
+  }
+
+  return (
+    <div className="h-screen w-full flex flex-col items-center justify-center px-4">
+      {errorInfo}
+    </div>
+  );
 }

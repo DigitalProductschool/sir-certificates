@@ -5,14 +5,13 @@ import {
   BadgeCheck,
   BookType,
   ChevronsUpDown,
-  FileUp,
   FileBadge,
-  FileText,
+  FilePen,
   Home,
   LayoutGrid,
   LogOut,
   Plus,
-  Settings2,
+  Settings,
   Share2,
   SquareUser,
   UsersIcon,
@@ -71,7 +70,7 @@ export function SidebarAdmin() {
     if (programId !== undefined) {
       setLastProgramId(Number(programId));
     }
-  }, [programId, programs]);
+  }, [programId, programs, setLastProgramId]);
 
   return (
     <Sidebar collapsible="icon">
@@ -153,125 +152,148 @@ export function SidebarAdmin() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Program Settings" asChild>
-                <NavLink
-                  to={`/org/program/${activeProgram?.id}/edit`}
-                  className="aria-current:bg-sidebar-accent aria-current:font-bold"
-                >
-                  <Settings2 />
-                  <span>Settings</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+        {activeProgram && (
+          <>
+            <SidebarGroup>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton tooltip="Program Settings" asChild>
+                    <NavLink
+                      to={`/org/program/${activeProgram?.id}/edit`}
+                      className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                    >
+                      <Settings />
+                      <span>Settings</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton tooltip="Social Media" asChild>
+                    <NavLink to={`/org/program/${activeProgram?.id}/social`}>
+                      <Share2 />
+                      <span>Social Media</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Participants</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Certificates" asChild>
-                <NavLink
-                  to={`/org/program/${activeProgram?.id}/batch/${activeBatchId ? activeBatchId + "/certificates" : ""}`}
-                  className="aria-current:bg-sidebar-accent aria-current:font-bold"
-                >
-                  <FileBadge />
-                  <span>Certificates</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Import Participants">
-                <NavLink
-                  to={
-                    activeBatchId
-                      ? `/org/program/${activeProgram?.id}/batch/${activeBatchId}/import`
-                      : `/org/program/${activeProgram?.id}/batch/create`
-                  }
-                  className="aria-current:bg-sidebar-accent aria-current:font-bold"
-                >
-                  <FileUp />
-                  <span>Import</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+                {!user.isSuperAdmin && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton tooltip="User" asChild>
+                      <NavLink
+                        to={`/org/user`}
+                        className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                      >
+                        <UsersIcon />
+                        <span>User</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroup>
 
-        <SidebarGroup className="grow">
-          <SidebarGroupLabel>Templates</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="PDF Certificate Templates" asChild>
-                <NavLink
-                  to={`/org/program/${activeProgram?.id}/templates/`}
-                  className="aria-current:bg-sidebar-accent aria-current:font-bold"
-                >
-                  <FileText className="w-6 h-6" size={24} />
-                  <span>PDF Certificate</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            {/*<SidebarMenuItem>
+            <SidebarGroup className="grow">
+              <SidebarGroupLabel>Certificates</SidebarGroupLabel>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton tooltip="Certificates" asChild>
+                    <NavLink
+                      to={`/org/program/${activeProgram?.id}/batch/${activeBatchId ? activeBatchId + "/certificates" : ""}`}
+                      className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                    >
+                      <FileBadge />
+                      <span>Batches</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {/*<SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Import Participants">
+                    <NavLink
+                      to={
+                        activeBatchId
+                          ? `/org/program/${activeProgram?.id}/batch/${activeBatchId}/import`
+                          : `/org/program/${activeProgram?.id}/batch/create`
+                      }
+                      className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                    >
+                      <FileUp />
+                      <span>Import</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>*/}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="PDF Certificate Templates"
+                    asChild
+                  >
+                    <NavLink
+                      to={`/org/program/${activeProgram?.id}/templates/`}
+                      className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                    >
+                      <FilePen className="w-6 h-6" size={24} />
+                      <span>Templates</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+
+            {/*<SidebarGroup className="grow">
+              <SidebarGroupLabel>Templates</SidebarGroupLabel>
+              <SidebarMenu>
+                <SidebarMenuItem>
               <SidebarMenuButton tooltip="Email Templates" asChild>
                 <NavLink to={`/org/program/${activeProgram.id}/emails`}>
                   <Mail />
                   <span>Email</span>
                 </NavLink>
               </SidebarMenuButton>
-            </SidebarMenuItem>*/}
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Social Media" asChild>
-                <NavLink to={`/org/program/${activeProgram?.id}/social`}>
-                  <Share2 />
-                  <span>Social Media Preview</span>
-                </NavLink>
-              </SidebarMenuButton>
             </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroup>*/}
 
-        <SidebarGroup className="mb-1">
-          <SidebarGroupLabel>{org.name}</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Organisation Settings" asChild>
-                <NavLink
-                  to={`/org/settings`}
-                  className="aria-current:bg-sidebar-accent aria-current:font-bold"
-                >
-                  <Home />
-                  <span>Organisation</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="User" asChild>
-                <NavLink
-                  to={`/org/user`}
-                  className="aria-current:bg-sidebar-accent aria-current:font-bold"
-                >
-                  <UsersIcon />
-                  <span>User</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Typefaces" asChild>
-                <NavLink
-                  to={`/org/typeface`}
-                  className="aria-current:bg-sidebar-accent aria-current:font-bold"
-                >
-                  <BookType />
-                  <span>Typefaces</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+            {user.isSuperAdmin && (
+              <SidebarGroup className="mb-1">
+                <SidebarGroupLabel>{org.name}</SidebarGroupLabel>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton tooltip="Organisation Settings" asChild>
+                      <NavLink
+                        to={`/org/settings`}
+                        className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                      >
+                        <Home />
+                        <span>Organisation</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton tooltip="User" asChild>
+                      <NavLink
+                        to={`/org/user`}
+                        className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                      >
+                        <UsersIcon />
+                        <span>User</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton tooltip="Typefaces" asChild>
+                      <NavLink
+                        to={`/org/typeface`}
+                        className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                      >
+                        <BookType />
+                        <span>Typefaces</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroup>
+            )}
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
