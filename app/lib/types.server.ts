@@ -14,6 +14,7 @@ export type InviteForm = {
 	email: string;
 	firstName: string;
 	lastName: string;
+	adminOfPrograms?: number[]
 };
 
 // @todo add types for other forms

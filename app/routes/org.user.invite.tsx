@@ -23,6 +23,7 @@ import { MultiSelect } from "~/components/ui/multi-select";
 
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { getProgramsByAdmin } from "~/lib/program.server";
 import { createUserInvitation } from "~/lib/user.server";
 
 export const meta: MetaFunction = () => {
@@ -30,21 +31,28 @@ export const meta: MetaFunction = () => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  const userId = await requireAdmin(request);
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const adminId = await requireAdmin(request);
+  const admin = await prisma.user.findUnique({ where: { id: adminId } });
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
 
+  console.log(inputs);
+
   // @todo add form validation
+
+  // @todo add access control
 
   await createUserInvitation(
     {
       firstName: inputs.firstName,
       lastName: inputs.lastName,
       email: inputs.email,
+      adminOfPrograms: inputs.adminOfPrograms
+        ? inputs.adminOfPrograms.split(",").map((pId: string) => Number(pId))
+        : undefined,
     },
-    user,
+    admin,
   );
 
   return redirect(`/org/user`);
@@ -64,8 +72,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     },
   });
 
-  // @todo add access-control, program managers can only invite users to their programs
-  const programs = await prisma.program.findMany();
+  const programs = await getProgramsByAdmin(adminId);
 
   return json({ admin, programs });
 };
