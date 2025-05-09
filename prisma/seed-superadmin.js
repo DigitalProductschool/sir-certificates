@@ -9,7 +9,7 @@ async function main() {
     where: {
       id: 1,
     },
-    update: {
+    data: {
       isSuperAdmin: true,
     },
   });
