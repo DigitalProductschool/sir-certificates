@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 const mapFontWeight: Record<number, string> = {
@@ -40,7 +40,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  await requireAdmin(request);
+  await requireSuperAdmin(request);
 
   const typefaces = await prisma.typeface.findMany({
     orderBy: [

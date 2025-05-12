@@ -21,7 +21,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { MultiSelect } from "~/components/ui/multi-select";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { getProgramsByAdmin } from "~/lib/program.server";
 import { createUserInvitation } from "~/lib/user.server";
@@ -31,13 +31,11 @@ export const meta: MetaFunction = () => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  const adminId = await requireAdmin(request);
+  const adminId = await requireSuperAdmin(request);
   const admin = await prisma.user.findUnique({ where: { id: adminId } });
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
-
-  console.log(inputs);
 
   // @todo add form validation
 
@@ -59,7 +57,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const adminId = await requireAdmin(request);
+  const adminId = await requireSuperAdmin(request);
   const admin = await prisma.user.findUnique({
     where: {
       id: adminId,

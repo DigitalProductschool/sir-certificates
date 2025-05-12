@@ -22,7 +22,7 @@ import { Label } from "~/components/ui/label";
 import { MultiSelect } from "~/components/ui/multi-select";
 import { Switch } from "~/components/ui/switch";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { getProgramsByAdmin } from "~/lib/program.server";
 
@@ -31,7 +31,7 @@ export const meta: MetaFunction<typeof loader> = () => {
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
-  const adminId = await requireAdmin(request);
+  const adminId = await requireSuperAdmin(request);
   const admin = await prisma.user.findUnique({
     where: {
       id: adminId,
@@ -91,7 +91,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  const adminId = await requireAdmin(request);
+  const adminId = await requireSuperAdmin(request);
   const admin = await prisma.user.findUnique({
     where: {
       id: adminId,

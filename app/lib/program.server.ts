@@ -34,7 +34,13 @@ export async function requireAccessToProgram(
 		where: {
 			id: adminId,
 		},
-		include: {
+		select: {
+			id: true,
+			email: true,
+			firstName: true,
+			lastName: true,
+			isAdmin: true,
+			isSuperAdmin: true,
 			adminOfPrograms: true,
 		},
 	});

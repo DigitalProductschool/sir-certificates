@@ -19,7 +19,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction = () => {
@@ -27,7 +27,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  await requireAdmin(request);
+  await requireSuperAdmin(request);
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
@@ -48,7 +48,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  await requireAdmin(request);
+  await requireSuperAdmin(request);
 
   const org = await prisma.organisation.findUnique({
     where: {
