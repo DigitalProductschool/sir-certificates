@@ -2,7 +2,7 @@ import type { ActionFunction } from "@remix-run/node";
 import { useEffect } from "react";
 import { redirect } from "@remix-run/node";
 import { useNavigate, useRouteError } from "@remix-run/react";
-import { requireAdmin } from "~/lib/auth.server";
+import { requireSuperAdmin } from "~/lib/auth.server";
 import { deleteTypeface } from "~/lib/typeface.server";
 
 import { Button } from "~/components/ui/button";
@@ -16,7 +16,7 @@ import {
 } from "~/components/ui/dialog";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireSuperAdmin(request);
 
   await deleteTypeface(Number(params.typefaceId));
 

@@ -19,15 +19,15 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 
-import { requireUserId, getUser } from "~/lib/auth.server";
+import { requireUserId, getUser, logout } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [
-    { title: `${data.org.name} Certificates` },
+    { title: `${data?.org?.name} Certificates` },
     {
       name: "description",
-      content: `All of your certificates from ${data.org.name} in one place.`,
+      content: `All of your certificates from ${data?.org?.name || "this organisation"} in one place.`,
     },
   ];
 };
@@ -37,10 +37,11 @@ export const loader: LoaderFunction = async ({ request }) => {
   const user = await getUser(request);
 
   if (!user) {
-    return new Response(null, {
+    return await logout(request);
+    /* return new Response(null, {
       status: 500,
       statusText: "Error while retrieving user information.",
-    });
+    }); */
   }
 
   // @todo parallelize DB requests instead of awaiting each one

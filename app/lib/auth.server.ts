@@ -136,6 +136,37 @@ export async function requireAdmin(
 	return userId;
 }
 
+export async function requireSuperAdmin(
+	request: Request,
+	redirectTo: string = new URL(request.url).pathname,
+) {
+	const session = await getUserSession(request);
+	const userId = session.get("userId");
+
+	if (!userId || typeof userId !== "number") {
+		const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
+		throw redirect(`/user/login?${searchParams}`);
+	}
+
+	const user = await prisma.user.findUnique({
+		where: { id: userId },
+		select: {
+			id: true,
+			isAdmin: true,
+			isSuperAdmin: true,
+		},
+	});
+
+	if (!user || !user.isSuperAdmin) {
+		throw new Response(null, {
+			status: 403,
+			statusText: "You are not allowed access here.",
+		});
+	}
+
+	return user.id;
+}
+
 export async function getUser(request: Request) {
 	const userId = await getUserId(request);
 

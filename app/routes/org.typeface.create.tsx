@@ -27,12 +27,12 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { saveUploadedTypeface } from "~/lib/typeface.server";
 
 export const action: ActionFunction = async ({ request }) => {
-  await requireAdmin(request);
+  await requireSuperAdmin(request);
 
   const uploadHandler = unstable_createMemoryUploadHandler({
     maxPartSize: 5 * 1024 * 1024,
