@@ -34,8 +34,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   // @todo add form validation
 
-  // @todo what happens when an existing user is invited?
-
   await createUserInvitation(
     {
       firstName: inputs.firstName,

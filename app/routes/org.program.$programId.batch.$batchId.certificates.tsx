@@ -35,11 +35,15 @@ export const meta: MetaFunction = () => {
 export const loader: LoaderFunction = async ({ request, params }) => {
   await requireAdmin(request);
 
+  // @todo make sure that only batches for the current program can be loaded
+  // @todo check access control for the program
+
   const certificates = await prisma.certificate.findMany({
     where: {
       batch: {
         is: {
           id: Number(params.batchId),
+          programId: Number(params.programId),
         },
       },
     },
