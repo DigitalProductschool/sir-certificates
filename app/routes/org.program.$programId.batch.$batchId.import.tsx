@@ -56,8 +56,16 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const batch = await prisma.batch.findUnique({
     where: {
       id: Number(params.batchId),
+      programId: Number(params.programId),
     },
   });
+
+  if (!batch) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
 
   const templates = await prisma.template.findMany({
     where: {
@@ -70,13 +78,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       },
     },
   });
-
-  if (!batch) {
-    throw new Response(null, {
-      status: 404,
-      statusText: "Not Found",
-    });
-  }
 
   return json({ batch, templates });
 };

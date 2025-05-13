@@ -61,17 +61,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     };
   }
 
-  const programs = await prisma.program.findMany({
-    where: {
-      socialPreview: {
-        isNot: null,
-      },
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-
   const certificates = await prisma.certificate.findMany({
     where: {
       email: user.email,
@@ -85,9 +74,20 @@ export const loader: LoaderFunction = async ({ request }) => {
     },
   });
 
-  if (certificates && certificates.length === 1) {
+  if (certificates.length === 1) {
     return redirect(`/view/${certificates[0].uuid}`);
   }
+
+  const programs = await prisma.program.findMany({
+    where: {
+      socialPreview: {
+        isNot: null,
+      },
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
 
   return json({ user, org, programs, certificates });
 };
