@@ -43,9 +43,15 @@ export const changePassword = async (user: User, newPassword: string) => {
 	return updatedUser;
 };
 
+interface UserInvitationSender {
+	email: string;
+	firstName: string;
+	lastName: string;
+}
+
 export const createUserInvitation = async (
 	user: InviteForm,
-	from: User | null,
+	from: UserInvitationSender | null,
 ) => {
 	const verifyCode = randomUUID();
 	const emailLowerCase = user.email.toLowerCase();
@@ -98,7 +104,7 @@ export const sendVerificationEmail = async (user: User) => {
 
 export const sendInvitationEmail = async (
 	invite: UserInvitation,
-	from: User | null,
+	from: UserInvitationSender | null,
 ) => {
 	// @todo dynamic org name from database
 	const acceptUrl = `${domain}/user/accept-invite/${invite.id}/${invite.verifyCode}`;
