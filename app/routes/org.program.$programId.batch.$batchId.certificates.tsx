@@ -36,7 +36,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   await requireAdmin(request);
 
   // @todo make sure that only batches for the current program can be loaded
-  // @todo check access control for the program
+  // @todo check access control for the certificates
 
   const certificates = await prisma.certificate.findMany({
     where: {
@@ -49,13 +49,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
     orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
   });
-
-  if (!certificates) {
-    throw new Response(null, {
-      status: 404,
-      statusText: "Not Found",
-    });
-  }
 
   const templates = await prisma.template.findMany({
     where: {
