@@ -157,13 +157,24 @@ export function SidebarAdmin() {
             <SidebarGroup>
               <SidebarMenu>
                 <SidebarMenuItem>
+                  <SidebarMenuButton tooltip="User" asChild>
+                    <NavLink
+                      to={`/org/program/${activeProgram?.id}/user`}
+                      className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                    >
+                      <UsersIcon />
+                      <span>Program Manager</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
                   <SidebarMenuButton tooltip="Program Settings" asChild>
                     <NavLink
                       to={`/org/program/${activeProgram?.id}/edit`}
                       className="aria-current:bg-sidebar-accent aria-current:font-bold"
                     >
                       <Settings />
-                      <span>Program Settings</span>
+                      <span>Settings</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -175,20 +186,6 @@ export function SidebarAdmin() {
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-
-                {!user.isSuperAdmin && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="User" asChild>
-                      <NavLink
-                        to={`/org/user`}
-                        className="aria-current:bg-sidebar-accent aria-current:font-bold"
-                      >
-                        <UsersIcon />
-                        <span>User</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
               </SidebarMenu>
             </SidebarGroup>
 
