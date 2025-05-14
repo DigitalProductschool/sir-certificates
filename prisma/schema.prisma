@@ -84,6 +84,7 @@ model Program {
   batches       Batch[]
   templates     Template[]
   socialPreview SocialPreview?  
+  updatedAt     DateTime  @updatedAt
 
   @@map("programs")
 }
@@ -97,6 +98,7 @@ model Batch {
 //teams         Team[]
   program       Program @relation(fields: [programId], references: [id])
   programId     Int  
+  updatedAt     DateTime  @updatedAt
 
   @@map("batches")
 }

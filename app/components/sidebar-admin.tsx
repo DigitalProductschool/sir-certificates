@@ -170,7 +170,7 @@ export function SidebarAdmin() {
                 <SidebarMenuItem>
                   <SidebarMenuButton tooltip="Program Settings" asChild>
                     <NavLink
-                      to={`/org/program/${activeProgram?.id}/edit`}
+                      to={`/org/program/${activeProgram?.id}/settings`}
                       className="aria-current:bg-sidebar-accent aria-current:font-bold"
                     >
                       <Settings />
