@@ -1,9 +1,9 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { User, UserInvitation } from "@prisma/client";
+import type { Prisma, Program, User, UserInvitation } from "@prisma/client";
 import { json } from "@remix-run/node";
-import { Form, Link, useLoaderData } from "@remix-run/react";
+import { Form, Link, useLoaderData, useSearchParams } from "@remix-run/react";
 
-import { Settings, Trash2Icon } from "lucide-react";
+import { ArrowDown, Settings, Trash2Icon } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 
@@ -25,6 +25,10 @@ import {
 import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
+type UserWithAdminOfPrograms = Prisma.UserGetPayload<{
+  include: { adminOfPrograms: true };
+}>;
+
 export const meta: MetaFunction = () => {
   return [{ title: "User" }];
 };
@@ -40,8 +44,13 @@ export const loader: LoaderFunction = async ({ request }) => {
       email: true,
       isAdmin: true,
       isSuperAdmin: true,
+      adminOfPrograms: true,
+    },
+    orderBy: {
+      firstName: "asc",
     },
   });
+
   const invitations = await prisma.userInvitation.findMany({
     select: {
       id: true,
@@ -67,6 +76,52 @@ export const handle = {
 
 export default function UserIndexPage() {
   const { user, invitations } = useLoaderData<typeof loader>();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  let sortedUser = user;
+  if (searchParams.has("sort")) {
+    switch (searchParams.get("sort")) {
+      case "name":
+        sortedUser = user.toSorted((a: User, b: User) => {
+          if (a.firstName < b.firstName) {
+            return -1;
+          }
+          if (a.firstName > b.firstName) {
+            return 1;
+          }
+          return 0;
+        });
+        break;
+      case "email":
+        sortedUser = user.toSorted((a: User, b: User) => {
+          if (a.email < b.email) {
+            return -1;
+          }
+          if (a.email > b.email) {
+            return 1;
+          }
+          return 0;
+        });
+        break;
+      case "permission":
+        sortedUser = user.toSorted((a: User, b: User) => {
+          if (a.isSuperAdmin && !b.isSuperAdmin) {
+            return -1;
+          }
+          if (!a.isAdmin && b.isAdmin) {
+            return 1;
+          }
+          if (a.isAdmin && !b.isAdmin) {
+            return -1;
+          }
+          if (!a.isSuperAdmin && b.isSuperAdmin) {
+            return 1;
+          }
+          return 0;
+        });
+        break;
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -76,12 +131,61 @@ export default function UserIndexPage() {
         </Button>
       </div>
       <Table>
+        <colgroup>
+          <col width="20%" />
+          <col width="20%" />
+          <col width="40%" />
+          <col />
+        </colgroup>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead className="font-medium">Email</TableHead>
-            <TableHead>Permissions</TableHead>
-            <TableHead></TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                className="pl-0"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set("sort", "name");
+                  setSearchParams(params, {
+                    preventScrollReset: true,
+                  });
+                }}
+              >
+                Name {searchParams.get("sort") === "name" && <ArrowDown />}
+              </Button>
+            </TableHead>
+            <TableHead className="font-medium">
+              <Button
+                variant="ghost"
+                className="pl-0"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set("sort", "email");
+                  setSearchParams(params, {
+                    preventScrollReset: true,
+                  });
+                }}
+              >
+                Email {searchParams.get("sort") === "email" && <ArrowDown />}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                className="pl-0"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set("sort", "permission");
+                  setSearchParams(params, {
+                    preventScrollReset: true,
+                  });
+                }}
+              >
+                Permissions{" "}
+                {searchParams.get("sort") === "permission" && <ArrowDown />}
+              </Button>
+            </TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -96,8 +200,8 @@ export default function UserIndexPage() {
                 <Form action={`invite/${invite.id}/delete`} method="POST">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <Trash2Icon className="h-4 w-4" />
+                      <Button variant="outline">
+                        <Trash2Icon className="h-4 w-4" /> Cancel
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">
@@ -108,26 +212,31 @@ export default function UserIndexPage() {
               </TableCell>
             </TableRow>
           ))}
-          {user.map((u: User) => (
+          {sortedUser.map((u: UserWithAdminOfPrograms) => (
             <TableRow key={u.id}>
-              <TableCell>
+              <TableCell className="align-top">
                 {u.firstName} {u.lastName}
               </TableCell>
-              <TableCell className="font-medium">{u.email}</TableCell>
-              <TableCell>
-                {u.isSuperAdmin
-                  ? "Super Admin"
-                  : u.isAdmin
-                    ? "Program Manager"
-                    : "View Certificates"}
+              <TableCell className="align-top font-medium">{u.email}</TableCell>
+              <TableCell className="align-top">
+                {u.isSuperAdmin ? (
+                  "Super Admin"
+                ) : u.isAdmin ? (
+                  <>
+                    <b>Program Manager</b>:{" "}
+                    {u.adminOfPrograms.map((p: Program) => p.name).join(", ")}
+                  </>
+                ) : (
+                  "View Certificates"
+                )}
               </TableCell>
               <TableCell>
                 {/* @todo show edit only if permissions are there / show this view only to super-admins, create a separate user view per program? */}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" asChild>
+                    <Button variant="outline" asChild>
                       <Link to={`${u.id}/edit`} aria-label="Edit user settings">
-                        <Settings className="h-4 w-4" />
+                        <Settings className="h-4 w-4" /> Edit
                       </Link>
                     </Button>
                   </TooltipTrigger>
