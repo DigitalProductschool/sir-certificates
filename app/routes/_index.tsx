@@ -72,6 +72,11 @@ export const loader: LoaderFunction = async ({ request }) => {
         },
       },
     },
+    orderBy: {
+      batch: {
+        name: "asc",
+      },
+    },
   });
 
   if (certificates.length === 1) {
