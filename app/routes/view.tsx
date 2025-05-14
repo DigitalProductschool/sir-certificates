@@ -47,6 +47,11 @@ export const loader: LoaderFunction = async ({ request }) => {
           },
         },
       },
+      orderBy: {
+        batch: {
+          name: "asc",
+        },
+      },
     });
     userPhoto = await prisma.userPhoto.findUnique({
       where: {
