@@ -54,7 +54,7 @@ export default function OrgIndex() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="outline" size="icon" asChild>
-                  <Link to={`${program.id}/edit`} aria-label="Edit program">
+                  <Link to={`${program.id}/settings`} aria-label="Edit program">
                     <Settings className="h-4 w-4" />
                   </Link>
                 </Button>

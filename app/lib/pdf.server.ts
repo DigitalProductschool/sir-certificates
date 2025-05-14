@@ -206,6 +206,7 @@ export async function generateTemplateSample(template: Template) {
 		name: "BatchName",
 		startDate: yesterday,
 		endDate: new Date(),
+		updatedAt: new Date(),
 	};
 
 	const mockCertificate: Certificate = {

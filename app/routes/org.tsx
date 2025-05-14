@@ -81,7 +81,7 @@ export default function OrgDashboard() {
               </div>
             </header>
             {/* @todo push the layout container further down into the Outlet and render the Outlet directly. Layout control should stay with the routes */}
-            <div className="grid flex-1 items-start gap-4 p-4">
+            <div className="grid flex-1 items-start gap-4 px-4">
               <Outlet />
             </div>
           </SidebarInset>
