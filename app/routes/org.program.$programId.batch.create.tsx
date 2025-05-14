@@ -28,6 +28,8 @@ export const action: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
 
+  // @todo add form validation
+
   const batch = await prisma.batch.create({
     data: {
       name: inputs.name,
