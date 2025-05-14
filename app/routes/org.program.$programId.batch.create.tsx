@@ -1,5 +1,5 @@
 import type { ActionFunction, MetaFunction } from "@remix-run/node";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { redirect } from "@remix-run/node";
 import { Form, useNavigate } from "@remix-run/react";
 
@@ -46,6 +46,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 export default function CreateBatchDialog() {
   const navigate = useNavigate();
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const [formIsValid, setFormIsValid] = useState(false);
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
@@ -68,7 +70,13 @@ export default function CreateBatchDialog() {
       }}
     >
       <DialogContent className="sm:max-w-[425px]">
-        <Form method="POST">
+        <Form
+          method="POST"
+          ref={formRef}
+          onChange={() => {
+            formRef.current && setFormIsValid(formRef.current.checkValidity());
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Add batch</DialogTitle>
             <DialogDescription>
@@ -77,14 +85,16 @@ export default function CreateBatchDialog() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" />
+            <Input id="name" name="name" required />
             <Label htmlFor="startDate">Start date</Label>
-            <Input type="date" id="startDate" name="startDate" />
+            <Input type="date" id="startDate" name="startDate" required />
             <Label htmlFor="endDate">End date</Label>
-            <Input type="date" id="endDate" name="endDate" />
+            <Input type="date" id="endDate" name="endDate" required />
           </div>
           <DialogFooter>
-            <Button type="submit">Save Batch</Button>
+            <Button type="submit" disabled={!formIsValid}>
+              Save Batch
+            </Button>
           </DialogFooter>
         </Form>
       </DialogContent>
