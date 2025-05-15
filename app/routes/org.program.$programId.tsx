@@ -1,6 +1,6 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { ErrorResponse } from "@remix-run/react";
-import type { Program } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { json } from "@remix-run/node";
 import {
   Link,
@@ -17,6 +17,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [{ title: `${data?.program?.name}` }];
 };
 
+export type ProgramWithBatchesAndLogo = Prisma.ProgramGetPayload<{
+  include: { batches: true; logo: true };
+}>;
+
 export const loader: LoaderFunction = async ({ request, params }) => {
   const adminId = await requireAdmin(request);
   await requireAccessToProgram(adminId, Number(params.programId));
@@ -27,6 +31,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
     include: {
       batches: true,
+      logo: true,
     },
   });
 
@@ -41,7 +46,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 };
 
 type LoaderReturnType = {
-  program: Program;
+  program: ProgramWithBatchesAndLogo;
 };
 
 type Match = {

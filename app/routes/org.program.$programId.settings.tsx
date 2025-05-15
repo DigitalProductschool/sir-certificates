@@ -1,8 +1,9 @@
 import type { ActionFunction, MetaFunction } from "@remix-run/node";
+import { ChangeEvent, useRef } from "react";
 import { json } from "@remix-run/node";
-import { Form, useRouteLoaderData } from "@remix-run/react";
+import { Form, useFetcher, useRouteLoaderData } from "@remix-run/react";
 
-import { Trash2Icon } from "lucide-react";
+import { ImageUp, Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -50,6 +51,24 @@ export default function ProgramSettings() {
   const { program } = useRouteLoaderData<typeof programLoader>(
     "routes/org.program.$programId",
   );
+  const fetcherIcon = useFetcher({ key: "program-icon" });
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const handleUploadClick = () => {
+    fileRef.current?.click();
+  };
+
+  const handleFileChanged = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.value) {
+      fetcherIcon.submit(event.currentTarget.form, {
+        method: "POST",
+        encType: "multipart/form-data",
+      });
+      window.setTimeout(() => {
+        event.target.value = "";
+      }, 100);
+    }
+  };
 
   return (
     <>
@@ -108,13 +127,69 @@ export default function ProgramSettings() {
             />
           </FormUpdate>
         </section>
+
+        <section className="flex flex-col gap-2">
+          <Label htmlFor="programIcon">Logo</Label>
+          <p className="text-sm text-muted-foreground max-w-[500px]">
+            Add the visual logo mark of your program. This needs to be scalable
+            vector image (SVG) and the logo should be placed in the center of a
+            transparent, square canvas with no padding around the edges.
+          </p>
+
+          <fetcherIcon.Form
+            method="POST"
+            action="upload"
+            encType="multipart/form-data"
+            className="grid grid-cols-2 gap-8 max-w-[505px]"
+          >
+            <div>
+              <div className="border rounded-lg aspect-square max-w-[200px] bg-white flex justify-center items-center">
+                {program.logo ? (
+                  <img
+                    src={`/view/logo/${program.logo.id}.svg`}
+                    alt=""
+                    role="presentation"
+                  />
+                ) : (
+                  "No Logo"
+                )}
+              </div>
+            </div>
+            <div>
+              <input
+                type="file"
+                name="programLogo"
+                ref={fileRef}
+                hidden
+                onChange={handleFileChanged}
+              />
+              <Button
+                type="button"
+                onClick={handleUploadClick}
+                disabled={fetcherIcon.state !== "idle"}
+                className="w-full"
+              >
+                <ImageUp />
+                {program.logo ? "Replace" : "Upload"} program icon
+              </Button>
+            </div>
+          </fetcherIcon.Form>
+        </section>
       </div>
 
-      <Form action={`../delete`} method="POST" className="flex grow">
-        <Button type="submit" variant="destructive">
-          <Trash2Icon className="h-4 w-4" /> Delete this program
-        </Button>
-      </Form>
+      <section className="flex flex-col gap-2 my-16">
+        <Label>Danger Zone</Label>
+        <p className="text-sm text-muted-foreground max-w-[500px]">
+          At the moment, all the certificates and batches inside the program
+          have to be deleted first, before the program can be deleted.
+        </p>
+
+        <Form action={`../delete`} method="POST" className="flex grow">
+          <Button type="submit" variant="destructive">
+            <Trash2Icon className="h-4 w-4" /> Delete this program
+          </Button>
+        </Form>
+      </section>
     </>
   );
 }

@@ -82,11 +82,22 @@ model Program {
   website       String?   @db.VarChar(128) 
   admins        User[]
   batches       Batch[]
+  logo          ProgramLogo?  
   templates     Template[]
   socialPreview SocialPreview?  
   updatedAt     DateTime  @updatedAt
 
   @@map("programs")
+}
+
+model ProgramLogo {
+  id            Int       @id @default(autoincrement())
+  contentType   String    @db.VarChar(64)
+  updatedAt     DateTime  @updatedAt    
+  program       Program   @relation(fields: [programId], references: [id])
+  programId     Int       @unique
+
+  @@map("program_logos")
 }
 
 model Batch {
