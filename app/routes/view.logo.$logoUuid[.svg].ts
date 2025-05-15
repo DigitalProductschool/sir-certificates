@@ -4,10 +4,9 @@ import { prisma } from "~/lib/prisma.server";
 import { readProgramLogo } from "~/lib/program.server";
 
 export const loader: LoaderFunction = async ({ params }) => {
-	// @todo use UUID instead of ID (make it harder to guess and reveal internals)
 	const logo = await prisma.programLogo.findUnique({
 		where: {
-			id: Number(params.logoId),
+			uuid: params.logoUuid,
 		},
 	});
 

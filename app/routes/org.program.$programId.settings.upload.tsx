@@ -1,4 +1,5 @@
 import type { ActionFunction } from "@remix-run/node";
+import { randomUUID } from "node:crypto";
 import {
   json,
   unstable_createMemoryUploadHandler,
@@ -57,9 +58,11 @@ export const action: ActionFunction = async ({ request, params }) => {
         programId: Number(params.programId),
       },
       update: {
+        uuid: randomUUID(),
         contentType: programLogo.type,
       },
       create: {
+        uuid: randomUUID(),
         contentType: programLogo.type,
         program: {
           connect: { id: Number(params.programId) },
