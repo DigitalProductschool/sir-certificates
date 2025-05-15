@@ -109,7 +109,9 @@ export default function OrgIndex() {
               <Button variant="outline" asChild>
                 <Link to={`${program.id}/templates`}>Templates</Link>
               </Button>
-              {countCertificates} certificates
+              <div className="text-sm text-center text-muted-foreground">
+                {countCertificates} certificates
+              </div>
             </CardContent>
           </Card>
         );
