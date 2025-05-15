@@ -1,5 +1,6 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Batch } from "@prisma/client";
+import type { User, Organisation, Batch } from "@prisma/client";
+import type { ProgramWithLogo } from "~/lib/program.server";
 import { json } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
 import { Layout } from "~/components/layout";
@@ -41,7 +42,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     };
   }
 
-  const programs = await getProgramsByAdmin(adminId);
+  const programs = await getProgramsByAdmin(adminId, { logo: true });
 
   let latestBatch: Batch | null = null;
   if (params.programId) {
@@ -56,6 +57,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return json({ user, org, programs, latestBatch });
+};
+
+export type LoaderReturnType = {
+  user: User;
+  org: Organisation;
+  programs: ProgramWithLogo[];
+  latestBatch: Batch;
 };
 
 export default function OrgDashboard() {

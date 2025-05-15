@@ -37,7 +37,7 @@ export const action: ActionFunction = async ({ request }) => {
     },
   });
 
-  return redirect(`/org/program/${program.id}/templates`);
+  return redirect(`/org/program/${program.id}/settings`);
 };
 
 export default function CreateProgramDialog() {

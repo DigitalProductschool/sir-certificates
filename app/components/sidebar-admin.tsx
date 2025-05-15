@@ -1,4 +1,4 @@
-import type { User, Organisation, Program, Batch } from "@prisma/client";
+import type { LoaderReturnType } from "~/routes/org";
 import { useEffect } from "react";
 import { Link, NavLink, useLoaderData, useParams } from "@remix-run/react";
 import {
@@ -43,14 +43,6 @@ import { useStickyState } from "~/hooks/use-sticky-state";
 
 import { pickCapitalLetters } from "~/lib/utils";
 
-// Loader from /org route
-export type LoaderReturnType = {
-  user: User;
-  org: Organisation;
-  programs: Program[];
-  latestBatch: Batch;
-};
-
 export function SidebarAdmin() {
   const { programId, batchId } = useParams();
   const { org, user, programs, latestBatch } =
@@ -84,13 +76,22 @@ export function SidebarAdmin() {
                   tooltip={activeProgram?.name}
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    <b>
-                      {activeProgram
-                        ? pickCapitalLetters(activeProgram.name)
-                        : "?"}
-                    </b>
-                  </div>
+                  {activeProgram?.logo ? (
+                    <img
+                      src={`/view/logo/${activeProgram.logo.id}.svg`}
+                      alt=""
+                      role="presentation"
+                      className="w-8 aspect-square"
+                    />
+                  ) : (
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                      <b>
+                        {activeProgram
+                          ? pickCapitalLetters(activeProgram.name)
+                          : "?"}
+                      </b>
+                    </div>
+                  )}
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
                       {activeProgram?.name}
@@ -138,9 +139,18 @@ export function SidebarAdmin() {
                     asChild
                   >
                     <Link to={`/org/program/${program.id}/batch`}>
-                      <div className="flex size-7 items-center justify-center rounded-sm border">
-                        <b>{pickCapitalLetters(program.name)}</b>
-                      </div>
+                      {program.logo ? (
+                        <img
+                          src={`/view/logo/${program.logo.id}.svg`}
+                          alt=""
+                          role="presentation"
+                          className="size-5 ml-1 aspect-square"
+                        />
+                      ) : (
+                        <div className="flex size-7 items-center justify-center rounded-sm border">
+                          <b>{pickCapitalLetters(program.name)}</b>
+                        </div>
+                      )}
                       {program.name}
                     </Link>
                   </DropdownMenuItem>
@@ -219,10 +229,7 @@ export function SidebarAdmin() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>*/}
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip="PDF Templates"
-                    asChild
-                  >
+                  <SidebarMenuButton tooltip="PDF Templates" asChild>
                     <NavLink
                       to={`/org/program/${activeProgram?.id}/templates/`}
                       className="aria-current:bg-sidebar-accent aria-current:font-bold"

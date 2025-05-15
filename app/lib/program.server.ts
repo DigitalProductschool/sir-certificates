@@ -1,7 +1,18 @@
-import type { Program } from "@prisma/client";
+import type { Prisma, Program, ProgramLogo } from "@prisma/client";
 import { prisma } from "./prisma.server";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { writeFile, unlink } from "node:fs/promises";
+import { ensureFolderExists, readFileIfExists } from "./fs.server";
 
-export async function getProgramsByAdmin(adminId: number) {
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const logoDir = resolve(__dirname, "../../storage/logos");
+
+export type ProgramWithLogo = Prisma.ProgramGetPayload<{
+	include: { logo: true };
+}>;
+
+export async function getProgramsByAdmin(adminId: number, include = {}) {
 	const admin = await prisma.user.findUnique({
 		where: {
 			id: adminId,
@@ -20,6 +31,7 @@ export async function getProgramsByAdmin(adminId: number) {
 
 	return await prisma.program.findMany({
 		where: filterPrograms,
+		include,
 		orderBy: {
 			name: "asc",
 		},
@@ -69,4 +81,49 @@ export async function requireAccessToProgram(
 		status: 403,
 		statusText: "You do not have access to this program.",
 	});
+}
+
+export async function saveProgramLogo(logo: ProgramLogo, image: File) {
+	const folderCreated = await ensureFolderExists(logoDir);
+	if (!folderCreated) {
+		throw new Error("Could not create social storage folder");
+	}
+
+	let extension: "svg" | "unkown";
+	switch (image.type) {
+		case "image/svg+xml":
+			extension = "svg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	const buffer = Buffer.from(await image.arrayBuffer());
+	return await writeFile(`${logoDir}/${logo.id}.logo.${extension}`, buffer);
+}
+
+export async function readProgramLogo(logo: ProgramLogo) {
+	let extension: "svg" | "unkown";
+	switch (logo.contentType) {
+		case "image/svg+xml":
+			extension = "svg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	return await readFileIfExists(`${logoDir}/${logo.id}.logo.${extension}`);
+}
+
+export async function deleteProgramLogo(logo: ProgramLogo) {
+	let extension: "svg" | "unkown";
+	switch (logo.contentType) {
+		case "image/svg+xml":
+			extension = "svg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	return await unlink(`${logoDir}/${logo.id}.logo.${extension}`);
 }

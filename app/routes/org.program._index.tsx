@@ -1,8 +1,8 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Program } from "@prisma/client";
+import type { ProgramWithLogo } from "~/lib/program.server";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
-import { Settings, UsersIcon } from "lucide-react";
+import { FileBadge, FilePen, Settings, UsersIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
@@ -20,7 +20,7 @@ export const meta: MetaFunction = () => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const adminId = await requireAdmin(request);
-  const programs = await getProgramsByAdmin(adminId);
+  const programs = await getProgramsByAdmin(adminId, { logo: true });
   const batches = await prisma.batch.findMany({
     where: {
       programId: {
@@ -54,14 +54,14 @@ export default function OrgIndex() {
   const { programs, batches } = useLoaderData<typeof loader>();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 items-start gap-4 md:gap-8">
-      <div className="col-span-1 md:col-span-2 xl:col-span-3">
+    <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 items-start gap-4 md:gap-8">
+      <div className="col-span-1 lg:col-span-2 xl:col-span-3">
         <Button asChild>
           <Link to="create">Add Program</Link>
         </Button>
       </div>
 
-      {programs.map((program: Program) => {
+      {programs.map((program: ProgramWithLogo) => {
         let countCertificates = 0;
         batches.forEach(
           (b: { programId: number; _count: { certificates: number } }) => {
@@ -72,43 +72,70 @@ export default function OrgIndex() {
         );
         return (
           <Card key={program.id}>
-            <CardHeader className="pb-3 flex-row items-center gap-2">
+            <CardHeader className="pb-4">
               <CardTitle className="grow">
-                <Link to={`${program.id}/batch`}>{program.name}</Link>
+                <Link
+                  to={`${program.id}/batch`}
+                  className="flex flex-row items-center gap-4"
+                >
+                  {program.logo && (
+                    <img
+                      src={`/view/logo/${program.logo.id}.svg`}
+                      alt=""
+                      role="presentation"
+                      className="w-8 aspect-square"
+                    />
+                  )}
+                  {program.name}
+                </Link>
               </CardTitle>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" asChild>
-                    <Link to={`${program.id}/user`} aria-label="Manage access">
-                      <UsersIcon className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Manage access</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" asChild>
-                    <Link
-                      to={`${program.id}/settings`}
-                      aria-label="Edit program"
-                    >
-                      <Settings className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  Edit program settings
-                </TooltipContent>
-              </Tooltip>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2">
               <Button variant="outline" asChild>
-                <Link to={`${program.id}/batch`}>Certificates</Link>
+                <Link to={`${program.id}/batch`}>
+                  <FileBadge className="h-4 w-4" /> Certificates
+                </Link>
               </Button>
-              <Button variant="outline" asChild>
-                <Link to={`${program.id}/templates`}>Templates</Link>
-              </Button>
+              <div className="flex gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" asChild>
+                      <Link to={`${program.id}/templates`}>
+                        <FilePen className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Edit templates</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" asChild>
+                      <Link
+                        to={`${program.id}/user`}
+                        aria-label="Manage access"
+                      >
+                        <UsersIcon className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Manage access</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" asChild>
+                      <Link
+                        to={`${program.id}/settings`}
+                        aria-label="Edit program"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    Edit program settings
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <div className="text-sm text-center text-muted-foreground">
                 {countCertificates} certificates
               </div>
