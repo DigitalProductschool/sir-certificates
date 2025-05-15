@@ -92,6 +92,7 @@ model Program {
 
 model ProgramLogo {
   id            Int       @id @default(autoincrement())
+  uuid          String    @unique @db.Uuid  
   contentType   String    @db.VarChar(64)
   updatedAt     DateTime  @updatedAt    
   program       Program   @relation(fields: [programId], references: [id])

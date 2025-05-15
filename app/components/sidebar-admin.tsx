@@ -78,7 +78,7 @@ export function SidebarAdmin() {
                 >
                   {activeProgram?.logo ? (
                     <img
-                      src={`/view/logo/${activeProgram.logo.id}.svg`}
+                      src={`/view/logo/${activeProgram.logo.uuid}.svg`}
                       alt=""
                       role="presentation"
                       className="w-8 aspect-square"
@@ -141,7 +141,7 @@ export function SidebarAdmin() {
                     <Link to={`/org/program/${program.id}/batch`}>
                       {program.logo ? (
                         <img
-                          src={`/view/logo/${program.logo.id}.svg`}
+                          src={`/view/logo/${program.logo.uuid}.svg`}
                           alt=""
                           role="presentation"
                           className="size-5 ml-1 aspect-square"

@@ -44,7 +44,7 @@ export default function App() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
-  console.error(error);
+  //console.error(error);
   let errorInfo;
 
   if (isRouteErrorResponse(error)) {

@@ -142,11 +142,12 @@ export default function ProgramSettings() {
             encType="multipart/form-data"
             className="grid grid-cols-2 gap-8 max-w-[505px]"
           >
+            {/* @todo implement a preview -> save workflow for changing the logo */}
             <div>
               <div className="border rounded-lg aspect-square max-w-[200px] bg-white flex justify-center items-center">
                 {program.logo ? (
                   <img
-                    src={`/view/logo/${program.logo.id}.svg`}
+                    src={`/view/logo/${program.logo.uuid}.svg`}
                     alt=""
                     role="presentation"
                   />
