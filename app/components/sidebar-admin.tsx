@@ -157,13 +157,13 @@ export function SidebarAdmin() {
             <SidebarGroup>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="User" asChild>
+                  <SidebarMenuButton tooltip="Program Managers" asChild>
                     <NavLink
                       to={`/org/program/${activeProgram?.id}/user`}
                       className="aria-current:bg-sidebar-accent aria-current:font-bold"
                     >
                       <UsersIcon />
-                      <span>Program Manager</span>
+                      <span>Program Managers</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -193,7 +193,7 @@ export function SidebarAdmin() {
               <SidebarGroupLabel>Certificates</SidebarGroupLabel>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Certificates" asChild>
+                  <SidebarMenuButton tooltip="Batches and Certificates" asChild>
                     <NavLink
                       to={`/org/program/${activeProgram?.id}/batch/${activeBatchId ? activeBatchId + "/certificates" : ""}`}
                       className="aria-current:bg-sidebar-accent aria-current:font-bold"
@@ -220,7 +220,7 @@ export function SidebarAdmin() {
                 </SidebarMenuItem>*/}
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    tooltip="PDF Certificate Templates"
+                    tooltip="PDF Templates"
                     asChild
                   >
                     <NavLink
