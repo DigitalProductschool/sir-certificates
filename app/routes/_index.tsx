@@ -142,9 +142,11 @@ export default function Index() {
                 key={cert.id}
                 className="flex flex-col gap-2"
               >
-                <span className="text-center">
-                  <b>{cert.batch.program.name}</b> &mdash; {cert.batch.name}
-                </span>
+                <div className="pl-1">
+                  <b>{cert.batch.program.name}</b>
+                  <br />
+                  <span className="text-sm text-muted-foreground">{cert.batch.name}</span>
+                </div>
                 <img
                   className="w-full mb-4 drop-shadow-xl hover:drop-shadow-lg hover:opacity-85"
                   src={`/cert/${cert.uuid}/preview.png?t=${cert.updatedAt}`}
