@@ -1,5 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Prisma, UserPhoto } from "@prisma/client";
+import type { UserPhoto } from "@prisma/client";
+import type { CertificatesWithBatchAndProgram } from "~/lib/types";
+
 import { json } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { SidebarParticipant } from "~/components/sidebar-participant";
@@ -7,17 +9,6 @@ import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 
 import { getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
-
-// @todo refactor to remove duplicate type definition here and in sidebar-participants
-export type CertificatesWithBatchAndProgram = Prisma.CertificateGetPayload<{
-  include: {
-    batch: {
-      include: {
-        program: true;
-      };
-    };
-  };
-}>;
 
 export const meta: MetaFunction = () => {
   return [{ title: "Certificates" }];
@@ -43,7 +34,11 @@ export const loader: LoaderFunction = async ({ request }) => {
       include: {
         batch: {
           include: {
-            program: true,
+            program: {
+              include: {
+                logo: true,
+              },
+            },
           },
         },
       },

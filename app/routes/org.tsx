@@ -1,6 +1,6 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { User, Organisation, Batch } from "@prisma/client";
-import type { ProgramWithLogo } from "~/lib/program.server";
+import type { ProgramWithLogo } from "~/lib/types";
 import { json } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
 import { Layout } from "~/components/layout";

@@ -1,5 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Batch, Prisma } from "@prisma/client";
+import type { Batch } from "@prisma/client";
+import type { ProgramWithBatches } from "~/lib/types";
+
 import { useEffect } from "react";
 import { json } from "@remix-run/node";
 import {
@@ -29,10 +31,6 @@ import {
 
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
-
-type ProgramWithBatches = Prisma.ProgramGetPayload<{
-  include: { batches: true };
-}>;
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [{ title: `${data.program?.name} Batches` }];

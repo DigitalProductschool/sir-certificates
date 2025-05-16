@@ -1,6 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { ErrorResponse } from "@remix-run/react";
-import type { Prisma } from "@prisma/client";
+import type { ProgramWithBatchesAndLogo } from "~/lib/types";
+
 import { json } from "@remix-run/node";
 import {
   Link,
@@ -16,10 +17,6 @@ import { requireAccessToProgram } from "~/lib/program.server";
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [{ title: `${data?.program?.name}` }];
 };
-
-export type ProgramWithBatchesAndLogo = Prisma.ProgramGetPayload<{
-  include: { batches: true; logo: true };
-}>;
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const adminId = await requireAdmin(request);

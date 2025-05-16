@@ -1,4 +1,5 @@
-import type { Prisma, Program, ProgramLogo } from "@prisma/client";
+import type { Program, ProgramLogo } from "@prisma/client";
+
 import { prisma } from "./prisma.server";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,10 +8,6 @@ import { ensureFolderExists, readFileIfExists } from "./fs.server";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const logoDir = resolve(__dirname, "../../storage/logos");
-
-export type ProgramWithLogo = Prisma.ProgramGetPayload<{
-	include: { logo: true };
-}>;
 
 export async function getProgramsByAdmin(adminId: number, include = {}) {
 	const admin = await prisma.user.findUnique({

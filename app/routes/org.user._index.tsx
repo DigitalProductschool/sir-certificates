@@ -1,5 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Prisma, Program, User, UserInvitation } from "@prisma/client";
+import type { Program, User, UserInvitation } from "@prisma/client";
+import type { UserWithAdminOfPrograms } from "~/lib/types";
+
 import { json } from "@remix-run/node";
 import { Form, Link, useLoaderData, useSearchParams } from "@remix-run/react";
 
@@ -24,10 +26,6 @@ import {
 
 import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
-
-type UserWithAdminOfPrograms = Prisma.UserGetPayload<{
-  include: { adminOfPrograms: true };
-}>;
 
 export const meta: MetaFunction = () => {
   return [{ title: "User" }];

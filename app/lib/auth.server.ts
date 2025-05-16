@@ -1,5 +1,5 @@
 import type { User } from "@prisma/client";
-import type { RegisterForm, LoginForm } from "./types.server";
+import type { RegisterForm, LoginForm } from "./types";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
 import { redirect, json, createCookieSessionStorage } from "@remix-run/node";
