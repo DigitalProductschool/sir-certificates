@@ -93,7 +93,8 @@ export default function OrgIndex() {
             <CardContent className="grid grid-cols-2 gap-2">
               <Button variant="outline" asChild>
                 <Link to={`${program.id}/batch`}>
-                  <FileBadge className="h-4 w-4" /> Certificates
+                  <FileBadge className="h-4 w-4" /> {countCertificates}{" "}
+                  {countCertificates === 1 ? "Certificate" : "Certificates"}
                 </Link>
               </Button>
               <div className="flex gap-2">
@@ -135,9 +136,6 @@ export default function OrgIndex() {
                     Edit program settings
                   </TooltipContent>
                 </Tooltip>
-              </div>
-              <div className="text-sm text-center text-muted-foreground">
-                {countCertificates} certificates
               </div>
             </CardContent>
           </Card>
