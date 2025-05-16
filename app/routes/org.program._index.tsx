@@ -1,5 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { ProgramWithLogo } from "~/lib/program.server";
+import type { ProgramWithLogo } from "~/lib/types";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { FileBadge, FilePen, Settings, UsersIcon } from "lucide-react";

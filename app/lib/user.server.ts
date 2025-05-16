@@ -1,5 +1,5 @@
 import type { User, UserInvitation, UserPhoto } from "@prisma/client";
-import type { RegisterForm, InviteForm } from "./types.server";
+import type { RegisterForm, InviteForm } from "./types";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";

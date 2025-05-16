@@ -1,6 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Program } from "@prisma/client";
-import type { CertificatesWithBatchAndProgram } from "./view";
+import type { Organisation, Program, User } from "@prisma/client";
+import type { CertificatesWithBatchAndProgram } from "~/lib/types";
+
 import { json, redirect } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
@@ -68,7 +69,11 @@ export const loader: LoaderFunction = async ({ request }) => {
     include: {
       batch: {
         include: {
-          program: true,
+          program: {
+            include: {
+              logo: true,
+            },
+          },
         },
       },
     },
@@ -95,6 +100,13 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   return json({ user, org, programs, certificates });
+};
+
+// Loader from /_index route
+export type LoaderReturnType = {
+  user: User;
+  org: Organisation;
+  certificates: CertificatesWithBatchAndProgram[];
 };
 
 export default function Index() {
