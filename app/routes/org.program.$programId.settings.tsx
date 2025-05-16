@@ -133,48 +133,58 @@ export default function ProgramSettings() {
           <p className="text-sm text-muted-foreground max-w-[500px]">
             Add the visual logo mark of your program. This needs to be scalable
             vector image (SVG) and the logo should be placed in the center of a
-            transparent, square canvas with no padding around the edges.
+            transparent canvas with no additional padding around the edges.
           </p>
-
-          <fetcherIcon.Form
-            method="POST"
-            action="upload"
-            encType="multipart/form-data"
-            className="grid grid-cols-2 gap-8 max-w-[505px]"
-          >
+          <div className="flex gap-4 mt-2">
             {/* @todo implement a preview -> save workflow for changing the logo */}
-            <div>
-              <div className="border rounded-lg aspect-square max-w-[200px] bg-white flex justify-center items-center">
-                {program.logo ? (
-                  <img
-                    src={`/view/logo/${program.logo.uuid}.svg`}
-                    alt=""
-                    role="presentation"
-                  />
-                ) : (
-                  "No Logo"
-                )}
-              </div>
+            <div className="border rounded-lg aspect-square w-48 bg-white flex justify-center items-center">
+              {program.logo ? (
+                <img
+                  src={`/view/logo/${program.logo.uuid}.svg`}
+                  alt=""
+                  role="presentation"
+                />
+              ) : (
+                "No Logo"
+              )}
             </div>
-            <div>
-              <input
-                type="file"
-                name="programLogo"
-                ref={fileRef}
-                hidden
-                onChange={handleFileChanged}
-              />
-              <Button
-                type="button"
-                onClick={handleUploadClick}
-                disabled={fetcherIcon.state !== "idle"}
-                className="w-full"
+            <div className="flex flex-col gap-2 items-stretch">
+              <fetcherIcon.Form
+                method="POST"
+                action="logo-upload"
+                encType="multipart/form-data"
               >
-                <ImageUp />
-                {program.logo ? "Replace" : "Upload"} program icon
-              </Button>
+                <input
+                  type="file"
+                  accept="image/svg+xml"
+                  name="programLogo"
+                  ref={fileRef}
+                  hidden
+                  onChange={handleFileChanged}
+                />
+                <Button
+                  type="button"
+                  onClick={handleUploadClick}
+                  disabled={fetcherIcon.state !== "idle"}
+                  className="w-full"
+                >
+                  <ImageUp />
+                  {program.logo ? "Replace" : "Upload"} logo
+                </Button>
+              </fetcherIcon.Form>
+              {program.logo && (
+                <Form
+                  action={`logo-delete`}
+                  method="POST"
+                  className="flex grow"
+                >
+                  <Button type="submit" variant="outline">
+                    <Trash2Icon className="h-4 w-4" /> Remove logo
+                  </Button>
+                </Form>
+              )}
             </div>
-          </fetcherIcon.Form>
+          </div>
         </section>
       </div>
 
