@@ -17,7 +17,7 @@ import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
 import { InputTiny } from "~/components/ui/input-tiny";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { defaultLayout } from "~/lib/social.server";
 
@@ -34,8 +34,9 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
+  // @todo refactor to program route loader to avoid duplicate data loading
   const program = await prisma.program.findUnique({
     where: {
       id: Number(params.programId),
@@ -156,7 +157,10 @@ export default function ProgramSocialPage() {
                 <ImageUp />
                 {social ? "Replace" : "Upload"} background image
               </Button>
-              <p className="text-xs text-muted-foreground mt-1 text-center"> 1200x630 pixel, PNG or JPEG</p>
+              <p className="text-xs text-muted-foreground mt-1 text-center">
+                {" "}
+                1200x630 pixel, PNG or JPEG
+              </p>
             </fetcherImage.Form>
             <div className="flex flex-row justify-between items-center">
               <Label htmlFor="previewWithPhoto">Preview with Photo</Label>

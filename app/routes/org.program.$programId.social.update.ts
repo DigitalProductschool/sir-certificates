@@ -1,15 +1,15 @@
 import type { ActionFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
+import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
   addPhotoToPreview,
   addTemplateAndPhotoToPreview,
 } from "~/lib/social.server";
-import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);

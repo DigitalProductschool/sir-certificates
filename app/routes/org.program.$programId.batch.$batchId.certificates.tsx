@@ -25,7 +25,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction = () => {
@@ -33,10 +33,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
-
-  // @todo make sure that only batches for the current program can be loaded
-  // @todo check access control for the certificates
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const certificates = await prisma.certificate.findMany({
     where: {

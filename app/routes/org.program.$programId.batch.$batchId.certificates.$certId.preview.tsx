@@ -4,12 +4,10 @@ import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 
 import { XIcon } from "lucide-react";
-
 import { H2 } from "~/components/typography/headlines";
-
 import { Button } from "~/components/ui/button";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction = () => {
@@ -17,7 +15,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const certificate = await prisma.certificate.findUnique({
     where: {

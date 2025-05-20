@@ -6,12 +6,12 @@ import {
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { saveProgramLogo, deleteProgramLogo } from "~/lib/program.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const uploadHandler = unstable_createMemoryUploadHandler({
     maxPartSize: 5 * 1024 * 1024,

@@ -6,7 +6,7 @@ import {
   useRouteError,
   isRouteErrorResponse,
 } from "@remix-run/react";
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 import { Button } from "~/components/ui/button";
@@ -20,7 +20,7 @@ import {
 } from "~/components/ui/dialog";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   await prisma.program
     .delete({
@@ -39,7 +39,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 export function ErrorBoundary() {
   const error = useRouteError();
   const navigate = useNavigate();
-  console.error(error);
+  // console.error(error);
 
   let additionalInfo = "";
   if (isRouteErrorResponse(error)) {

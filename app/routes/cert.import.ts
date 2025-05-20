@@ -12,6 +12,7 @@ import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	await requireAdmin(request);
+	// @todo refactor to program-specific route and program-specific access
 
 	const formData = await request.formData();
 	const inputs = Object.fromEntries(formData);

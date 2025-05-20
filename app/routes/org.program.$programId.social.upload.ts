@@ -5,7 +5,8 @@ import {
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
+import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
   saveSocialBackground,
   deleteSocialBackground,
@@ -13,10 +14,10 @@ import {
   addTemplateAndPhotoToPreview,
   defaultLayout,
 } from "~/lib/social.server";
-import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  const programId = Number(params.programId);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const uploadHandler = unstable_createMemoryUploadHandler({
     maxPartSize: 5 * 1024 * 1024,
@@ -52,7 +53,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   // Clean up existing background image
   const existingSocial = await prisma.socialPreview.findFirst({
     where: {
-      programId: Number(params.programId),
+      programId,
     },
   });
   if (existingSocial) {
@@ -63,7 +64,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   const social = await prisma.socialPreview
     .upsert({
       where: {
-        programId: Number(params.programId),
+        programId,
       },
       update: {
         contentType: backgroundImage.type,
@@ -72,7 +73,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         contentType: backgroundImage.type,
         layout: defaultLayout,
         program: {
-          connect: { id: Number(params.programId) },
+          connect: { id: programId },
         },
       },
     })
@@ -97,7 +98,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   // Add certificate preview to background image
   const template = await prisma.template.findFirst({
     where: {
-      programId: Number(params.programId),
+      programId,
     },
   });
 

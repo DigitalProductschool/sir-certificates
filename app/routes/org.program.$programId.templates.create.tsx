@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
   saveUploadedTemplate,
@@ -38,7 +38,7 @@ import {
 import { locales } from "~/lib/template-locales";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const uploadHandler = unstable_createMemoryUploadHandler({
     maxPartSize: 5 * 1024 * 1024,

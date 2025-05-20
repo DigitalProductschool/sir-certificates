@@ -1,12 +1,12 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { deleteTemplate } from "~/lib/template.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
-  await deleteTemplate(Number(params.templateId));
+  await deleteTemplate(Number(params.templateId), Number(params.programId));
 
   return redirect(`/org/program/${params.programId}/templates`);
 };

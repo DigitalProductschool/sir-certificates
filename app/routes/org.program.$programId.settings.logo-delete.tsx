@@ -1,14 +1,12 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { deleteProgramLogo } from "~/lib/program.server";
 import { prisma } from "~/lib/prisma.server";
-import { requireAccessToProgram } from "~/lib/program.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  const adminId = await requireAdmin(request);
-  requireAccessToProgram(adminId, Number(params.programId));
+  await requireAdminWithProgram(request, Number(params.programId));
 
   // Clean up existing logo image
   const existingLogo = await prisma.programLogo.findUnique({

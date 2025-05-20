@@ -17,11 +17,12 @@ export async function deleteTemplatePDF(templateId: number) {
 	return await unlink(`${templateDir}/${templateId}.pdf`);
 }
 
-export async function deleteTemplate(templateId: number) {
+export async function deleteTemplate(templateId: number, programId: number) {
 	const deletedTemplate = await prisma.template
 		.delete({
 			where: {
 				id: templateId,
+				programId: programId,
 			},
 		})
 		.catch((error) => {
@@ -34,5 +35,3 @@ export async function deleteTemplate(templateId: number) {
 
 	return deletedTemplate;
 }
-
-

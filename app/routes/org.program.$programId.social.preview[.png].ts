@@ -1,11 +1,11 @@
 import type { LoaderFunction } from "@remix-run/node";
 
 import { prisma } from "~/lib/prisma.server";
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { readBackgroundImage, readCompositeImage } from "~/lib/social.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-	await requireAdmin(request);
+	await requireAdminWithProgram(request, Number(params.programId));
 
 	const url = new URL(request.url);
 	const withPhoto = url.searchParams.get("withPhoto") ? true : false;

@@ -10,17 +10,15 @@ import {
   useRouteError,
 } from "@remix-run/react";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
-import { requireAccessToProgram } from "~/lib/program.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [{ title: `${data?.program?.name}` }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  const adminId = await requireAdmin(request);
-  await requireAccessToProgram(adminId, Number(params.programId));
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const program = await prisma.program.findUnique({
     where: {
