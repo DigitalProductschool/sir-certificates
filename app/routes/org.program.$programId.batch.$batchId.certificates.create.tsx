@@ -141,7 +141,12 @@ export default function CreateCertificateDialog() {
           <Label htmlFor="teamName">Team</Label>
           <Input id="teamName" name="teamName" className="mb-2" />
           <Label htmlFor="templateId">Template</Label>
-          <Select name="templateId">
+          <Select
+            name="templateId"
+            defaultValue={
+              templates.length === 1 ? templates[0].id.toString() : undefined
+            }
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select a template" />
             </SelectTrigger>
