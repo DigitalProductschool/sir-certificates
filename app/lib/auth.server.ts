@@ -6,6 +6,7 @@ import { redirect, json, createCookieSessionStorage } from "@remix-run/node";
 import { domain } from "./config.server";
 import { mailjetSend } from "./email.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
+import { requireAccessToProgram } from "./program.server";
 import { createUser } from "./user.server";
 
 const sessionSecret = process.env.SESSION_SECRET;
@@ -165,6 +166,14 @@ export async function requireSuperAdmin(
 	}
 
 	return user.id;
+}
+
+export async function requireAdminWithProgram(
+	request: Request,
+	programId: number,
+) {
+	const adminId = await requireAdmin(request);
+	return await requireAccessToProgram(adminId, programId);
 }
 
 export async function getUser(request: Request) {

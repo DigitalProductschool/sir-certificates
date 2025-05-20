@@ -27,9 +27,8 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
-import { requireAccessToProgram } from "~/lib/program.server";
 
 import { loader as programLoader } from "./org.program.$programId";
 
@@ -39,8 +38,7 @@ export const meta: MetaFunction = () => {
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const programId = Number(params.programId);
-  const adminId = await requireAdmin(request);
-  await requireAccessToProgram(adminId, programId);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const user = await prisma.user.findMany({
     where: {

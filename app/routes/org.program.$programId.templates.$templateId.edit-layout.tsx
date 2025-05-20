@@ -17,8 +17,9 @@ import {
   useRouteError,
   isRouteErrorResponse,
 } from "@remix-run/react";
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
+
 import {
   generateTemplateSample,
   generatePreviewOfTemplate,
@@ -46,7 +47,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
@@ -67,6 +68,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     .update({
       where: {
         id: Number(params.templateId),
+        programId: Number(params.programId),
       },
       data: {
         layout: layoutJSON,
@@ -86,11 +88,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const template = await prisma.template.findUnique({
     where: {
       id: Number(params.templateId),
+      programId: Number(params.programId),
     },
   });
 

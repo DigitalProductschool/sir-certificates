@@ -6,7 +6,7 @@ import {
   useRouteError,
   isRouteErrorResponse,
 } from "@remix-run/react";
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 import { Button } from "~/components/ui/button";
@@ -20,12 +20,13 @@ import {
 } from "~/components/ui/dialog";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   await prisma.batch
     .delete({
       where: {
         id: Number(params.batchId),
+        programId: Number(params.programId),
       },
     })
     .catch((error) => {

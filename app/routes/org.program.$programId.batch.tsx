@@ -37,7 +37,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdmin(request); // access to program is managed at parent route
 
   const program = await prisma.program.findUnique({
     where: {

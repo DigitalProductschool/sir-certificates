@@ -15,7 +15,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 export const meta: MetaFunction = () => {
@@ -23,7 +23,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);

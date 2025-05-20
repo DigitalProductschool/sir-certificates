@@ -33,7 +33,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import {
   generateCertificate,
   generatePreviewOfCertificate,
@@ -45,7 +45,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
@@ -53,6 +53,11 @@ export const action: ActionFunction = async ({ request, params }) => {
   const certificate = await prisma.certificate.update({
     where: {
       id: Number(params.certId),
+      batch: {
+        is: {
+          programId: Number(params.programId),
+        },
+      },
     },
     data: {
       firstName: inputs.firstName,
@@ -84,11 +89,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const certificate = await prisma.certificate.findUnique({
     where: {
       id: Number(params.certId),
+      batch: {
+        is: {
+          programId: Number(params.programId),
+        },
+      },
     },
   });
 

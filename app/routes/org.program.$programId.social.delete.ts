@@ -1,17 +1,15 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import {
   deleteSocialBackground,
   deleteSocialComposites,
 } from "~/lib/social.server";
 import { prisma } from "~/lib/prisma.server";
-import { requireAccessToProgram } from "~/lib/program.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  const adminId = await requireAdmin(request);
-  requireAccessToProgram(adminId, Number(params.programId));
+  await requireAdminWithProgram(request, Number(params.programId));
 
   // Clean up existing background image
   const existingSocial = await prisma.socialPreview.findFirst({

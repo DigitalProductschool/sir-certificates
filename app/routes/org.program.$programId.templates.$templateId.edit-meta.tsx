@@ -7,7 +7,7 @@ import {
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
-import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, useLoaderData, useNavigate } from "@remix-run/react";
 
 import { Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -34,7 +34,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import {
   generateTemplateSample,
   generatePreviewOfTemplate,
@@ -44,7 +44,7 @@ import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { locales } from "~/lib/template-locales";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const uploadHandler = unstable_createMemoryUploadHandler({
     maxPartSize: 5 * 1024 * 1024,
@@ -70,11 +70,12 @@ export const action: ActionFunction = async ({ request, params }) => {
   const templateLocale = (formData.get("locale") as string) || undefined;
   const templatePDF = formData.get("pdf") as File;
 
-  // If this email exists already for this batch, update instead of create
+  // If this template exists already for this batch, update instead of create
   const template = await prisma.template
     .update({
       where: {
         id: Number(params.templateId),
+        programId: Number(params.programId),
       },
       data: {
         name: templateName,
@@ -99,11 +100,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const template = await prisma.template.findUnique({
     where: {
       id: Number(params.templateId),
+      programId: Number(params.programId),
     },
   });
 
@@ -115,10 +117,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return json({ template });
-};
-
-export const handle = {
-  breadcrumb: () => <Link to="#">Batch XXX</Link>,
 };
 
 export default function EditTemplateDialog() {

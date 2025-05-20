@@ -10,8 +10,7 @@ import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { FormUpdate } from "~/components/form-update";
 
-import { requireAdmin } from "~/lib/auth.server";
-import { requireAccessToProgram } from "~/lib/program.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
 import { loader as programLoader } from "./org.program.$programId";
@@ -23,8 +22,7 @@ export const meta: MetaFunction = () => {
 const allowedUpdateFields = ["name", "achievement", "about", "website"];
 
 export const action: ActionFunction = async ({ request, params }) => {
-  const adminId = await requireAdmin(request);
-  requireAccessToProgram(adminId, Number(params.programId));
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);

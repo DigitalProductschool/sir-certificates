@@ -1,15 +1,16 @@
 import type { LoaderFunction } from "@remix-run/node";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { generatePreviewOfTemplate } from "~/lib/pdf.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const template = await prisma.template.findUnique({
     where: {
       id: Number(params.templateId),
+      programId: Number(params.programId),
     },
   });
 

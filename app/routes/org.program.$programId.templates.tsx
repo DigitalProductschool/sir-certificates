@@ -37,7 +37,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdmin(request); // program access is managed at the parent route
 
   const program = await prisma.program.findUnique({
     where: {
@@ -61,10 +61,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
   return json({ program });
 };
-
-/* export const handle = {
-  breadcrumb: (match) => <Link to={match.pathname}>Templates</Link>,
-}; */
 
 export default function ProgramTemplatesPage() {
   const { program } = useLoaderData<typeof loader>();

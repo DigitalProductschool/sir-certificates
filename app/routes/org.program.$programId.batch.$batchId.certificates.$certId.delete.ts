@@ -1,10 +1,10 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import { deleteCertificate } from "~/lib/pdf.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   await deleteCertificate(Number(params.certId));
 

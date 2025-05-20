@@ -1,7 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import {
   generateCertificate,
   generatePreviewOfCertificate,
@@ -9,7 +9,7 @@ import {
 import { prisma } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const certificate = await prisma.certificate.findUnique({
     where: {

@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 
-import { requireAdmin } from "~/lib/auth.server";
+import { requireAdminWithProgram } from "~/lib/auth.server";
 import {
   generateCertificate,
   generatePreviewOfCertificate,
@@ -40,10 +40,12 @@ export const meta: MetaFunction = () => {
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
+
+  // @todo ensure that only certificates are created in programs where the admin has access
 
   const certificate = await prisma.certificate.create({
     data: {
@@ -80,7 +82,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAdmin(request);
+  await requireAdminWithProgram(request, Number(params.programId));
 
   const templates = await prisma.template.findMany({
     where: {
