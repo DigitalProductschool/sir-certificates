@@ -24,7 +24,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  await requireAdmin(request);
+  const adminId = await requireAdmin(request);
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData);
@@ -34,6 +34,11 @@ export const action: ActionFunction = async ({ request }) => {
   const program = await prisma.program.create({
     data: {
       name: inputs.name,
+      admins: {
+        connect: {
+          id: adminId,
+        },
+      },
     },
   });
 
