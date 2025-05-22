@@ -6,9 +6,10 @@ import {
   Link,
   useLoaderData,
   useRouteLoaderData,
+  useSearchParams,
 } from "@remix-run/react";
 
-import { UserPlus, UserX, MailX } from "lucide-react";
+import { ArrowDown, UserPlus, UserX, MailX } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 
@@ -62,6 +63,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       isAdmin: true,
       isSuperAdmin: true,
     },
+    orderBy: {
+      firstName: "asc",
+    },
   });
   const invitations = await prisma.userInvitation.findMany({
     select: {
@@ -91,6 +95,52 @@ export default function UserIndexPage() {
   const { program } = useRouteLoaderData<typeof programLoader>(
     "routes/org.program.$programId",
   );
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  let sortedUser = user;
+  if (searchParams.has("sort")) {
+    switch (searchParams.get("sort")) {
+      case "name":
+        sortedUser = user.toSorted((a: User, b: User) => {
+          if (a.firstName < b.firstName) {
+            return -1;
+          }
+          if (a.firstName > b.firstName) {
+            return 1;
+          }
+          return 0;
+        });
+        break;
+      case "email":
+        sortedUser = user.toSorted((a: User, b: User) => {
+          if (a.email < b.email) {
+            return -1;
+          }
+          if (a.email > b.email) {
+            return 1;
+          }
+          return 0;
+        });
+        break;
+      case "permission":
+        sortedUser = user.toSorted((a: User, b: User) => {
+          if (a.isSuperAdmin && !b.isSuperAdmin) {
+            return -1;
+          }
+          if (!a.isAdmin && b.isAdmin) {
+            return 1;
+          }
+          if (a.isAdmin && !b.isAdmin) {
+            return -1;
+          }
+          if (!a.isSuperAdmin && b.isSuperAdmin) {
+            return 1;
+          }
+          return 0;
+        });
+        break;
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -109,9 +159,52 @@ export default function UserIndexPage() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead className="font-medium">Email</TableHead>
-            <TableHead>Permissions</TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                className="pl-0"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set("sort", "name");
+                  setSearchParams(params, {
+                    preventScrollReset: true,
+                  });
+                }}
+              >
+                Name {searchParams.get("sort") === "name" && <ArrowDown />}
+              </Button>
+            </TableHead>
+            <TableHead className="font-medium">
+              <Button
+                variant="ghost"
+                className="pl-0"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set("sort", "email");
+                  setSearchParams(params, {
+                    preventScrollReset: true,
+                  });
+                }}
+              >
+                Email {searchParams.get("sort") === "email" && <ArrowDown />}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                className="pl-0"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set("sort", "permission");
+                  setSearchParams(params, {
+                    preventScrollReset: true,
+                  });
+                }}
+              >
+                Permissions{" "}
+                {searchParams.get("sort") === "permission" && <ArrowDown />}
+              </Button>
+            </TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
@@ -139,7 +232,7 @@ export default function UserIndexPage() {
               </TableCell>
             </TableRow>
           ))}
-          {user.map((u: User) => (
+          {sortedUser.map((u: User) => (
             <TableRow key={u.id}>
               <TableCell>
                 {u.firstName} {u.lastName}
