@@ -142,6 +142,7 @@ export default function BatchCertificatesPage() {
                           <Link
                             to={`${cert.id}/edit`}
                             aria-label="Edit certificate"
+                            preventScrollReset
                           >
                             <Settings className="h-4 w-4" />
                           </Link>
