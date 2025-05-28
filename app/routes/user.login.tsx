@@ -128,7 +128,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 export default function Login() {
   const actionData = useActionData<typeof action>();
   const { org } = useLoaderData<typeof loader>();
-  const [searchParams /*, setSearchParams */] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isClient, setIsClient] = useState(false);
   const [formAction, setFormAction] = useState("login");
   const [formData, setFormData] = useState({
@@ -164,6 +164,7 @@ export default function Login() {
         email: searchParams.get("email"),
       });
     }
+    setSearchParams({});
   }, [searchParams, formData]);
 
   useEffect(() => {
