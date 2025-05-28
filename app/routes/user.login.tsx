@@ -155,16 +155,21 @@ export default function Login() {
   };
 
   useEffect(() => {
+    let updateSearchParams = false;
     if (searchParams.get("sign") === "up") {
       setFormAction("register");
+      updateSearchParams = true;
     }
     if (searchParams.get("email")) {
       setFormData({
         ...formData,
         email: searchParams.get("email"),
       });
+      updateSearchParams = true;
     }
-    setSearchParams({});
+    if (updateSearchParams) {
+      setSearchParams({});
+    }
   }, [searchParams, formData]);
 
   useEffect(() => {
