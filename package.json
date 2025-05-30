@@ -42,9 +42,9 @@
     "@react-three/drei": "^9.115.0",
     "@react-three/fiber": "^8.17.10",
     "@react-three/rapier": "^1.5.0",
-    "@remix-run/node": "^2.11.1",
-    "@remix-run/react": "^2.11.1",
-    "@remix-run/serve": "^2.11.1",
+    "@remix-run/node": "^2.16.8",
+    "@remix-run/react": "^2.16.8",
+    "@remix-run/serve": "^2.16.8",
     "archiver": "^7.0.1",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
@@ -71,7 +71,9 @@
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.11.1",
+    "@remix-run/dev": "^2.16.8",
+    "@remix-run/fs-routes": "^2.16.8",
+    "@remix-run/route-config": "^2.16.8",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.15.14",
     "@types/react": "^18.2.20",
