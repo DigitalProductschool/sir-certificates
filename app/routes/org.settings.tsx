@@ -4,7 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { useEffect, useState } from "react";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, useLoaderData, useNavigate } from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
@@ -63,7 +63,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
   }
 
-  return json({ org });
+  return { org };
 };
 
 export default function EditOrgDialog() {

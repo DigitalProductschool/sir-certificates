@@ -1,6 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import { useEffect, useState } from "react";
-import { json } from "@remix-run/node";
 import {
   Link,
   useLoaderData,
@@ -113,7 +112,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
   // Remove certificate email to prevent exposure // @todo Improve type safety for this
   certificate.email = "";
-  return json({ certificate, userIsOwner, domain });
+  return { certificate, userIsOwner, domain };
 };
 
 export default function Index() {

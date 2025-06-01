@@ -1,7 +1,6 @@
 // @todo rename route to cert.import
 import { randomUUID } from "node:crypto";
 import type { ActionFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
 
 import { requireAdmin } from "~/lib/auth.server";
 import {
@@ -80,5 +79,5 @@ export const action: ActionFunction = async ({ request }) => {
 		await generatePreviewOfCertificate(certificate, skipIfExists);
 	}
 
-	return json({ certificate });
+	return { certificate };
 };

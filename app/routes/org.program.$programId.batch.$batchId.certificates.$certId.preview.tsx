@@ -1,6 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Certificate } from "@prisma/client";
-import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 
 import { XIcon } from "lucide-react";
@@ -30,7 +29,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ certificate });
+  return { certificate };
 };
 
 type LoaderReturnType = {

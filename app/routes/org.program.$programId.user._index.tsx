@@ -1,6 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { User, UserInvitation } from "@prisma/client";
-import { json } from "@remix-run/node";
 import {
   Form,
   Link,
@@ -76,7 +75,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
-  return json({ user, invitations });
+  return { user, invitations };
 };
 
 type Match = {
@@ -242,8 +241,8 @@ export default function UserIndexPage() {
                 {u.isSuperAdmin
                   ? "Super Admin"
                   : u.isAdmin
-                    ? "Program Manager"
-                    : "View Certificates"}
+                  ? "Program Manager"
+                  : "View Certificates"}
               </TableCell>
               <TableCell>
                 {!u.isSuperAdmin && (

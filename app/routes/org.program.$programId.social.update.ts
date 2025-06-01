@@ -1,5 +1,4 @@
 import type { ActionFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
@@ -69,5 +68,5 @@ export const action: ActionFunction = async ({ request, params }) => {
     addPhotoToPreview(social);
   }
 
-  return json({ social });
+  return { social };
 };

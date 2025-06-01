@@ -3,9 +3,9 @@ import type {
   LoaderFunction,
   MetaFunction,
 } from "@remix-run/node";
-// import type { Batch } from "@prisma/client";
+
 import { useEffect, useState, useRef } from "react";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
 
 import { Trash2Icon } from "lucide-react";
@@ -71,7 +71,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ batch });
+  return { batch };
 };
 
 export const handle = {
@@ -83,9 +83,6 @@ export default function EditBatchDialog() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const formRef = useRef<HTMLFormElement | null>(null);
-
-  const startDate = new Date(batch.startDate);
-  const endDate = new Date(batch.endDate);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -122,14 +119,14 @@ export default function EditBatchDialog() {
             type="date"
             id="startDate"
             name="startDate"
-            defaultValue={startDate.toISOString().split("T")[0]}
+            defaultValue={batch.startDate.toISOString().split("T")[0]}
           />
           <Label htmlFor="endDate">End date</Label>
           <Input
             type="date"
             id="endDate"
             name="endDate"
-            defaultValue={endDate.toISOString().split("T")[0]}
+            defaultValue={batch.endDate.toISOString().split("T")[0]}
           />
         </Form>
         <DialogFooter>

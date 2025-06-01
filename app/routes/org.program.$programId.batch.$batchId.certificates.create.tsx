@@ -6,7 +6,7 @@ import type {
 import type { Template } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { useEffect, useState, useRef } from "react";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, useLoaderData, useNavigate } from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
@@ -96,7 +96,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
-  return json({ templates });
+  return { templates };
 };
 
 export default function CreateCertificateDialog() {

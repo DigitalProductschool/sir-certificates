@@ -1,6 +1,5 @@
 import type { ActionFunction, MetaFunction } from "@remix-run/node";
 import { ChangeEvent, useRef } from "react";
-import { json } from "@remix-run/node";
 import { Form, useFetcher, useRouteLoaderData } from "@remix-run/react";
 
 import { ImageUp, Trash2Icon } from "lucide-react";
@@ -42,7 +41,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     data: update,
   });
 
-  return json({ program });
+  return { program };
 };
 
 export default function ProgramSettings() {

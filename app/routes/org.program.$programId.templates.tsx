@@ -1,7 +1,6 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Template } from "@prisma/client";
 import { useEffect } from "react";
-import { json } from "@remix-run/node";
 import {
   Link,
   Outlet,
@@ -59,7 +58,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ program });
+  return { program };
 };
 
 export default function ProgramTemplatesPage() {

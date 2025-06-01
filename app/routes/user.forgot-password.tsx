@@ -1,6 +1,6 @@
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { useState } from "react";
-import { redirect, json } from "@remix-run/node";
+import { redirect, data } from "@remix-run/node";
 import {
 	Form,
 	useActionData,
@@ -25,7 +25,7 @@ export const action: ActionFunction = async ({ request }) => {
 	const email = form.get("email");
 
 	if (typeof email !== "string") {
-		return json({ error: `Invalid Form Data` }, { status: 400 });
+		return data({ error: `Invalid Form Data` }, { status: 400 });
 	}
 
 	const errors = {
@@ -33,7 +33,7 @@ export const action: ActionFunction = async ({ request }) => {
 	};
 
 	if (Object.values(errors).some(Boolean))
-		return json(
+		return data(
 			{
 				errors,
 				fields: { email },
@@ -70,7 +70,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 		},
 	});
 
-	return json({ org });
+	return { org };
 };
 
 export default function ForgotPassword() {

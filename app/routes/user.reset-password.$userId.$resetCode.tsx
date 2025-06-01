@@ -7,7 +7,7 @@ import type { UserPasswordReset } from "@prisma/client";
 import type { PasswordAssessment } from "~/components/password-indicator";
 
 import { useState } from "react";
-import { redirect, json } from "@remix-run/node";
+import { redirect, data } from "@remix-run/node";
 import {
 	Form,
 	useActionData,
@@ -45,12 +45,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const password = form.get("password");
 
 	if (typeof password !== "string") {
-		return json({ error: `Invalid Form Data` }, { status: 400 });
+		return data({ error: `Invalid Form Data` }, { status: 400 });
 	}
 
 	const strength = assessPassword(password);
 	if (!strength.enough) {
-		return json(
+		return data(
 			{ error: "Please choose a stronger password." },
 			{ status: 400 },
 		);
@@ -143,7 +143,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 		},
 	});
 
-	return json({ org });
+	return { org };
 };
 
 export default function ResetPassword() {

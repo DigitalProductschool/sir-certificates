@@ -1,7 +1,6 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Prisma } from "@prisma/client";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { json } from "@remix-run/node";
 import { Form, useLoaderData, useFetcher } from "@remix-run/react";
 import { ImageUp, Paintbrush, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -62,11 +61,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     layout = defaultLayout;
   }
 
-  return json({
+  return {
     program,
     social,
     socialLayout: layout,
-  });
+  };
 };
 
 export default function ProgramSocialPage() {
@@ -126,7 +125,9 @@ export default function ProgramSocialPage() {
               </div>
             ) : (
               <img
-                src={`social/preview.png?t=${social.updatedAt}${previewWithPhoto ? "&withPhoto=1" : ""}`}
+                src={`social/preview.png?t=${social.updatedAt}${
+                  previewWithPhoto ? "&withPhoto=1" : ""
+                }`}
                 className="w-full max-w-[600px] aspect-[1.91/1]"
                 alt="Social media preview for shared certificates"
               />

@@ -2,7 +2,6 @@ import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { ErrorResponse } from "@remix-run/react";
 import type { ProgramWithBatchesAndLogo } from "~/lib/types";
 
-import { json } from "@remix-run/node";
 import {
   Link,
   Outlet,
@@ -37,7 +36,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ program });
+  return { program };
 };
 
 type LoaderReturnType = {

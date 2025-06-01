@@ -5,7 +5,7 @@ import type {
 } from "@remix-run/node";
 import type { Template } from "@prisma/client";
 import { useEffect, useState, useRef } from "react";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, useLoaderData, useNavigate } from "@remix-run/react";
 
 import { Trash2Icon } from "lucide-react";
@@ -124,7 +124,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
-  return json({ certificate, templates });
+  return { certificate, templates };
 };
 
 export default function EditCertificateDialog() {

@@ -5,7 +5,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { useEffect, useState } from "react";
-import { redirect, json } from "@remix-run/node";
+import { redirect, data } from "@remix-run/node";
 import {
   Form,
   Link,
@@ -36,7 +36,7 @@ export const action: ActionFunction = async ({ request }) => {
   const password = form.get("password");
 
   if (typeof email !== "string" || typeof password !== "string") {
-    return json({ error: `Invalid Form Data` }, { status: 400 });
+    return data({ error: `Invalid Form Data` }, { status: 400 });
   }
 
   const errors = {
@@ -45,7 +45,7 @@ export const action: ActionFunction = async ({ request }) => {
   };
 
   if (Object.values(errors).some(Boolean))
-    return json(
+    return data(
       {
         errors,
         fields: { email, password },
@@ -71,7 +71,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     },
   });
 
-  return json({ org });
+  return { org };
 };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {

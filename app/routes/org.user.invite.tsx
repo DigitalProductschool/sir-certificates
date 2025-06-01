@@ -5,7 +5,7 @@ import type {
 } from "@remix-run/node";
 import type { Program } from "@prisma/client";
 import { useEffect, useState } from "react";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
 
 import { Button } from "~/components/ui/button";
@@ -72,7 +72,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const programs = await getProgramsByAdmin(adminId);
 
-  return json({ admin, programs });
+  return { admin, programs };
 };
 
 export const handle = {
