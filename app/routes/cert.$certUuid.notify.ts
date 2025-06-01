@@ -83,8 +83,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	const certUrl = `${domain}/view/${certificate.uuid}?sign${participant ? "in" : "up"}=${certificate.email}`;
 	const loginUrl = participant
-		? `${domain}/user/login?email=${certificate.email}`
-		: `${domain}/user/login?sign=up&email=${certificate.email}&firstName=${certificate.firstName}&lastName=${certificate.lastName}`;
+		? `${domain}/user/sign/in?email=${certificate.email}`
+		: `${domain}/user/sign/up?email=${certificate.email}&firstName=${certificate.firstName}&lastName=${certificate.lastName}`;
 
 	const mailText = social
 		? `Dear ${certificate.firstName},\n\nYour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\n\nDownload your certificate from this link:\n${certUrl}\n\n\nShare your certificate on social media with your personal link:\n1. Sign up to our certificate tool with this email address at the link above\n2. Insert your photo into the social media preview\n3. Share it across your platforms\n\n\nCongratulations!`

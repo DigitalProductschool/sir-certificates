@@ -11,8 +11,8 @@ import {
   useActionData,
   useSearchParams,
   useLoaderData,
+  useLocation,
 } from "@remix-run/react";
-import { CheckIcon } from "lucide-react";
 import { Balloons } from "~/components/balloons.client";
 import { FormField } from "~/components/form-field";
 import { Button } from "~/components/ui/button";
@@ -24,7 +24,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { useIsMobile } from "~/hooks/use-mobile";
-import { login, register, getUser } from "~/lib/auth.server";
+import { register, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import {
   validateEmail,
@@ -34,42 +34,25 @@ import {
 
 export const action: ActionFunction = async ({ request }) => {
   const form = await request.formData();
-  const formAction = form.get("_action");
   const email = form.get("email");
   const password = form.get("password");
-  let firstName = form.get("firstName");
-  let lastName = form.get("lastName");
+  const firstName = form.get("firstName");
+  const lastName = form.get("lastName");
 
   if (
-    typeof formAction !== "string" ||
     typeof email !== "string" ||
-    typeof password !== "string"
+    typeof password !== "string" ||
+    typeof firstName !== "string" ||
+    typeof lastName !== "string"
   ) {
-    return json(
-      { error: `Invalid Form Data`, form: formAction },
-      { status: 400 },
-    );
-  }
-
-  if (
-    formAction === "register" &&
-    (typeof firstName !== "string" || typeof lastName !== "string")
-  ) {
-    return json(
-      { error: `Invalid Form Data`, form: formAction },
-      { status: 400 },
-    );
+    return json({ error: `Invalid Form Data` }, { status: 400 });
   }
 
   const errors = {
     email: validateEmail(email),
     password: validatePassword(password),
-    ...(formAction === "register"
-      ? {
-          firstName: validateName((firstName as string) || ""),
-          lastName: validateName((lastName as string) || ""),
-        }
-      : {}),
+    firstName: validateName((firstName as string) || ""),
+    lastName: validateName((lastName as string) || ""),
   };
 
   if (Object.values(errors).some(Boolean))
@@ -77,23 +60,11 @@ export const action: ActionFunction = async ({ request }) => {
       {
         errors,
         fields: { email, password, firstName, lastName },
-        form: formAction,
       },
       { status: 400 },
     );
 
-  switch (formAction) {
-    case "login": {
-      return await login({ email, password });
-    }
-    case "register": {
-      firstName = firstName as string;
-      lastName = lastName as string;
-      return await register({ email, password, firstName, lastName });
-    }
-    default:
-      return json({ error: `Invalid Form Data` }, { status: 400 });
-  }
+  return await register({ email, password, firstName, lastName });
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -126,13 +97,13 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export default function Login() {
+  const location = useLocation();
   const actionData = useActionData<typeof action>();
   const { org } = useLoaderData<typeof loader>();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams /*, setSearchParams*/] = useSearchParams();
   const [isClient, setIsClient] = useState(false);
-  const [formAction, setFormAction] = useState("login");
   const [formData, setFormData] = useState({
-    email: actionData?.fields?.email || "",
+    email: actionData?.fields?.email || location.state?.email || "",
     password: actionData?.fields?.password || "",
     firstName:
       actionData?.fields?.lastName || searchParams.get("firstName") || "",
@@ -144,7 +115,6 @@ export default function Login() {
 
   const errors = actionData?.errors || {};
   const formError = actionData?.error;
-  const formErrorCode = actionData?.errorCode;
 
   // Updates the form data when an input changes
   const handleInputChange = (
@@ -155,17 +125,15 @@ export default function Login() {
   };
 
   useEffect(() => {
-    if (searchParams.get("sign") === "up") {
-      setFormAction("register");
-      setSearchParams({});
-    }
     if (searchParams.get("email")) {
-      setFormData({
-        ...formData,
-        email: searchParams.get("email"),
+      setFormData((formData) => {
+        return {
+          ...formData,
+          email: searchParams.get("email"),
+        };
       });
     }
-  }, [searchParams, formData]);
+  }, [searchParams]);
 
   useEffect(() => {
     setIsClient(true);
@@ -212,19 +180,6 @@ export default function Login() {
           isMobile ? "col-span-2" : ""
         }`}
       >
-        {searchParams.get("verification") === "done" && (
-          <div className="absolute top-10 flex mx-8 p-2 px-4 gap-2 rounded-xl bg-green-600 text-primary-foreground">
-            <CheckIcon /> Email successfully verified. You can now sign in.
-          </div>
-        )}
-
-        {searchParams.get("reset") === "done" && (
-          <div className="absolute top-10 flex mx-8 p-2 px-4 gap-2 rounded-xl bg-green-600 text-primary-foreground">
-            <CheckIcon /> Your password has been changed. You can now sign in
-            with your new password.
-          </div>
-        )}
-
         <div className="grow"></div>
         {isMobile && (
           <svg
@@ -240,13 +195,10 @@ export default function Login() {
         )}
         <Card className="mx-auto max-w-sm shadow-none border-none bg-transparent">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">
-              {formAction === "login" ? "Sign In" : "Register"}
-            </CardTitle>
+            <CardTitle className="text-2xl text-center">Register</CardTitle>
             <CardDescription className="text-center text-balance">
-              {formAction === "login"
-                ? "Enter your email and password below to log in to your account and access your certificates."
-                : "Enter your name and email and choose a password to register an account and access your certificates."}
+              Enter your name and email and choose a password to register an
+              account and access your certificates.
             </CardDescription>
           </CardHeader>
 
@@ -254,14 +206,6 @@ export default function Login() {
             {formError && (
               <div className="w-full font-semibold text-sm tracking-wide text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2">
                 {formError}
-                {formErrorCode && formErrorCode === "verify-email" && (
-                  <Form action="/user/verification/resend" method="POST">
-                    <input type="hidden" name="email" value={formData.email} />
-                    <Button variant="outline" size="sm" type="submit">
-                      Resend email
-                    </Button>
-                  </Form>
-                )}
               </div>
             )}
             <Form method="POST">
@@ -279,61 +223,39 @@ export default function Login() {
                 value={formData.password}
                 onChange={(e) => handleInputChange(e, "password")}
                 error={errors?.password}
-                hint={
-                  formAction === "login" && (
-                    <Link
-                      to={`/user/forgot-password${
-                        formData.email !== "" ? `?email=${formData.email}` : ""
-                      }`}
-                      className="ml-auto inline-block text-sm underline"
-                    >
-                      Forgot your password?
-                    </Link>
-                  )
-                }
               />
-              {formAction === "register" && (
-                <>
-                  <FormField
-                    htmlFor="firstName"
-                    label="First Name"
-                    onChange={(e) => handleInputChange(e, "firstName")}
-                    value={formData.firstName}
-                    error={errors?.firstName}
-                  />
-                  <FormField
-                    htmlFor="lastName"
-                    label="Last Name"
-                    onChange={(e) => handleInputChange(e, "lastName")}
-                    value={formData.lastName}
-                    error={errors?.lastName}
-                  />
-                </>
-              )}
+              <FormField
+                htmlFor="firstName"
+                label="First Name"
+                onChange={(e) => handleInputChange(e, "firstName")}
+                value={formData.firstName}
+                error={errors?.firstName}
+              />
+              <FormField
+                htmlFor="lastName"
+                label="Last Name"
+                onChange={(e) => handleInputChange(e, "lastName")}
+                value={formData.lastName}
+                error={errors?.lastName}
+              />
 
-              <Button
-                type="submit"
-                name="_action"
-                value={formAction}
-                className="w-full"
-              >
-                {formAction === "login" ? "Sign In" : "Sign Up"}
+              <Button type="submit" className="w-full">
+                Sign Up
               </Button>
 
               <div className="mt-4 text-center text-sm">
-                {formAction === "login"
-                  ? "Don't have an account?"
-                  : "Already got an account?"}
-
-                <Button
-                  type="button"
-                  variant="link"
-                  onClick={() =>
-                    setFormAction(formAction == "login" ? "register" : "login")
-                  }
-                  className="underline"
-                >
-                  {formAction === "login" ? "Sign Up" : "Sign In"}
+                Already got an account?
+                <Button type="button" variant="link" className="underline">
+                  <Link
+                    to={"/user/sign/in" /* @todo add supportfor redirectTo */}
+                    state={
+                      formData.email !== ""
+                        ? { email: formData.email }
+                        : undefined
+                    }
+                  >
+                    Sign In
+                  </Link>
                 </Button>
               </div>
             </Form>

@@ -366,7 +366,7 @@ export function SidebarAdmin() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <form
-                    action="/user/logout"
+                    action="/user/sign/out"
                     method="POST"
                     className="flex grow"
                   >

@@ -132,7 +132,7 @@ export default function Index() {
       setSignInMail(searchParams.get("signin"));
       setSearchParams({});
     }
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 min-h-screen">
@@ -152,12 +152,12 @@ export default function Index() {
             {!user && (
               <Button variant={signUpMail ? "default" : "outline"} asChild>
                 {signUpMail ? (
-                  <Link to={`/user/login?sign=up&email=${signUpMail}`}>
-                    Sign up
-                  </Link>
+                  <Link to={`/user/sign/up?email=${signUpMail}`}>Sign up</Link>
                 ) : (
                   <Link
-                    to={`/user/login${signInMail ? "?email=".concat(signInMail) : ""}`}
+                    to={`/user/sign/in${
+                      signInMail ? "?email=".concat(signInMail) : ""
+                    }`}
                   >
                     Sign in
                   </Link>
@@ -208,8 +208,10 @@ export default function Index() {
                       <Link
                         to={
                           signUpMail
-                            ? `/user/login?sign=up&email=${signUpMail}`
-                            : `/user/login${signInMail ? "?email=".concat(signInMail) : ""}`
+                            ? `/user/sign/up?email=${signUpMail}`
+                            : `/user/sign/in${
+                                signInMail ? "?email=".concat(signInMail) : ""
+                              }`
                         }
                       >
                         <Share />
