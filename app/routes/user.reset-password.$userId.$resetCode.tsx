@@ -97,7 +97,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	});
 
 	const searchParams = new URLSearchParams([["reset", "done"]]);
-	return redirect(`/user/login?${searchParams}`);
+	return redirect(`/user/sign/in?${searchParams}`);
 };
 
 export const loader: LoaderFunction = async ({ params }) => {

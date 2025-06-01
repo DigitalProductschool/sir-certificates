@@ -33,7 +33,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 			const searchParams = new URLSearchParams([
 				["verification", "done"],
 			]);
-			throw redirect(`/user/login?${searchParams}`);
+			throw redirect(`/user/sign/in?${searchParams}`);
 		}
 	}
 

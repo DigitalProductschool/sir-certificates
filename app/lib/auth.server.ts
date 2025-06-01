@@ -82,6 +82,7 @@ export async function login({ email, password }: LoginForm) {
 		);
 	}
 
+	// @todo support redirectTo parameter from login form
 	const redirectTo = user.isAdmin ? "/org/program" : "/";
 
 	return createUserSessionAndRedirect(user, redirectTo);
@@ -109,8 +110,14 @@ export async function requireUserId(
 	const userId = session.get("userId");
 
 	if (!userId || typeof userId !== "number") {
-		const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
-		throw redirect(`/user/login?${searchParams}`);
+		if (redirectTo !== "/") {
+			const searchParams = new URLSearchParams([
+				["redirectTo", redirectTo],
+			]);
+			throw redirect(`/user/sign/in?${searchParams}`);
+		} else {
+			throw redirect("/user/sign/in");
+		}
 	}
 	return userId;
 }
@@ -124,7 +131,7 @@ export async function requireAdmin(
 
 	if (!userId || typeof userId !== "number") {
 		const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
-		throw redirect(`/user/login?${searchParams}`);
+		throw redirect(`/user/sign/in?${searchParams}`);
 	}
 
 	const isAdmin = session.get("isAdmin");
@@ -146,7 +153,7 @@ export async function requireSuperAdmin(
 
 	if (!userId || typeof userId !== "number") {
 		const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
-		throw redirect(`/user/login?${searchParams}`);
+		throw redirect(`/user/sign/in?${searchParams}`);
 	}
 
 	const user = await prisma.user.findUnique({
@@ -205,7 +212,7 @@ export async function getUser(request: Request) {
 
 export async function logout(request: Request) {
 	const session = await getUserSession(request);
-	return redirect("/user/login", {
+	return redirect("/user/sign/in", {
 		headers: {
 			"Set-Cookie": await storage.destroySession(session),
 		},

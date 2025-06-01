@@ -30,7 +30,7 @@ export const action: ActionFunction = async ({ request }) => {
 	}
 
 	if (user.isVerified) {
-		return redirect("/user/login");
+		return redirect("/user/sign/in");
 	} else {
 		await sendVerificationEmail(user);
 		return redirect("/user/verification-info");
