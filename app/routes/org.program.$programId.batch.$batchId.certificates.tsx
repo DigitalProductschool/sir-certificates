@@ -208,7 +208,7 @@ export default function BatchCertificatesPage() {
                         <MailCheck />
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        {new Date(cert.notifiedAt).toLocaleString()}
+                        {new Date(cert.notifiedAt).toLocaleString("en-UK")}
                       </TooltipContent>
                     </Tooltip>
                   ) : (

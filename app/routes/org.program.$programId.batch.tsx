@@ -130,8 +130,8 @@ export default function BatchPage() {
                 <div className="flex gap-2 text-left items-center">
                   {currentBatch?.name}
                   <div className="text-xs text-muted-foreground">
-                    {new Date(currentBatch?.startDate).toLocaleDateString()}–{" "}
-                    {new Date(currentBatch?.endDate).toLocaleDateString()}
+                    {new Date(currentBatch?.startDate).toLocaleDateString("en-UK")}–{" "}
+                    {new Date(currentBatch?.endDate).toLocaleDateString("en-UK")}
                   </div>
                 </div>
               </SelectValue>
@@ -150,8 +150,8 @@ export default function BatchPage() {
                   >
                     {batch.name}
                     <div className="text-xs text-muted-foreground">
-                      {startDate.toLocaleDateString()}–{" "}
-                      {endDate.toLocaleDateString()}
+                      {startDate.toLocaleDateString("en-UK")}–{" "}
+                      {endDate.toLocaleDateString("en-UK")}
                     </div>
                   </SelectItem>
                 );
