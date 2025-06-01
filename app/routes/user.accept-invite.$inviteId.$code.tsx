@@ -2,7 +2,7 @@ import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import type { PasswordAssessment } from "~/components/password-indicator";
 import bcrypt from "bcryptjs";
 import { useState } from "react";
-import { json } from "@remix-run/node";
+import { data } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { Layout } from "~/components/layout";
 
@@ -47,7 +47,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 		const strength = assessPassword(inputs.password);
 		if (!strength.enough) {
-			return json(
+			return data(
 				{ error: "Please choose a stronger password." },
 				{ status: 400 },
 			);
@@ -130,10 +130,8 @@ export const loader: LoaderFunction = async ({ params }) => {
 			},
 		});
 
-		return json({ invite, org });
+		return { invite, org };
 	}
-
-	// @todo load org and add imprint/privacy footer
 
 	// Got here?
 	throw new Response(null, {

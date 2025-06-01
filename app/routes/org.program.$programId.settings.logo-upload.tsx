@@ -1,7 +1,6 @@
 import type { ActionFunction } from "@remix-run/node";
 import { randomUUID } from "node:crypto";
 import {
-  json,
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
@@ -83,5 +82,5 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   // Save logo to disk
   await saveProgramLogo(logo, programLogo);
-  return json({ logo });
+  return { logo };
 };

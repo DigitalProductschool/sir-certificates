@@ -2,7 +2,6 @@ import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import type { Prisma } from "@prisma/client";
 import { useEffect, useState, useRef } from "react";
 import {
-  json,
   redirect,
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
@@ -130,7 +129,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ template });
+  return { template };
 };
 
 export default function DuplicateTemplateDialog() {

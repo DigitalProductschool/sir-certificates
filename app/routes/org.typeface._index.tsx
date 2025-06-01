@@ -1,6 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Typeface } from "@prisma/client";
-import { json } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 
 import { Trash2Icon } from "lucide-react";
@@ -50,7 +49,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     ],
   });
 
-  return json({ typefaces });
+  return { typefaces };
 };
 
 type Match = {

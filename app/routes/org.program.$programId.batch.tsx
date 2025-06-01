@@ -3,7 +3,6 @@ import type { Batch } from "@prisma/client";
 import type { ProgramWithBatches } from "~/lib/types";
 
 import { useEffect } from "react";
-import { json } from "@remix-run/node";
 import {
   Link,
   Outlet,
@@ -59,7 +58,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ program });
+  return { program };
 };
 
 type LoaderReturnType = {
@@ -130,18 +129,14 @@ export default function BatchPage() {
                 <div className="flex gap-2 text-left items-center">
                   {currentBatch?.name}
                   <div className="text-xs text-muted-foreground">
-                    {new Date(currentBatch?.startDate).toLocaleDateString("en-UK")}–{" "}
-                    {new Date(currentBatch?.endDate).toLocaleDateString("en-UK")}
+                    {currentBatch?.startDate.toLocaleDateString("en-UK")}–{" "}
+                    {currentBatch?.endDate.toLocaleDateString("en-UK")}
                   </div>
                 </div>
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {program.batches.map((batch: Batch) => {
-                // batch is still a JSON object, not an actual Batch
-                // @todo check if https://www.prisma.io/docs/orm/prisma-client/type-safety#what-are-generated-types can help here to operate on the correct type
-                const startDate = new Date(batch.startDate);
-                const endDate = new Date(batch.endDate);
                 return (
                   <SelectItem
                     key={batch.id}
@@ -150,8 +145,8 @@ export default function BatchPage() {
                   >
                     {batch.name}
                     <div className="text-xs text-muted-foreground">
-                      {startDate.toLocaleDateString("en-UK")}–{" "}
-                      {endDate.toLocaleDateString("en-UK")}
+                      {batch.startDate.toLocaleDateString("en-UK")}–{" "}
+                      {batch.endDate.toLocaleDateString("en-UK")}
                     </div>
                   </SelectItem>
                 );

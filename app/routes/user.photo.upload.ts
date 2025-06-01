@@ -1,6 +1,5 @@
 import type { ActionFunction } from "@remix-run/node";
 import {
-	json,
 	unstable_createMemoryUploadHandler,
 	unstable_parseMultipartFormData,
 } from "@remix-run/node";
@@ -61,7 +60,7 @@ export const action: ActionFunction = async ({ request }) => {
 		if (userPhoto) {
 			const photoBuffer = await photo.arrayBuffer();
 			await saveTransparentPhoto(userPhoto, photoBuffer);
-			return json({ userPhoto: { updatedAt: userPhoto.updatedAt } });
+			return { userPhoto: { updatedAt: userPhoto.updatedAt } };
 		}
 	} else {
 		return new Response(null, {

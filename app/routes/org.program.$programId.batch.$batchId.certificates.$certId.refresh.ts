@@ -1,5 +1,4 @@
 import type { ActionFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import {
@@ -46,5 +45,5 @@ export const action: ActionFunction = async ({ request, params }) => {
     },
   });
 
-  return json({ certificate: certificateUpdate });
+  return { certificate: certificateUpdate };
 };

@@ -1,6 +1,5 @@
 import type { ActionFunction } from "@remix-run/node";
 import {
-  json,
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
@@ -108,5 +107,5 @@ export const action: ActionFunction = async ({ request, params }) => {
     await addPhotoToPreview(social);
   }
 
-  return json({ social });
+  return { social };
 };

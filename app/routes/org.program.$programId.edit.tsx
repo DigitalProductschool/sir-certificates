@@ -4,7 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { useEffect, useState, useRef } from "react";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, useLoaderData, useNavigate } from "@remix-run/react";
 
 import { Trash2Icon } from "lucide-react";
@@ -70,7 +70,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ program });
+  return { program };
 };
 
 export default function EditBatchDialog() {

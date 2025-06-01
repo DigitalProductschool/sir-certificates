@@ -1,5 +1,5 @@
 import type { LoaderFunction } from "@remix-run/node";
-import { redirect, json } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { getUser } from "~/lib/auth.server";
@@ -19,7 +19,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 		},
 	});
 
-	return json({ org });
+	return { org };
 };
 
 export default function ForgotPasswordNextSteps() {

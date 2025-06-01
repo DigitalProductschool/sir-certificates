@@ -2,7 +2,6 @@ import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Template } from "@prisma/client";
 
 import { useState } from "react";
-import { json } from "@remix-run/node";
 import { Link, useParams, useLoaderData, useNavigate } from "@remix-run/react";
 import {
   CircleFadingPlus,
@@ -79,7 +78,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
-  return json({ batch, templates });
+  return { batch, templates };
 };
 
 /* type LoaderReturnType = {

@@ -1,6 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Certificate, Template } from "@prisma/client";
-import { json } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useParams } from "@remix-run/react";
 
 import { ChevronDown, Eye, MailCheck, Settings } from "lucide-react";
@@ -68,7 +67,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
-  return json({ certificates, templates });
+  return { certificates, templates };
 };
 
 export default function BatchCertificatesPage() {
@@ -208,7 +207,7 @@ export default function BatchCertificatesPage() {
                         <MailCheck />
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        {new Date(cert.notifiedAt).toLocaleString("en-UK")}
+                        {cert.notifiedAt.toLocaleString("en-UK")}
                       </TooltipContent>
                     </Tooltip>
                   ) : (

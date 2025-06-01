@@ -2,7 +2,6 @@ import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Program, User, UserInvitation } from "@prisma/client";
 import type { UserWithAdminOfPrograms } from "~/lib/types";
 
-import { json } from "@remix-run/node";
 import { Form, Link, useLoaderData, useSearchParams } from "@remix-run/react";
 
 import { ArrowDown, Settings, Trash2Icon } from "lucide-react";
@@ -58,7 +57,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     },
   });
 
-  return json({ user, invitations });
+  return { user, invitations };
 };
 
 type Match = {

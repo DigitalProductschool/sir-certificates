@@ -6,7 +6,6 @@ import type {
 } from "@remix-run/node";
 import type { Template } from "@prisma/client";
 import { useEffect, useState } from "react";
-import { json } from "@remix-run/node";
 import {
   Form,
   Link,
@@ -84,7 +83,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     await generatePreviewOfTemplate(template, false);
   }
 
-  return json({ template });
+  return { template };
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -106,7 +105,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
   const typefaces = await prisma.typeface.findMany();
 
-  return json({ template, typefaces });
+  return { template, typefaces };
 };
 
 type LoaderReturnType = {
