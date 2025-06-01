@@ -1,8 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { User, Organisation, Batch } from "@prisma/client";
 import type { ProgramWithLogo } from "~/lib/types";
-import { json } from "@remix-run/node";
-import { Outlet } from "@remix-run/react";
+import { Outlet, useLoaderData } from "@remix-run/react";
 import { Layout } from "~/components/layout";
 //import { Breadcrumbs } from "~/components/breadcrumbs";
 import { SidebarAdmin } from "~/components/sidebar-admin";
@@ -56,7 +55,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ user, org, programs, latestBatch });
+  return { user, org, programs, latestBatch };
 };
 
 export type LoaderReturnType = {
@@ -67,11 +66,17 @@ export type LoaderReturnType = {
 };
 
 export default function OrgDashboard() {
+  const { org, user, programs, latestBatch } = useLoaderData<typeof loader>();
   return (
     <Layout type="full">
       <TooltipProvider delayDuration={0}>
         <SidebarProvider>
-          <SidebarAdmin />
+          <SidebarAdmin
+            org={org}
+            user={user}
+            programs={programs}
+            latestBatch={latestBatch}
+          />
 
           <SidebarInset className="gap-4 py-3 bg-transparent">
             <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent">

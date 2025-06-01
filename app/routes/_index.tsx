@@ -2,7 +2,7 @@ import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import type { Organisation, Program, User } from "@prisma/client";
 import type { CertificatesWithBatchAndProgram } from "~/lib/types";
 
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
 import { SidebarParticipant } from "~/components/sidebar-participant";
@@ -28,7 +28,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { title: `${data?.org?.name} Certificates` },
     {
       name: "description",
-      content: `All of your certificates from ${data?.org?.name || "this organisation"} in one place.`,
+      content: `All of your certificates from ${
+        data?.org?.name || "this organisation"
+      } in one place.`,
     },
   ];
 };
@@ -99,7 +101,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     },
   });
 
-  return json({ user, org, programs, certificates });
+  return { user, org, programs, certificates };
 };
 
 // Loader from /_index route
@@ -117,7 +119,7 @@ export default function Index() {
   return (
     <div className="flex min-h-screen w-full">
       <SidebarProvider defaultOpen={false}>
-        <SidebarParticipant />
+        <SidebarParticipant user={user} certificates={certificates} />
 
         <SidebarInset className="flex flex-col gap-4 px-4 py-3">
           <header className="sticky top-0 flex h-14 items-center gap-4 border-b sm:static sm:h-auto sm:border-0 sm:bg-transparent">
@@ -145,7 +147,9 @@ export default function Index() {
                 <div className="pl-1">
                   <b>{cert.batch.program.name}</b>
                   <br />
-                  <span className="text-sm text-muted-foreground">{cert.batch.name}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {cert.batch.name}
+                  </span>
                 </div>
                 <img
                   className="w-full mb-4 drop-shadow-xl hover:drop-shadow-lg hover:opacity-85"

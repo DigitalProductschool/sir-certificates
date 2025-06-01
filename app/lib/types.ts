@@ -50,3 +50,7 @@ export type ProgramWithLogo = Prisma.ProgramGetPayload<{
 export type UserWithAdminOfPrograms = Prisma.UserGetPayload<{
 	include: { adminOfPrograms: true };
 }>;
+
+export type UserWithPhoto = Prisma.UserGetPayload<{
+	include: { photo: true };
+}>;
