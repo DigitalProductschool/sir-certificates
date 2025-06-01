@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/tabindex-no-positive */
 import type {
   ActionFunction,
   LoaderFunction,
@@ -218,6 +219,7 @@ export default function Login() {
                 value={formData.email}
                 onChange={(e) => handleInputChange(e, "email")}
                 error={errors?.email}
+                tabindex={1}
               />
               <FormField
                 htmlFor="password"
@@ -226,19 +228,21 @@ export default function Login() {
                 value={formData.password}
                 onChange={(e) => handleInputChange(e, "password")}
                 error={errors?.password}
+                tabindex={2}
                 hint={
                   <Link
                     to={`/user/forgot-password${
                       formData.email !== "" ? `?email=${formData.email}` : ""
                     }`}
                     className="ml-auto inline-block text-sm underline"
+                    tabIndex={4}
                   >
                     Forgot your password?
                   </Link>
                 }
               />
 
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" tabIndex={3}>
                 Sign In
               </Button>
 
@@ -248,6 +252,7 @@ export default function Login() {
                   type="button"
                   variant="link"
                   className="underline"
+                  tabIndex={5}
                   asChild
                 >
                   <Link

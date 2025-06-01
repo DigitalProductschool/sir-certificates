@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 
@@ -6,10 +6,11 @@ interface FormFieldProps {
 	htmlFor: string;
 	label: string;
 	type?: string;
-	value: any;
-	onChange?: (...args: any) => any;
+	value: string | number;
+	onChange?: React.ChangeEventHandler<HTMLInputElement>;
 	error?: string;
-	hint?: any;
+	hint?: ReactNode;
+	tabindex?: number;
 }
 
 export function FormField({
@@ -20,6 +21,7 @@ export function FormField({
 	onChange = () => {},
 	error = "",
 	hint,
+	tabindex,
 }: FormFieldProps) {
 	const [errorText, setErrorText] = useState(error);
 
@@ -43,6 +45,7 @@ export function FormField({
 				id={htmlFor}
 				name={htmlFor}
 				value={value}
+				tabIndex={tabindex}
 			/>
 			<div className="text-xs font-semibold text-center tracking-wide text-red-500 w-full">
 				{errorText || ""}

@@ -1,6 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
 import { useState } from "react";
-import { json } from "@remix-run/node";
 import { Link, useLoaderData, useRouteLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
 import { ClipboardCopy, ClipboardCheck, SquareUserRound } from "lucide-react";
@@ -68,13 +67,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     },
   });
 
-  return json({ certificate, social, domain });
+  return { certificate, social, domain };
 };
 
 export default function Index() {
   const { certificate, social, domain } = useLoaderData<typeof loader>();
-  const { user, userPhoto } =
-    useRouteLoaderData<typeof viewLoader>("routes/view");
+  const { user } = useRouteLoaderData<typeof viewLoader>("routes/view");
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
   const certificateUrl = `${domain}/view/${certificate.uuid}`;
@@ -116,10 +114,10 @@ export default function Index() {
             <Button asChild>
               <Link to="/user/photo">
                 <SquareUserRound />
-                {userPhoto ? "Change" : "Add"} photo
+                {user.photo ? "Change" : "Add"} photo
               </Link>
             </Button>
-            {!userPhoto && (
+            {!user.photo && (
               <img
                 src="/assets/scribble-add-photo.svg"
                 alt="Add yourself to the preview here"
@@ -151,7 +149,7 @@ export default function Index() {
             <CardContent>
               {!social ? (
                 <div className="w-full max-w-[600px] aspect-[1.91/1] flex border border-dashed border-slate-500 justify-center items-center bg-muted"></div>
-              ) : userPhoto ? (
+              ) : user.photo ? (
                 <img
                   src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}`}
                   className="w-full max-w-[600px] aspect-[1.91/1]"
@@ -196,7 +194,9 @@ export default function Index() {
             </Button>
             <Button asChild>
               <a
-                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificateUrl)}`}
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                  certificateUrl,
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

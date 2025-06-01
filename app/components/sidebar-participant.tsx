@@ -1,6 +1,7 @@
-import type { LoaderReturnType } from "~/routes/_index";
+import type { User } from "@prisma/client";
+import type { CertificatesWithBatchAndProgram } from "~/lib/types";
 
-import { Link, NavLink, useLoaderData } from "@remix-run/react";
+import { Link, NavLink } from "@remix-run/react";
 import { ChevronsUpDown, LogOut, SquareUser, TowerControl } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -27,9 +28,13 @@ import {
 
 import { pickCapitalLetters } from "~/lib/utils";
 
-export function SidebarParticipant() {
-  const { user, certificates } = useLoaderData<LoaderReturnType>();
-
+export function SidebarParticipant({
+  user,
+  certificates,
+}: {
+  user: User;
+  certificates: CertificatesWithBatchAndProgram[];
+}) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="duration-200 transition-all flex mt-2 pl-4 group-data-[collapsible=icon]:mt-1 group-data-[collapsible=icon]:pl-3">
@@ -101,7 +106,9 @@ export function SidebarParticipant() {
                       src="/user/photo/preview.png"
                       alt={user.firstName}
                     />
-                    <AvatarFallback className="rounded-lg">{`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`}</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">{`${user.firstName.charAt(
+                      0,
+                    )}${user.lastName.charAt(0)}`}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
@@ -125,7 +132,9 @@ export function SidebarParticipant() {
                         src="/user/photo/preview.png"
                         alt={user.firstName}
                       />
-                      <AvatarFallback className="rounded-lg">{`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`}</AvatarFallback>
+                      <AvatarFallback className="rounded-lg">{`${user.firstName.charAt(
+                        0,
+                      )}${user.lastName.charAt(0)}`}</AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">

@@ -202,6 +202,7 @@ export async function getUser(request: Request) {
 				isAdmin: true,
 				isSuperAdmin: true,
 				adminOfPrograms: true,
+				photo: true
 			},
 		});
 		return user;

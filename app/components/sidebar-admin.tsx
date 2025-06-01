@@ -1,6 +1,7 @@
-import type { LoaderReturnType } from "~/routes/org";
+import type { Organisation, User, Batch } from "@prisma/client";
+import type { ProgramWithLogo } from "~/lib/types";
 import { useEffect } from "react";
-import { Link, NavLink, useLoaderData, useParams } from "@remix-run/react";
+import { Link, NavLink, useParams } from "@remix-run/react";
 import {
   BadgeCheck,
   BookType,
@@ -43,10 +44,20 @@ import { useStickyState } from "~/hooks/use-sticky-state";
 
 import { pickCapitalLetters } from "~/lib/utils";
 
-export function SidebarAdmin() {
+export function SidebarAdmin({
+  org,
+  user,
+  programs,
+  latestBatch,
+}: {
+  org: Organisation;
+  user: User;
+  programs: ProgramWithLogo[];
+  latestBatch: Batch;
+}) {
   const { programId, batchId } = useParams();
-  const { org, user, programs, latestBatch } =
-    useLoaderData<LoaderReturnType>();
+  /* const { org, user, programs, latestBatch } =
+    useLoaderData<LoaderReturnType>(); */
 
   const [lastProgramId, setLastProgramId] = useStickyState(
     "lastActiveProgram",
@@ -205,7 +216,9 @@ export function SidebarAdmin() {
                 <SidebarMenuItem>
                   <SidebarMenuButton tooltip="Batches and Certificates" asChild>
                     <NavLink
-                      to={`/org/program/${activeProgram?.id}/batch/${activeBatchId ? activeBatchId + "/certificates" : ""}`}
+                      to={`/org/program/${activeProgram?.id}/batch/${
+                        activeBatchId ? activeBatchId + "/certificates" : ""
+                      }`}
                       className="aria-current:bg-sidebar-accent aria-current:font-bold"
                     >
                       <FileBadge />
@@ -314,7 +327,9 @@ export function SidebarAdmin() {
                       src="/user/photo/preview.png"
                       alt={user.firstName}
                     />
-                    <AvatarFallback className="rounded-lg">{`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`}</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">{`${user.firstName.charAt(
+                      0,
+                    )}${user.lastName.charAt(0)}`}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
@@ -338,7 +353,9 @@ export function SidebarAdmin() {
                         src="/user/photo/preview.png"
                         alt={user.firstName}
                       />
-                      <AvatarFallback className="rounded-lg">{`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`}</AvatarFallback>
+                      <AvatarFallback className="rounded-lg">{`${user.firstName.charAt(
+                        0,
+                      )}${user.lastName.charAt(0)}`}</AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">

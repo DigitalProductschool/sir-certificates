@@ -127,7 +127,7 @@ export default function ProgramSettings() {
         </section>
 
         <section className="flex flex-col gap-2">
-          <Label htmlFor="programIcon">Logo</Label>
+          <Label>Logo</Label>
           <p className="text-sm text-muted-foreground max-w-[500px]">
             Add the visual logo mark of your program. This needs to be scalable
             vector image (SVG) and the logo should be placed in the center of a
