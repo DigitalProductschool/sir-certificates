@@ -8,11 +8,11 @@ import {
 	TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-interface SendNotificationProps {
+interface CertificateRefreshProps {
 	certificate: Certificate;
 }
 
-export function CertificateRefresh({ certificate }: SendNotificationProps) {
+export function CertificateRefresh({ certificate }: CertificateRefreshProps) {
 	const fetcher = useFetcher();
 	return (
 		<fetcher.Form action={`${certificate.id}/refresh`} method="POST">

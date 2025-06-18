@@ -3,13 +3,21 @@ import type { Certificate, Template } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useParams } from "@remix-run/react";
 
-import { MailCheck, Settings } from "lucide-react";
+import { ChevronDown, Eye, MailCheck, Settings } from "lucide-react";
 
 import { CertificateRefresh } from "~/components/certificate-refresh";
 import { CertificateSendNotification } from "~/components/certificate-send-notification";
 
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+
 import {
   Table,
   TableBody,
@@ -27,6 +35,7 @@ import {
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { AsyncAction } from "~/components/async-action";
 
 export const meta: MetaFunction = () => {
   return [{ title: "Certificates" }];
@@ -136,24 +145,56 @@ export default function BatchCertificatesPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-4 items-center">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" asChild>
-                          <Link
-                            to={`${cert.id}/edit`}
-                            aria-label="Edit certificate"
-                            preventScrollReset
-                          >
-                            <Settings className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        Edit certificate
-                      </TooltipContent>
-                    </Tooltip>
+                    <div className="flex items-center">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" className="w-12" asChild>
+                            <Link
+                              to={`${cert.id}/edit`}
+                              aria-label="Edit certificate"
+                              preventScrollReset
+                            >
+                              <Settings />
+                            </Link>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          Edit certificate
+                        </TooltipContent>
+                      </Tooltip>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="w-8">
+                            <ChevronDown />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="w-56 -ml-12"
+                          align="start"
+                        >
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                              <AsyncAction action={`${cert.id}/refresh`}>
+                                <button
+                                  type="submit"
+                                  className="flex flex-col items-start text-left"
+                                >
+                                  <b>Refresh certificate</b>
+                                  <div className="text-sm text-muted-foreground">
+                                    Update template and variables to current
+                                    values.
+                                  </div>
+                                </button>
+                              </AsyncAction>
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                     <Button variant="outline" asChild>
-                      <Link to={`${cert.id}/preview`}>Preview</Link>
+                      <Link to={`${cert.id}/preview`}>
+                        <Eye className="h-4 w-4" /> Preview
+                      </Link>
                     </Button>
                   </div>
                 </TableCell>
