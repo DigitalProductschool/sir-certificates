@@ -50,7 +50,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
   };
 
-  // @todo check if MaxFilesExceededError, MaxFileSizeExceededError need separate handling in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser)
+  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
   const formData = await parseFormData(
     request,
     { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
