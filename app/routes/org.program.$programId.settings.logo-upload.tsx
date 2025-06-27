@@ -1,86 +1,72 @@
 import type { ActionFunction } from "@remix-run/node";
+import type { ProgramLogo } from "@prisma/client";
 import { randomUUID } from "node:crypto";
-import {
-  unstable_createMemoryUploadHandler,
-  unstable_parseMultipartFormData,
-} from "@remix-run/node";
-
+import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireAdminWithProgram } from "~/lib/auth.server";
-import { saveProgramLogo, deleteProgramLogo } from "~/lib/program.server";
+import { saveProgramLogoUpload } from "~/lib/program.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
+
+const oneMb = 1024 * 1024;
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
-  const uploadHandler = unstable_createMemoryUploadHandler({
-    maxPartSize: 5 * 1024 * 1024,
-    filter: (field) => {
-      if (field.name === "programLogo") {
-        if (field.contentType === "image/svg+xml") {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return true;
-      }
-    },
-  });
+  let logo: ProgramLogo | void = undefined;
 
-  const formData = await unstable_parseMultipartFormData(
+  const uploadHandler = async (fileUpload: FileUpload) => {
+    if (
+      fileUpload.fieldName === "programLogo" &&
+      fileUpload.type === "image/svg+xml"
+    ) {
+      // Create or update ProgramLogo
+      logo = await prisma.programLogo
+        .upsert({
+          where: {
+            programId: Number(params.programId),
+          },
+          update: {
+            uuid: randomUUID(),
+            contentType: fileUpload.type,
+          },
+          create: {
+            uuid: randomUUID(),
+            contentType: fileUpload.type,
+            program: {
+              connect: { id: Number(params.programId) },
+            },
+          },
+        })
+        .catch((error) => {
+          console.error(error);
+          throwErrorResponse(error, "Could not create/update program logo");
+        });
+
+      if (!logo) {
+        throw new Response(null, {
+          status: 500,
+          statusText: "Missing program logo record",
+        });
+      }
+
+      return saveProgramLogoUpload(logo, fileUpload);
+    }
+  };
+
+  // @todo check if MaxFilesExceededError, MaxFileSizeExceededError need separate handling in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser)
+  const formData = await parseFormData(
     request,
+    { maxFiles: 1, maxFileSize: 5 * oneMb },
     uploadHandler,
   );
 
   const programLogo = formData.get("programLogo") as File;
-  if (!programLogo) {
+
+  if (!programLogo || logo === undefined) {
     return new Response(null, {
       status: 400,
       statusText: "Missing uploaded image",
     });
   }
 
-  // Clean up existing background image
-  const existingLogo = await prisma.programLogo.findFirst({
-    where: {
-      programId: Number(params.programId),
-    },
-  });
-  if (existingLogo) {
-    await deleteProgramLogo(existingLogo);
-  }
-
-  // Create or update SocialPreview
-  const logo = await prisma.programLogo
-    .upsert({
-      where: {
-        programId: Number(params.programId),
-      },
-      update: {
-        uuid: randomUUID(),
-        contentType: programLogo.type,
-      },
-      create: {
-        uuid: randomUUID(),
-        contentType: programLogo.type,
-        program: {
-          connect: { id: Number(params.programId) },
-        },
-      },
-    })
-    .catch((error) => {
-      console.error(error);
-      throwErrorResponse(error, "Could not create/update program logo");
-    });
-
-  if (!logo) {
-    return new Response(null, {
-      status: 500,
-      statusText: "Missing program logo record",
-    });
-  }
-
-  // Save logo to disk
-  await saveProgramLogo(logo, programLogo);
   return { logo };
 };
