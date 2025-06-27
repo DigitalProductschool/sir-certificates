@@ -1,12 +1,10 @@
 import type { ActionFunction } from "@remix-run/node";
+import type { Typeface } from "@prisma/client";
 import { useEffect, useState } from "react";
-import {
-  redirect,
-  unstable_createMemoryUploadHandler,
-  unstable_parseMultipartFormData,
-} from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 
 import { Form, useNavigate, useRouteError } from "@remix-run/react";
+import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -29,28 +27,37 @@ import {
 
 import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
-import { saveUploadedTypeface } from "~/lib/typeface.server";
+import { saveTypefaceUpload } from "~/lib/typeface.server";
 
 export const action: ActionFunction = async ({ request }) => {
   await requireSuperAdmin(request);
 
-  const uploadHandler = unstable_createMemoryUploadHandler({
-    maxPartSize: 5 * 1024 * 1024,
-    filter: (field) => {
-      if (field.name === "ttf") {
-        if (field.contentType === "font/ttf") {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return true;
-      }
-    },
-  });
+  let typeface: Typeface | void = undefined;
 
-  const formData = await unstable_parseMultipartFormData(
+  const uploadHandler = async (fileUpload: FileUpload) => {
+    if (fileUpload.fieldName === "ttf" && fileUpload.type === "font/ttf") {
+      typeface = await prisma.typeface
+        .create({
+          data: {
+            name: "(Typeface Name)",
+            weight: 400,
+            style: "tbd",
+          },
+        })
+        .catch((error) => {
+          throwErrorResponse(error, "Could not create typeface");
+        });
+
+      if (typeface) {
+        return await saveTypefaceUpload(typeface, fileUpload);
+      }
+    }
+  };
+
+  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+  const formData = await parseFormData(
     request,
+    { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
     uploadHandler,
   );
 
@@ -60,15 +67,19 @@ export const action: ActionFunction = async ({ request }) => {
   const style = (formData.get("style") as string) || "normal";
   const typefaceTTF = formData.get("ttf") as File;
 
-  if (!typefaceTTF) {
+  if (!typefaceTTF || typeface === undefined) {
     throw new Response(null, {
       status: 400,
       statusText: "Missing uploaded TTF file",
     });
   }
 
-  const typeface = await prisma.typeface
-    .create({
+  typeface = await prisma.typeface
+    .update({
+      where: {
+        // @ts-expect-error Typescript control flow doesn't recognize the assigment above and believes that `typeface` is a 'never'
+        id: typeface.id,
+      },
       data: {
         name: typefaceName,
         weight: weight,
@@ -79,15 +90,7 @@ export const action: ActionFunction = async ({ request }) => {
       throwErrorResponse(error, "Could not import typeface");
     });
 
-  if (typeface) {
-    await saveUploadedTypeface(typeface, typefaceTTF);
-    return redirect(`/org/typeface`);
-  }
-
-  throw new Response(null, {
-    status: 500,
-    statusText: "Unkown error when creating new typeface",
-  });
+  return redirect(`/org/typeface`);
 };
 
 export default function CreateTypefaceDialog() {
