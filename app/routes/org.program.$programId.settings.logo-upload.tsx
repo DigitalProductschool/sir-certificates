@@ -6,8 +6,6 @@ import { requireAdminWithProgram } from "~/lib/auth.server";
 import { saveProgramLogoUpload } from "~/lib/program.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
-const oneMb = 1024 * 1024;
-
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
@@ -55,7 +53,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   // @todo check if MaxFilesExceededError, MaxFileSizeExceededError need separate handling in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser)
   const formData = await parseFormData(
     request,
-    { maxFiles: 1, maxFileSize: 5 * oneMb },
+    { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
     uploadHandler,
   );
 
