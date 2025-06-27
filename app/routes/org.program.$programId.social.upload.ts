@@ -1,13 +1,10 @@
 import type { ActionFunction } from "@remix-run/node";
-import {
-  unstable_createMemoryUploadHandler,
-  unstable_parseMultipartFormData,
-} from "@remix-run/node";
-
+import type { SocialPreview } from "@prisma/client";
+import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
-  saveSocialBackground,
+  saveSocialBackgroundUpload,
   deleteSocialBackground,
   addPhotoToPreview,
   addTemplateAndPhotoToPreview,
@@ -18,81 +15,74 @@ export const action: ActionFunction = async ({ request, params }) => {
   const programId = Number(params.programId);
   await requireAdminWithProgram(request, Number(params.programId));
 
-  const uploadHandler = unstable_createMemoryUploadHandler({
-    maxPartSize: 5 * 1024 * 1024,
-    filter: (field) => {
-      if (field.name === "photo") {
-        if (
-          field.contentType === "image/png" ||
-          field.contentType === "image/jpeg"
-        ) {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return true;
-      }
-    },
-  });
+  let social: SocialPreview | void = undefined;
 
-  const formData = await unstable_parseMultipartFormData(
+  const uploadHandler = async (fileUpload: FileUpload) => {
+    if (
+      fileUpload.fieldName === "backgroundImage" &&
+      (fileUpload.type === "image/png" || fileUpload.type === "image/jpeg")
+    ) {
+      // Clean up existing background image
+      const existingSocial = await prisma.socialPreview.findFirst({
+        where: {
+          programId,
+        },
+      });
+      if (existingSocial) {
+        await deleteSocialBackground(existingSocial);
+      }
+
+      // Create or update SocialPreview
+      social = await prisma.socialPreview
+        .upsert({
+          where: {
+            programId,
+          },
+          update: {
+            contentType: fileUpload.type,
+          },
+          create: {
+            contentType: fileUpload.type,
+            layout: defaultLayout,
+            program: {
+              connect: { id: programId },
+            },
+          },
+        })
+        .catch((error) => {
+          console.error(error);
+          throwErrorResponse(
+            error,
+            "Could not create/update social preview background image",
+          );
+        });
+
+      if (!social) {
+        throw new Response(null, {
+          status: 500,
+          statusText: "Missing social media preview record",
+        });
+      }
+
+      // Save background image to disk
+      return await saveSocialBackgroundUpload(social, fileUpload);
+    }
+  };
+
+  const formData = await parseFormData(
     request,
+    { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
     uploadHandler,
   );
 
   const backgroundImage = formData.get("backgroundImage") as File;
-  if (!backgroundImage) {
+
+  if (!backgroundImage || social === undefined) {
     return new Response(null, {
       status: 400,
       statusText: "Missing uploaded image",
     });
   }
-
-  // Clean up existing background image
-  const existingSocial = await prisma.socialPreview.findFirst({
-    where: {
-      programId,
-    },
-  });
-  if (existingSocial) {
-    await deleteSocialBackground(existingSocial);
-  }
-
-  // Create or update SocialPreview
-  const social = await prisma.socialPreview
-    .upsert({
-      where: {
-        programId,
-      },
-      update: {
-        contentType: backgroundImage.type,
-      },
-      create: {
-        contentType: backgroundImage.type,
-        layout: defaultLayout,
-        program: {
-          connect: { id: programId },
-        },
-      },
-    })
-    .catch((error) => {
-      console.error(error);
-      throwErrorResponse(
-        error,
-        "Could not create/update social preview background image",
-      );
-    });
-
-  if (!social) {
-    return new Response(null, {
-      status: 500,
-      statusText: "Missing social media preview record",
-    });
-  }
-
-  // Save background image to disk
-  await saveSocialBackground(social, backgroundImage);
 
   // Add certificate preview to background image
   const template = await prisma.template.findFirst({

@@ -1,3 +1,4 @@
+import type { FileUpload } from "@mjackson/form-data-parser";
 import type { Program, ProgramLogo } from "@prisma/client";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,7 +9,6 @@ import {
 } from "@mjackson/lazy-file/fs";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma } from "./prisma.server";
-import { FileUpload } from "@mjackson/form-data-parser";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 export const logoDir = resolve(__dirname, "../../storage/logos");
