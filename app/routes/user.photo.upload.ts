@@ -1,71 +1,63 @@
 import type { ActionFunction } from "@remix-run/node";
-import {
-	unstable_createMemoryUploadHandler,
-	unstable_parseMultipartFormData,
-} from "@remix-run/node";
-
+import type { UserPhoto } from "@prisma/client";
+import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireUserId } from "~/lib/auth.server";
-import { saveTransparentPhoto } from "~/lib/user.server";
+import { saveTransparentPhotoUpload } from "~/lib/user.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const userId = await requireUserId(request);
+	let userPhoto: UserPhoto | void = undefined;
 
-	const uploadHandler = unstable_createMemoryUploadHandler({
-		maxPartSize: 5 * 1024 * 1024,
-		filter: (field) => {
-			if (field.name === "photo") {
-				if (
-					field.contentType === "image/png" ||
-					field.contentType === "image/jpeg"
-				) {
-					return true;
-				} else {
-					return false;
-				}
-			} else {
-				return true;
+	const uploadHandler = async (fileUpload: FileUpload) => {
+		if (
+			fileUpload.fieldName === "photo" &&
+			fileUpload.type === "image/png"
+		) {
+			userPhoto = await prisma.userPhoto
+				.upsert({
+					where: {
+						userId,
+					},
+					update: {
+						contentType: fileUpload.type,
+					},
+					create: {
+						contentType: fileUpload.type,
+						user: {
+							connect: { id: userId },
+						},
+					},
+				})
+				.catch((error) => {
+					console.error(error);
+					throwErrorResponse(
+						error,
+						"Could not create/update user photo",
+					);
+				});
+
+			if (userPhoto) {
+				return await saveTransparentPhotoUpload(userPhoto, fileUpload);
 			}
-		},
-	});
+		}
+	};
 
-	const formData = await unstable_parseMultipartFormData(
+	// @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+	const formData = await parseFormData(
 		request,
+		{ maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
 		uploadHandler,
 	);
 
 	const photo = formData.get("photo") as File;
 
-	if (photo) {
-		const userPhoto = await prisma.userPhoto
-			.upsert({
-				where: {
-					userId,
-				},
-				update: {
-					contentType: photo.type,
-				},
-				create: {
-					contentType: photo.type,
-					user: {
-						connect: { id: userId },
-					},
-				},
-			})
-			.catch((error) => {
-				console.error(error);
-				throwErrorResponse(error, "Could not create/update user photo");
-			});
-
-		if (userPhoto) {
-			const photoBuffer = await photo.arrayBuffer();
-			await saveTransparentPhoto(userPhoto, photoBuffer);
-			return { userPhoto: { updatedAt: userPhoto.updatedAt } };
-		}
-	} else {
+	if (!photo) {
 		return new Response(null, {
 			status: 400,
 			statusText: "Missing uploaded photo",
 		});
 	}
+
+	return { userPhoto };
 };
