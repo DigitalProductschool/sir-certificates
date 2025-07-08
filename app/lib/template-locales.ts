@@ -13,5 +13,7 @@ const locales = [
 	},
 ];
 
-export { locales };
+const defaultLocale = locales[0];
+
+export { locales, defaultLocale };
 export default locales;
