@@ -16,6 +16,12 @@ import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 import { replaceVariables } from "./text-variables";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
+import { FileUpload } from "@mjackson/form-data-parser";
+
+import {
+  openFile as lazyOpenFile,
+  writeFile as lazyWriteFile,
+} from "@mjackson/lazy-file/fs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -25,484 +31,484 @@ const previewDir = resolve(__dirname, "../../storage/previews");
 const templateDir = resolve(__dirname, "../../storage/templates");
 
 type Line = {
-	text: string;
-	font: string;
-	split?: string;
+  text: string;
+  font: string;
+  split?: string;
 };
 
 type LineWithFont = {
-	text: string;
-	font: PDFFont;
-	split?: string;
+  text: string;
+  font: PDFFont;
+  split?: string;
 };
 
 type LineOptions = {
-	x: number;
-	y: number;
-	maxWidth?: number;
-	lineHeight?: number;
-	size?: number;
-	color?: Color;
+  x: number;
+  y: number;
+  maxWidth?: number;
+  lineHeight?: number;
+  size?: number;
+  color?: Color;
 };
 
 type TextOptions = {
-	x: number;
-	y: number;
-	size: number;
-	lines: Array<Line>;
-	lineHeight?: number;
-	maxWidth?: number;
-	align?: "left" | "center";
-	color?: [number, number, number];
+  x: number;
+  y: number;
+  size: number;
+  lines: Array<Line>;
+  lineHeight?: number;
+  maxWidth?: number;
+  align?: "left" | "center";
+  color?: [number, number, number];
 };
 
 const A4PageWidth = 595;
 
 async function assembleTypefacesFromLayout(
-	pdf: PDFDocument,
-	layout: TextOptions[],
+  pdf: PDFDocument,
+  layout: TextOptions[],
 ) {
-	const typefaces = await getAvailableTypefaces();
-	const fontMap = new Map<string, PDFFont>();
+  const typefaces = await getAvailableTypefaces();
+  const fontMap = new Map<string, PDFFont>();
 
-	for (const text of layout) {
-		for (const line of text.lines) {
-			if (!fontMap.has(line.font)) {
-				const typeface = typefaces.get(line.font);
-				if (typeface) {
-					const fontBuffer = await readFontFile(typeface.id);
-					if (fontBuffer) {
-						const font = await pdf.embedFont(fontBuffer, {
-							subset: true,
-						});
-						fontMap.set(line.font, font);
-					}
-				} else {
-					throw new Response("Missing font: '" + line.font + "'", {
-						status: 500,
-						statusText: "Missing font: '" + line.font + "'",
-					});
-				}
-			}
-		}
-	}
+  for (const text of layout) {
+    for (const line of text.lines) {
+      if (!fontMap.has(line.font)) {
+        const typeface = typefaces.get(line.font);
+        if (typeface) {
+          const fontBuffer = await readFontFile(typeface.id);
+          if (fontBuffer) {
+            const font = await pdf.embedFont(fontBuffer, {
+              subset: true,
+            });
+            fontMap.set(line.font, font);
+          }
+        } else {
+          throw new Response("Missing font: '" + line.font + "'", {
+            status: 500,
+            statusText: "Missing font: '" + line.font + "'",
+          });
+        }
+      }
+    }
+  }
 
-	return fontMap;
+  return fontMap;
 }
 
 // @todo dry up the code for generateCertificate and generateCertificateTemplate
 
 export async function generateCertificate(
-	batch: Batch,
-	certificate: Certificate,
-	template: Template,
-	skipIfExists = true,
+  batch: Batch,
+  certificate: Certificate,
+  template: Template,
+  skipIfExists = true,
 ) {
-	const pdfFilePath = `${certDir}/${certificate.id}.pdf`;
+  const pdfFilePath = `${certDir}/${certificate.id}.pdf`;
 
-	const folderCreated = await ensureFolderExists(certDir);
-	if (!folderCreated) {
-		throw new Error("Could not create certificate storage folder");
-	}
+  const folderCreated = await ensureFolderExists(certDir);
+  if (!folderCreated) {
+    throw new Error("Could not create certificate storage folder");
+  }
 
-	if (skipIfExists) {
-		const existingFile = await readFileIfExists(pdfFilePath);
-		if (existingFile !== false) {
-			return existingFile;
-		}
-	}
+  if (skipIfExists) {
+    const existingFile = await readFileIfExists(pdfFilePath);
+    if (existingFile !== false) {
+      return existingFile;
+    }
+  }
 
-	// Get PDF template // @todo simplify by loading from path string?
-	const templatePath = `${dir}/templates/${certificate.templateId}.pdf`;
-	const templateBuffer = await readFile(templatePath);
-	const pdf = await PDFDocument.load(templateBuffer);
+  // Get PDF template // @todo simplify by loading from path string?
+  const templatePath = `${dir}/templates/${certificate.templateId}.pdf`;
+  const templateBuffer = await readFile(templatePath);
+  const pdf = await PDFDocument.load(templateBuffer);
 
-	// Load custom fonts
-	pdf.registerFontkit(fontkit);
-	const fontMap = await assembleTypefacesFromLayout(
-		pdf,
-		template.layout as TextOptions[],
-	);
+  // Load custom fonts
+  pdf.registerFontkit(fontkit);
+  const fontMap = await assembleTypefacesFromLayout(
+    pdf,
+    template.layout as TextOptions[],
+  );
 
-	// Modify page
-	const page = pdf.getPages()[0];
+  // Modify page
+  const page = pdf.getPages()[0];
 
-	const texts = template.layout as any;
-	texts.forEach((text: TextOptions) => {
-		const lines = text.lines.map((line: Line) => {
-			const replacements = replaceVariables(
-				line.text,
-				template.locale,
-				certificate,
-				batch,
-			);
+  const texts = template.layout as any;
+  texts.forEach((text: TextOptions) => {
+    const lines = text.lines.map((line: Line) => {
+      const replacements = replaceVariables(
+        line.text,
+        template.locale,
+        certificate,
+        batch,
+      );
 
-			return {
-				text: replacements,
-				font: fontMap.get(line.font)!,
-				split: line.split,
-			};
-		});
+      return {
+        text: replacements,
+        font: fontMap.get(line.font)!,
+        split: line.split,
+      };
+    });
 
-		if (text.align === "center") {
-			drawTextBoxCentered(page, lines, {
-				size: text.size,
-				lineHeight: text.lineHeight,
-				x: text.x,
-				y: text.y,
-				maxWidth: text.maxWidth,
-				color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-			});
-		} else {
-			drawTextBox(page, lines, {
-				size: text.size,
-				lineHeight: text.lineHeight,
-				x: text.x,
-				y: text.y,
-				maxWidth: text.maxWidth,
-				color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-			});
-		}
-	});
+    if (text.align === "center") {
+      drawTextBoxCentered(page, lines, {
+        size: text.size,
+        lineHeight: text.lineHeight,
+        x: text.x,
+        y: text.y,
+        maxWidth: text.maxWidth,
+        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+      });
+    } else {
+      drawTextBox(page, lines, {
+        size: text.size,
+        lineHeight: text.lineHeight,
+        x: text.x,
+        y: text.y,
+        maxWidth: text.maxWidth,
+        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+      });
+    }
+  });
 
-	// Wrap up and return as buffer
-	const pdfBytes = await pdf.save();
-	const pdfBuffer = Buffer.from(pdfBytes);
+  // Wrap up and return as buffer
+  const pdfBytes = await pdf.save();
+  const pdfBuffer = Buffer.from(pdfBytes);
 
-	await writeFile(pdfFilePath, pdfBuffer);
+  await writeFile(pdfFilePath, pdfBuffer);
 
-	return pdfBuffer;
+  return pdfBuffer;
 }
 
 export async function generateTemplateSample(template: Template) {
-	const pdfFilePath = `${templateDir}/${template.id}.sample.pdf`;
+  const pdfFilePath = `${templateDir}/${template.id}.sample.pdf`;
 
-	const folderCreated = await ensureFolderExists(templateDir);
-	if (!folderCreated) {
-		throw new Error("Could not create certificate storage folder");
-	}
+  const folderCreated = await ensureFolderExists(templateDir);
+  if (!folderCreated) {
+    throw new Error("Could not create certificate storage folder");
+  }
 
-	// Get PDF template
-	const templatePath = `${templateDir}/${template.id}.pdf`;
-	const templateBuffer = await readFile(templatePath);
-	const pdf = await PDFDocument.load(templateBuffer);
+  // Get PDF template
+  const templatePath = `${templateDir}/${template.id}.pdf`;
+  const templateBuffer = await readFile(templatePath);
+  const pdf = await PDFDocument.load(templateBuffer);
 
-	// Load custom fonts
-	pdf.registerFontkit(fontkit);
-	const fontMap = await assembleTypefacesFromLayout(
-		pdf,
-		template.layout as TextOptions[],
-	);
+  // Load custom fonts
+  pdf.registerFontkit(fontkit);
+  const fontMap = await assembleTypefacesFromLayout(
+    pdf,
+    template.layout as TextOptions[],
+  );
 
-	// Modify page
-	const page = pdf.getPages()[0];
+  // Modify page
+  const page = pdf.getPages()[0];
 
-	const yesterday = new Date();
-	yesterday.setDate(yesterday.getDate() - 1);
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
 
-	const mockBatch: Batch = {
-		id: 1,
-		programId: 1,
-		name: "BatchName",
-		startDate: yesterday,
-		endDate: new Date(),
-		updatedAt: new Date(),
-	};
+  const mockBatch: Batch = {
+    id: 1,
+    programId: 1,
+    name: "BatchName",
+    startDate: yesterday,
+    endDate: new Date(),
+    updatedAt: new Date(),
+  };
 
-	const mockCertificate: Certificate = {
-		id: 1,
-		batchId: 1,
-		templateId: template.id,
-		firstName: "FirstName",
-		lastName: "LastName",
-		teamName: "TeamName",
-		uuid: "1234-5678-ABCD-EDGH-1234-5678",
-		email: "mock-user@dpschool.io",
-		updatedAt: new Date(),
-		notifiedAt: null,
-		mjResponse: {},
-	};
+  const mockCertificate: Certificate = {
+    id: 1,
+    batchId: 1,
+    templateId: template.id,
+    firstName: "FirstName",
+    lastName: "LastName",
+    teamName: "TeamName",
+    uuid: "1234-5678-ABCD-EDGH-1234-5678",
+    email: "mock-user@dpschool.io",
+    updatedAt: new Date(),
+    notifiedAt: null,
+    mjResponse: {},
+  };
 
-	const texts = template.layout as any;
-	texts.forEach((text: TextOptions) => {
-		const lines = text.lines.map((line: Line) => {
-			const replacements = replaceVariables(
-				line.text,
-				template.locale,
-				mockCertificate,
-				mockBatch,
-			);
+  const texts = template.layout as any;
+  texts.forEach((text: TextOptions) => {
+    const lines = text.lines.map((line: Line) => {
+      const replacements = replaceVariables(
+        line.text,
+        template.locale,
+        mockCertificate,
+        mockBatch,
+      );
 
-			return {
-				text: replacements,
-				font: fontMap.get(line.font)!,
-				split: line.split,
-			};
-		});
+      return {
+        text: replacements,
+        font: fontMap.get(line.font)!,
+        split: line.split,
+      };
+    });
 
-		if (text.align === "center") {
-			drawTextBoxCentered(page, lines, {
-				size: text.size,
-				lineHeight: text.lineHeight,
-				x: text.x,
-				y: text.y,
-				maxWidth: text.maxWidth,
-				color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-			});
-		} else {
-			drawTextBox(page, lines, {
-				size: text.size,
-				lineHeight: text.lineHeight,
-				x: text.x,
-				y: text.y,
-				maxWidth: text.maxWidth,
-				color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-			});
-		}
-	});
+    if (text.align === "center") {
+      drawTextBoxCentered(page, lines, {
+        size: text.size,
+        lineHeight: text.lineHeight,
+        x: text.x,
+        y: text.y,
+        maxWidth: text.maxWidth,
+        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+      });
+    } else {
+      drawTextBox(page, lines, {
+        size: text.size,
+        lineHeight: text.lineHeight,
+        x: text.x,
+        y: text.y,
+        maxWidth: text.maxWidth,
+        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+      });
+    }
+  });
 
-	// Wrap up and return as buffer
-	const pdfBytes = await pdf.save();
-	const pdfBuffer = Buffer.from(pdfBytes);
+  // Wrap up and return as buffer
+  const pdfBytes = await pdf.save();
+  const pdfBuffer = Buffer.from(pdfBytes);
 
-	await writeFile(pdfFilePath, pdfBuffer);
+  await writeFile(pdfFilePath, pdfBuffer);
 
-	return pdfBuffer;
+  return pdfBuffer;
 }
 
 export function drawTextBox(
-	page: PDFPage,
-	lines: Array<LineWithFont>,
-	options: LineOptions = { x: 0, y: 0 },
+  page: PDFPage,
+  lines: Array<LineWithFont>,
+  options: LineOptions = { x: 0, y: 0 },
 ) {
-	const lineOptions = {
-		size: options.size || 12,
-		color: options.color,
-		// opacity: options.opacity,
-	};
+  const lineOptions = {
+    size: options.size || 12,
+    color: options.color,
+    // opacity: options.opacity,
+  };
 
-	let x = options.x;
-	let y = options.y;
+  let x = options.x;
+  let y = options.y;
 
-	// @todo check if a maxWidth set too low can trigger an infite loop here?
+  // @todo check if a maxWidth set too low can trigger an infite loop here?
 
-	lines.forEach((line) => {
-		let firstInLine = true;
-		line.text.split(line.split || " ").forEach((word: string) => {
-			if (
-				x + line.font.widthOfTextAtSize(word, lineOptions.size) >
-				options.x + (options.maxWidth || A4PageWidth)
-			) {
-				x = options.x;
-				y -= options.lineHeight || lineOptions.size * 1.4;
-				firstInLine = true;
-			}
+  lines.forEach((line) => {
+    let firstInLine = true;
+    line.text.split(line.split || " ").forEach((word: string) => {
+      if (
+        x + line.font.widthOfTextAtSize(word, lineOptions.size) >
+        options.x + (options.maxWidth || A4PageWidth)
+      ) {
+        x = options.x;
+        y -= options.lineHeight || lineOptions.size * 1.4;
+        firstInLine = true;
+      }
 
-			if (!firstInLine) {
-				word = " " + word;
-			}
+      if (!firstInLine) {
+        word = " " + word;
+      }
 
-			page.drawText(word, {
-				...lineOptions,
-				font: line.font,
-				x,
-				y,
-			});
+      page.drawText(word, {
+        ...lineOptions,
+        font: line.font,
+        x,
+        y,
+      });
 
-			x += line.font.widthOfTextAtSize(word, lineOptions.size);
-			firstInLine = false;
-		});
-	});
+      x += line.font.widthOfTextAtSize(word, lineOptions.size);
+      firstInLine = false;
+    });
+  });
 }
 
 // @caveat centered text doesn't auto-wrap lines at the moment
 // @todo improve centered text rendering with auto-wrapping lines
 export function drawTextBoxCentered(
-	page: PDFPage,
-	lines: Array<LineWithFont>,
-	options: LineOptions = { x: 0, y: 0 },
+  page: PDFPage,
+  lines: Array<LineWithFont>,
+  options: LineOptions = { x: 0, y: 0 },
 ) {
-	const lineOptions = {
-		size: options.size || 12,
-		color: options.color,
-	};
+  const lineOptions = {
+    size: options.size || 12,
+    color: options.color,
+  };
 
-	let x = options.x;
-	let y = options.y;
-	const maxWidth = options.maxWidth || A4PageWidth;
+  let x = options.x;
+  let y = options.y;
+  const maxWidth = options.maxWidth || A4PageWidth;
 
-	lines.forEach((line) => {
-		const lineWidth = line.font.widthOfTextAtSize(
-			line.text,
-			lineOptions.size,
-		);
+  lines.forEach((line) => {
+    const lineWidth = line.font.widthOfTextAtSize(line.text, lineOptions.size);
 
-		x = options.x + (maxWidth - lineWidth) / 2;
+    x = options.x + (maxWidth - lineWidth) / 2;
 
-		page.drawText(line.text, {
-			...lineOptions,
-			font: line.font,
-			x,
-			y,
-		});
+    page.drawText(line.text, {
+      ...lineOptions,
+      font: line.font,
+      x,
+      y,
+    });
 
-		y -= options.lineHeight || lineOptions.size * 1.4;
-	});
+    y -= options.lineHeight || lineOptions.size * 1.4;
+  });
 }
 
 export async function generatePreviewOfCertificate(
-	certificate: Certificate,
-	skipIfExists = true,
+  certificate: Certificate,
+  skipIfExists = true,
 ) {
-	const previewFilePath = `${previewDir}/${certificate.id}.png`;
-	const pdfFilePath = `${certDir}/${certificate.id}.pdf`;
-	return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
+  const previewFilePath = `${previewDir}/${certificate.id}.png`;
+  const pdfFilePath = `${certDir}/${certificate.id}.pdf`;
+  return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
 }
 
 export async function generatePreviewOfTemplate(
-	template: Template,
-	skipIfExists = true,
+  template: Template,
+  skipIfExists = true,
 ) {
-	const previewFilePath = `${previewDir}/tpl-${template.id}.png`;
-	const pdfFilePath = `${templateDir}/${template.id}.sample.pdf`;
-	return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
+  const previewFilePath = `${previewDir}/tpl-${template.id}.png`;
+  const pdfFilePath = `${templateDir}/${template.id}.sample.pdf`;
+  return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
 }
 
 export async function generatePdfPreview(
-	pdfFilePath: string,
-	previewFilePath: string,
-	skipIfExists = true,
+  pdfFilePath: string,
+  previewFilePath: string,
+  skipIfExists = true,
 ) {
-	const folderCreated = await ensureFolderExists(previewDir);
-	if (!folderCreated) {
-		throw new Error("Could not create preview storage folder");
-	}
+  const folderCreated = await ensureFolderExists(previewDir);
+  if (!folderCreated) {
+    throw new Error("Could not create preview storage folder");
+  }
 
-	if (skipIfExists) {
-		const existingFile = await readFileIfExists(previewFilePath);
-		if (existingFile !== false) {
-			return existingFile;
-		}
-	}
+  if (skipIfExists) {
+    const existingFile = await readFileIfExists(previewFilePath);
+    if (existingFile !== false) {
+      return existingFile;
+    }
+  }
 
-	// @todo make sure that the PDF file exists
+  // @todo make sure that the PDF file exists
 
-	// Generate PDF preview PNG
-	const document = await convert(pdfFilePath, {
-		scale: 2,
-	});
+  // Generate PDF preview PNG
+  const document = await convert(pdfFilePath, {
+    scale: 2,
+  });
 
-	for await (const page of document) {
-		await writeFile(previewFilePath, page);
-		return page;
-	}
+  for await (const page of document) {
+    await writeFile(previewFilePath, page);
+    return page;
+  }
 }
 
 export async function readPreviewOfTemplate(template: Template) {
-	const previewFilePath = `${previewDir}/tpl-${template.id}.png`;
-	return readFileIfExists(previewFilePath);
+  const previewFilePath = `${previewDir}/tpl-${template.id}.png`;
+  return readFileIfExists(previewFilePath);
 }
 
-export async function saveUploadedTemplate(
-	template: Template,
-	templatePDF: File,
+export async function saveTemplateUpload(
+  template: Template,
+  templatePDF: FileUpload,
 ) {
-	const folderCreated = await ensureFolderExists(templateDir);
-	if (!folderCreated) {
-		throw new Error("Could not create templates storage folder");
-	}
+  const folderCreated = await ensureFolderExists(templateDir);
+  if (!folderCreated) {
+    throw new Error("Could not create templates storage folder");
+  }
 
-	const buffer = Buffer.from(await templatePDF.arrayBuffer());
-	return await writeFile(`${templateDir}/${template.id}.pdf`, buffer);
+  const filepath = `${templateDir}/${template.id}.pdf`;
+  await lazyWriteFile(filepath, templatePDF);
+  return lazyOpenFile(filepath);
 }
 
 export async function duplicateTemplate(
-	existingTpl: Template,
-	duplicatedTpl: Template,
+  existingTpl: Template,
+  duplicatedTpl: Template,
 ) {
-	await copyFile(
-		`${templateDir}/${existingTpl.id}.pdf`,
-		`${templateDir}/${duplicatedTpl.id}.pdf`,
-	);
-	await copyFile(
-		`${templateDir}/${existingTpl.id}.sample.pdf`,
-		`${templateDir}/${duplicatedTpl.id}.sample.pdf`,
-	);
-	await copyFile(
-		`${previewDir}/tpl-${existingTpl.id}.png`,
-		`${previewDir}/tpl-${duplicatedTpl.id}.png`,
-	);
-	return true;
+  await copyFile(
+    `${templateDir}/${existingTpl.id}.pdf`,
+    `${templateDir}/${duplicatedTpl.id}.pdf`,
+  );
+  await copyFile(
+    `${templateDir}/${existingTpl.id}.sample.pdf`,
+    `${templateDir}/${duplicatedTpl.id}.sample.pdf`,
+  );
+  await copyFile(
+    `${previewDir}/tpl-${existingTpl.id}.png`,
+    `${previewDir}/tpl-${duplicatedTpl.id}.png`,
+  );
+  return true;
 }
 
 export async function deleteCertificatePreview(certificateId: number) {
-	return await unlink(`${previewDir}/${certificateId}.png`);
+  return await unlink(`${previewDir}/${certificateId}.png`);
 }
 
 export async function deleteCertificatePDF(certificateId: number) {
-	return await unlink(`${certDir}/${certificateId}.pdf`);
+  return await unlink(`${certDir}/${certificateId}.pdf`);
 }
 
 export async function deleteCertificate(certificateId: number) {
-	await deleteCertificatePreview(certificateId);
-	await deleteCertificatePDF(certificateId);
+  await deleteCertificatePreview(certificateId);
+  await deleteCertificatePDF(certificateId);
 
-	return await prisma.certificate
-		.delete({
-			where: {
-				id: certificateId,
-			},
-		})
-		.catch((error) => {
-			console.error(error);
-			throwErrorResponse(error, "Could not delete certificate");
-		});
+  return await prisma.certificate
+    .delete({
+      where: {
+        id: certificateId,
+      },
+    })
+    .catch((error) => {
+      console.error(error);
+      throwErrorResponse(error, "Could not delete certificate");
+    });
 }
 
 export const sampleLayout: any = [
-	{
-		x: 50,
-		y: 550,
-		size: 12,
-		align: "left",
-		color: [0, 0, 0],
-		lines: [],
-	},
+  {
+    x: 50,
+    y: 550,
+    size: 12,
+    align: "left",
+    color: [0, 0, 0],
+    lines: [],
+  },
 ];
 
 export function downloadCertificates(certificates: Certificate[]) {
-	// PassThrough stream for piping the archive directly to the response
-	const stream = new PassThrough();
-	const archive = archiver("zip", {
-		zlib: { level: 9 }, // Sets the compression level.
-	});
-	const zipFilename = "certificates.zip";
+  // PassThrough stream for piping the archive directly to the response
+  const stream = new PassThrough();
+  const archive = archiver("zip", {
+    zlib: { level: 9 }, // Sets the compression level.
+  });
+  const zipFilename = "certificates.zip";
 
-	archive.on("error", (err: any) => {
-		console.error("Error creating archive:", err);
-		stream.emit("error", err);
-	});
+  archive.on("error", (err: any) => {
+    console.error("Error creating archive:", err);
+    stream.emit("error", err);
+  });
 
-	// Pipe archive data into the PassThrough stream
-	archive.pipe(stream);
+  // Pipe archive data into the PassThrough stream
+  archive.pipe(stream);
 
-	// Add files to the archive
-	certificates.forEach((cert) => {
-		archive.file(`${certDir}/${cert.id}.pdf`, {
-			name: cert.teamName
-				? `${slug(cert.teamName)}/${slug(cert.firstName)} ${slug(cert.lastName)}.certificate.pdf`
-				: `${slug(cert.firstName)} ${slug(cert.lastName)}.certificate.pdf`,
-		});
-	});
+  // Add files to the archive
+  certificates.forEach((cert) => {
+    archive.file(`${certDir}/${cert.id}.pdf`, {
+      name: cert.teamName
+        ? `${slug(cert.teamName)}/${slug(cert.firstName)} ${slug(
+            cert.lastName,
+          )}.certificate.pdf`
+        : `${slug(cert.firstName)} ${slug(cert.lastName)}.certificate.pdf`,
+    });
+  });
 
-	// Finalize the archive (starts streaming to the response)
-	archive.finalize();
+  // Finalize the archive (starts streaming to the response)
+  archive.finalize();
 
-	// Return the streaming response
-	return new Response(stream as unknown as BodyInit, {
-		headers: {
-			"Content-Type": "application/zip",
-			"Content-Disposition": `attachment; filename="${zipFilename}"`,
-		},
-	});
+  // Return the streaming response
+  return new Response(stream as unknown as BodyInit, {
+    headers: {
+      "Content-Type": "application/zip",
+      "Content-Disposition": `attachment; filename="${zipFilename}"`,
+    },
+  });
 }

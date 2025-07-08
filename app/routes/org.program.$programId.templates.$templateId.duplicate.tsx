@@ -1,12 +1,9 @@
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import type { Prisma } from "@prisma/client";
 import { useEffect, useState, useRef } from "react";
-import {
-  redirect,
-  unstable_createMemoryUploadHandler,
-  unstable_parseMultipartFormData,
-} from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -31,7 +28,7 @@ import { requireAdminWithProgram } from "~/lib/auth.server";
 import {
   generateTemplateSample,
   generatePreviewOfTemplate,
-  saveUploadedTemplate,
+  saveTemplateUpload,
   duplicateTemplate,
 } from "~/lib/pdf.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
@@ -39,26 +36,6 @@ import { locales } from "~/lib/template-locales";
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
-
-  const uploadHandler = unstable_createMemoryUploadHandler({
-    maxPartSize: 5 * 1024 * 1024,
-    filter: (field) => {
-      if (field.name === "pdf") {
-        if (field.contentType === "application/pdf") {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return true;
-      }
-    },
-  });
-
-  const formData = await unstable_parseMultipartFormData(
-    request,
-    uploadHandler,
-  );
 
   const existing = await prisma.template.findUnique({
     where: {
@@ -73,37 +50,73 @@ export const action: ActionFunction = async ({ request, params }) => {
     });
   }
 
-  const templateName = (formData.get("name") as string) || existing.name;
-  const templateLocale = (formData.get("locale") as string) || existing.locale;
-  const templatePDF = formData.get("pdf") as File;
-
-  const template = await prisma.template
+  let template = await prisma.template
     .create({
       data: {
-        name: templateName,
+        name: `${existing.name} Copy`,
         layout: existing.layout as Prisma.InputJsonValue,
-        locale: templateLocale,
+        locale: existing.locale,
         program: {
           connect: { id: Number(params.programId) },
         },
       },
     })
     .catch((error) => {
-      throwErrorResponse(error, "Could not import template");
+      throwErrorResponse(error, "Could create duplicated template record");
     });
 
   if (template) {
-    if (templatePDF) {
-      await saveUploadedTemplate(template, templatePDF);
-      await generateTemplateSample(template);
-      await generatePreviewOfTemplate(template, false);
-    } else {
-      await duplicateTemplate(existing, template);
-    }
+    const uploadHandler = async (fileUpload: FileUpload) => {
+      if (
+        fileUpload.fieldName === "pdf" &&
+        fileUpload.type === "application/pdf"
+      ) {
+        if (template) return await saveTemplateUpload(template, fileUpload);
+      }
+    };
 
-    return redirect(
-      `/org/program/${params.programId}/templates/${template.id}/edit-layout`,
+    // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+    const formData = await parseFormData(
+      request,
+      { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
+      uploadHandler,
     );
+
+    const templateName =
+      (formData.get("name") as string) || `${existing.name} Copy`;
+    const templateLocale =
+      (formData.get("locale") as string) || existing.locale;
+    const templatePDF = formData.get("pdf") as File;
+
+    template = await prisma.template
+      .update({
+        where: {
+          id: template.id,
+        },
+        data: {
+          name: templateName,
+          locale: templateLocale,
+        },
+      })
+      .catch((error) => {
+        throwErrorResponse(
+          error,
+          "Could not update duplicated template record",
+        );
+      });
+
+    if (template) {
+      if (templatePDF) {
+        await generateTemplateSample(template);
+        await generatePreviewOfTemplate(template, false);
+      } else {
+        await duplicateTemplate(existing, template);
+      }
+
+      return redirect(
+        `/org/program/${params.programId}/templates/${template.id}/edit-layout`,
+      );
+    }
   }
 
   throw new Response(null, {

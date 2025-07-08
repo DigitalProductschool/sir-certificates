@@ -1,12 +1,8 @@
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
-// import type { Batch } from "@prisma/client";
 import { useEffect, useState, useRef } from "react";
-import {
-  redirect,
-  unstable_createMemoryUploadHandler,
-  unstable_parseMultipartFormData,
-} from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 
 import { Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -37,39 +33,42 @@ import { requireAdminWithProgram } from "~/lib/auth.server";
 import {
   generateTemplateSample,
   generatePreviewOfTemplate,
-  saveUploadedTemplate,
+  saveTemplateUpload,
 } from "~/lib/pdf.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
-import { locales } from "~/lib/template-locales";
+import { defaultLocale, locales } from "~/lib/template-locales";
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
-  const uploadHandler = unstable_createMemoryUploadHandler({
-    maxPartSize: 5 * 1024 * 1024,
-    filter: (field) => {
-      if (field.name === "pdf") {
-        if (field.contentType === "application/pdf") {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return true;
-      }
+  const existing = await prisma.template.findUnique({
+    where: {
+      id: Number(params.templateId),
+      programId: Number(params.programId),
     },
   });
 
-  const formData = await unstable_parseMultipartFormData(
+  const uploadHandler = async (fileUpload: FileUpload) => {
+    if (
+      fileUpload.fieldName === "pdf" &&
+      fileUpload.type === "application/pdf"
+    ) {
+      if (existing) return await saveTemplateUpload(existing, fileUpload);
+    }
+  };
+
+  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+  const formData = await parseFormData(
     request,
+    { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
     uploadHandler,
   );
 
   const templateName = (formData.get("name") as string) || "(Template Name)";
-  const templateLocale = (formData.get("locale") as string) || undefined;
-  const templatePDF = formData.get("pdf") as File;
+  const templateLocale =
+    (formData.get("locale") as string) || defaultLocale.code;
+  // const templatePDF = formData.get("pdf") as File;
 
-  // If this template exists already for this batch, update instead of create
   const template = await prisma.template
     .update({
       where: {
@@ -86,9 +85,6 @@ export const action: ActionFunction = async ({ request, params }) => {
     });
 
   if (template) {
-    if (templatePDF) {
-      await saveUploadedTemplate(template, templatePDF);
-    }
     await generateTemplateSample(template);
     await generatePreviewOfTemplate(template, false);
   }

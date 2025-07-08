@@ -1,12 +1,10 @@
 import type { ActionFunction } from "@remix-run/node";
+import type { Template } from "@prisma/client";
 import { useEffect, useState } from "react";
-import {
-  redirect,
-  unstable_createMemoryUploadHandler,
-  unstable_parseMultipartFormData,
-} from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 
 import { Form, useNavigate, useRouteError } from "@remix-run/react";
+import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -30,38 +28,54 @@ import {
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
-  saveUploadedTemplate,
-  sampleLayout,
   generateTemplateSample,
   generatePreviewOfTemplate,
+  sampleLayout,
+  saveTemplateUpload,
 } from "~/lib/pdf.server";
-import { locales } from "~/lib/template-locales";
+import { locales, defaultLocale } from "~/lib/template-locales";
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
-  const uploadHandler = unstable_createMemoryUploadHandler({
-    maxPartSize: 5 * 1024 * 1024,
-    filter: (field) => {
-      if (field.name === "pdf") {
-        if (field.contentType === "application/pdf") {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return true;
-      }
-    },
-  });
+  let template: Template | void = undefined;
 
-  const formData = await unstable_parseMultipartFormData(
+  const uploadHandler = async (fileUpload: FileUpload) => {
+    if (
+      fileUpload.fieldName === "pdf" &&
+      fileUpload.type === "application/pdf"
+    ) {
+      template = await prisma.template
+        .create({
+          data: {
+            name: "(Template Name)",
+            layout: sampleLayout,
+            locale: defaultLocale.code,
+            program: {
+              connect: { id: Number(params.programId) },
+            },
+          },
+        })
+        .catch((error) => {
+          throwErrorResponse(error, "Could not create template record");
+        });
+
+      if (template) {
+        return await saveTemplateUpload(template, fileUpload);
+      }
+    }
+  };
+
+  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+  const formData = await parseFormData(
     request,
+    { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
     uploadHandler,
   );
 
   const templateName = (formData.get("name") as string) || "(Template Name)";
-  const templateLocale = (formData.get("locale") as string) || undefined;
+  const templateLocale =
+    (formData.get("locale") as string) || defaultLocale.code;
   const templatePDF = formData.get("pdf") as File;
 
   if (!templatePDF) {
@@ -71,23 +85,22 @@ export const action: ActionFunction = async ({ request, params }) => {
     });
   }
 
-  const template = await prisma.template
-    .create({
+  template = await prisma.template
+    .update({
+      where: {
+        // @ts-expect-error Typescript control flow doesn't recognize the assigment above and believes that `template` is a 'never'
+        id: template.id,
+      },
       data: {
         name: templateName,
-        layout: sampleLayout,
         locale: templateLocale,
-        program: {
-          connect: { id: Number(params.programId) },
-        },
       },
     })
     .catch((error) => {
-      throwErrorResponse(error, "Could not import template");
+      throwErrorResponse(error, "Could not update template record");
     });
 
   if (template) {
-    await saveUploadedTemplate(template, templatePDF);
     await generateTemplateSample(template);
     await generatePreviewOfTemplate(template);
     return redirect(
