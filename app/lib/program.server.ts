@@ -13,7 +13,7 @@ import { prisma } from "./prisma.server";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 export const logoDir = resolve(__dirname, "../../storage/logos");
 
-export async function getProgramsByAdmin(adminId: number, include = {}) {
+export async function getProgramsByAdmin(adminId: number) {
   const admin = await prisma.user.findUnique({
     where: {
       id: adminId,
@@ -32,7 +32,9 @@ export async function getProgramsByAdmin(adminId: number, include = {}) {
 
   return await prisma.program.findMany({
     where: filterPrograms,
-    include,
+    include: {
+      logo: true,
+    },
     orderBy: {
       name: "asc",
     },

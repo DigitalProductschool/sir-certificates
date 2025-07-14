@@ -1,6 +1,6 @@
 // @todo rename route to cert.import
 import { randomUUID } from "node:crypto";
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 
 import { requireAdmin } from "~/lib/auth.server";
 import {
@@ -11,10 +11,10 @@ import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	await requireAdmin(request);
-	// @todo refactor to program-specific route and program-specific access
+	// @todo @security refactor to program-specific route and program-specific access
 
 	const formData = await request.formData();
-	const inputs = Object.fromEntries(formData);
+	const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
 	if (!inputs.email || inputs.email === "") {
 		throw new Response(null, {

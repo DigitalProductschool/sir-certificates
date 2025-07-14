@@ -1,12 +1,7 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
-import type { Program } from "@prisma/client";
+import type { Route } from "./+types/org.user.$userId.edit";
+import type { ActionFunction } from "react-router";
 import { useEffect, useState } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, redirect, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -26,9 +21,9 @@ import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { getProgramsByAdmin } from "~/lib/program.server";
 
-export const meta: MetaFunction<typeof loader> = () => {
+export function meta() {
   return [{ title: "Edit User" }];
-};
+}
 
 export const action: ActionFunction = async ({ request, params }) => {
   const adminId = await requireSuperAdmin(request);
@@ -39,12 +34,12 @@ export const action: ActionFunction = async ({ request, params }) => {
   });
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
   // @todo check access control
   const userIsAdmin = inputs.isAdmin === "yes";
 
-  const setAdminOfPrograms: number[] = inputs.adminOfPrograms
+  const setAdminOfPrograms = inputs.adminOfPrograms
     ? inputs.adminOfPrograms.split(",").map((id: string) => {
         return { id: Number(id) };
       })
@@ -52,7 +47,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   // @todo add error handling (i.e. user not found)
 
-  // @todo add access-control, program managers can only edit users associated with their programs
+  // @todo @security add access-control, program managers can only edit users associated with their programs
 
   const update: {
     firstName: string;
@@ -90,7 +85,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   return redirect(`/org/user`);
 };
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   const adminId = await requireSuperAdmin(request);
   const admin = await prisma.user.findUnique({
     where: {
@@ -131,25 +126,21 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const programs = await getProgramsByAdmin(adminId);
 
   return { admin, user, programs };
-};
+}
 
-export const handle = {
-  breadcrumb: () => <Link to="#">User XXX</Link>,
-};
-
-export default function EditUserDialog() {
-  const { admin, user, programs } = useLoaderData<typeof loader>();
+export default function EditUserDialog({ loaderData }: Route.ComponentProps) {
+  const { admin, user, programs } = loaderData;
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const [isAdmin, setIsAdmin] = useState(user.isAdmin);
   const [isSuperAdmin, setIsSuperAdmin] = useState(user.isSuperAdmin);
 
-  const programList = programs.map((p: Program) => {
-    return { value: p.id, label: p.name };
+  const programList = programs.map((p) => {
+    return { value: p.id.toString(), label: p.name };
   });
 
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>(
-    user.adminOfPrograms.map((p: Program) => p.id),
+    user.adminOfPrograms.map((p) => p.id.toString()),
   );
 
   useEffect(() => {
@@ -188,7 +179,7 @@ export default function EditUserDialog() {
             />
             <Label htmlFor="lastName">Last name</Label>
             <Input id="lastName" name="lastName" defaultValue={user.lastName} />
-            {admin.isSuperAdmin && (
+            {admin?.isSuperAdmin && (
               <div className="flex items-end">
                 <Label
                   htmlFor="isSuperAdmin"

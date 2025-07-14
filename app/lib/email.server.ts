@@ -1,4 +1,7 @@
-import Mailjet, { SendEmailV3_1, LibraryResponse,  } from "node-mailjet";
+import Mailjet, {
+	type SendEmailV3_1,
+	type LibraryResponse,
+} from "node-mailjet";
 
 const mailjet = new Mailjet({
 	apiKey: process.env.MJ_APIKEY_PUBLIC,

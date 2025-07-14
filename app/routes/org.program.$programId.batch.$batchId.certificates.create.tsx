@@ -1,13 +1,9 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
+import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.create";
+import type { ActionFunction } from "react-router";
 import type { Template } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { useEffect, useState, useRef } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, redirect, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -35,17 +31,17 @@ import {
 } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Add Certificate" }];
-};
+}
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
-  // @todo ensure that only certificates are created in programs where the admin has access
+  // @todo @security ensure that only certificates are created in programs where the admin has access
 
   const certificate = await prisma.certificate.create({
     data: {
@@ -81,7 +77,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   return redirect(`../`);
 };
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const templates = await prisma.template.findMany({
@@ -97,10 +93,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   });
 
   return { templates };
-};
+}
 
-export default function CreateCertificateDialog() {
-  const { templates } = useLoaderData<typeof loader>();
+export default function CreateCertificateDialog({
+  loaderData,
+}: Route.ComponentProps) {
+  const { templates } = loaderData;
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const formRef = useRef<HTMLFormElement | null>(null);

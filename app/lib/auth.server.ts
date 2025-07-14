@@ -1,8 +1,8 @@
 import type { User } from "@prisma/client";
-import type { RegisterForm, LoginForm } from "./types";
+import type { RegisterForm, LoginForm, UserAuthenticated } from "./types";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
-import { redirect, json, createCookieSessionStorage } from "@remix-run/node";
+import { redirect, data, createCookieSessionStorage } from "react-router";
 import { domain } from "./config.server";
 import { mailjetSend } from "./email.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
@@ -43,19 +43,33 @@ export async function register(user: RegisterForm) {
 	const exists = await prisma.user.count({
 		where: { email: emailLowerCase },
 	});
+
+	// @todo improve type signature of action errors
 	if (exists) {
-		return json(
-			{ error: `User already exists with that email` },
+		return data(
+			{
+				error: `User already exists with that email`,
+				errors: undefined,
+				errorCode: undefined,
+				fields: undefined,
+			},
 			{ status: 400 },
 		);
 	}
 
 	const newUser = await createUser(user);
 	if (!newUser) {
-		return json(
+		return data(
 			{
 				error: `Something went wrong trying to create a new user.`,
-				fields: { email: user.email, password: user.password },
+				errors: undefined,
+				errorCode: undefined,
+				fields: {
+					email: user.email,
+					password: user.password,
+					firstName: user.firstName,
+					lastName: user.lastName,
+				},
 			},
 			{ status: 400 },
 		);
@@ -70,13 +84,24 @@ export async function login({ email, password }: LoginForm) {
 	});
 
 	if (!user || !(await bcrypt.compare(password, user.password)))
-		return json({ error: `Incorrect login` }, { status: 400 });
+		return data(
+			{
+				error: `Incorrect login`,
+				errors: undefined,
+				fields: undefined,
+				errorCode: undefined,
+			},
+			{ status: 400 },
+		);
 
+	// @todo unify response types and usage with user.forgot-password route action/loader
 	if (!user.isVerified) {
-		return json(
+		return data(
 			{
 				error: `You still need to verify your email address.`,
 				errorCode: "verify-email",
+				errors: undefined,
+				fields: undefined,
 			},
 			{ status: 400 },
 		);
@@ -183,7 +208,9 @@ export async function requireAdminWithProgram(
 	return await requireAccessToProgram(adminId, programId);
 }
 
-export async function getUser(request: Request) {
+export async function getUser(
+	request: Request,
+): Promise<UserAuthenticated | null> {
 	const userId = await getUserId(request);
 
 	if (typeof userId !== "number") {
@@ -202,7 +229,7 @@ export async function getUser(request: Request) {
 				isAdmin: true,
 				isSuperAdmin: true,
 				adminOfPrograms: true,
-				photo: true
+				photo: true,
 			},
 		});
 		return user;

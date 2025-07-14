@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import type { SocialPreview } from "@prisma/client";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireAdminWithProgram } from "~/lib/auth.server";

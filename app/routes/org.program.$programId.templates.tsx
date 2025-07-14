@@ -1,14 +1,7 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/org.program.$programId.templates";
 import type { Template } from "@prisma/client";
 import { useEffect } from "react";
-import {
-  Link,
-  Outlet,
-  useLoaderData,
-  useNavigate,
-  useParams,
-  useMatches,
-} from "@remix-run/react";
+import { Link, Outlet, useNavigate } from "react-router";
 
 import { Settings } from "lucide-react";
 
@@ -31,11 +24,11 @@ import {
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  return [{ title: `${data.program?.name} Templates` }];
-};
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: `${data?.program?.name} Templates` }];
+}
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdmin(request); // program access is managed at the parent route
 
   const program = await prisma.program.findUnique({
@@ -59,14 +52,15 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return { program };
-};
+}
 
-export default function ProgramTemplatesPage() {
-  const { program } = useLoaderData<typeof loader>();
-
-  const params = useParams();
+export default function ProgramTemplatesPage({
+  loaderData,
+  params,
+  matches,
+}: Route.ComponentProps) {
+  const { program } = loaderData;
   const navigate = useNavigate();
-  const matches = useMatches();
 
   const firstTemplate =
     program.templates.length > 0 ? program.templates[0] : undefined;

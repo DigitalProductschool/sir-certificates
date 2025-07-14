@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import type { UserPhoto } from "@prisma/client";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireUserId } from "~/lib/auth.server";

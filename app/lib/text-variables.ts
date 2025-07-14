@@ -1,10 +1,10 @@
-import type { Batch, Certificate } from "@prisma/client";
+import type { CertificateView, CertificateViewBatch } from "./types";
 
 export function replaceVariables(
 	text: string,
 	locale: string = "de-DE",
-	certificate: Certificate,
-	batch: Batch,
+	certificate: CertificateView,
+	batch: CertificateViewBatch,
 ) {
 	let replacements = text || "";
 
@@ -48,7 +48,9 @@ export function replaceVariables(
 	);
 	replacements = replacements.replaceAll(
 		"{certificate.fullNameCaps}",
-		`${certificate.firstName.toUpperCase() || ""} ${certificate.lastName.toUpperCase() || ""}`,
+		`${certificate.firstName.toUpperCase() || ""} ${
+			certificate.lastName.toUpperCase() || ""
+		}`,
 	);
 	replacements = replacements.replaceAll(
 		"{certificate.firstName}",

@@ -1,7 +1,6 @@
-import type { ActionFunction, MetaFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { useEffect, useState, useRef } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, useNavigate } from "@remix-run/react";
+import { Form, redirect, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -18,15 +17,15 @@ import { Label } from "~/components/ui/label";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Add Batch" }];
-};
+}
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
   // @todo add form validation
 

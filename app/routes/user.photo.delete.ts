@@ -1,5 +1,5 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { deleteUserPhoto } from "~/lib/user.server";

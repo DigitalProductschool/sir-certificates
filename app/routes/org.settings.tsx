@@ -1,11 +1,6 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
+import type { Route } from "./+types/org.settings";
 import { useEffect, useState } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, redirect, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -22,15 +17,15 @@ import { Label } from "~/components/ui/label";
 import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Edit Organisation" }];
-};
+}
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
   await requireSuperAdmin(request);
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
   await prisma.organisation.update({
     where: {
@@ -45,9 +40,9 @@ export const action: ActionFunction = async ({ request }) => {
 
   // @todo since settings is reachable globally, redirecting back to program is not always correct
   return redirect(`/org/program`);
-};
+}
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
   await requireSuperAdmin(request);
 
   const org = await prisma.organisation.findUnique({
@@ -64,10 +59,10 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 
   return { org };
-};
+}
 
-export default function EditOrgDialog() {
-  const { org } = useLoaderData<typeof loader>();
+export default function EditOrgDialog({ loaderData }: Route.ComponentProps) {
+  const { org } = loaderData;
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
 
@@ -106,7 +101,7 @@ export default function EditOrgDialog() {
             <Input
               id="imprintUrl"
               name="imprintUrl"
-              defaultValue={org.imprintUrl}
+              defaultValue={org.imprintUrl ?? ""}
               placeholder="https://"
             />
 
@@ -114,7 +109,7 @@ export default function EditOrgDialog() {
             <Input
               id="privacyUrl"
               name="privacyUrl"
-              defaultValue={org.privacyUrl}
+              defaultValue={org.privacyUrl ?? ""}
               placeholder="https://"
             />
           </div>

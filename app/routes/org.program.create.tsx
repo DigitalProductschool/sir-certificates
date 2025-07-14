@@ -1,7 +1,6 @@
-import type { ActionFunction, MetaFunction } from "@remix-run/node";
+import type { Route } from "./+types/org.program.create";
 import { useEffect, useState } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, useNavigate } from "@remix-run/react";
+import { Form, redirect, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -18,16 +17,16 @@ import { Label } from "~/components/ui/label";
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   const title = `Add Program`;
   return [{ title }, { name: "description", content: "Welcome to Remix!" }];
-};
+}
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
   const adminId = await requireAdmin(request);
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
   // @todo add form validation and error handling
 
@@ -43,7 +42,7 @@ export const action: ActionFunction = async ({ request }) => {
   });
 
   return redirect(`/org/program/${program.id}/settings`);
-};
+}
 
 export default function CreateProgramDialog() {
   const navigate = useNavigate();

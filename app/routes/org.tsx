@@ -1,9 +1,7 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { User, Organisation, Batch } from "@prisma/client";
-import type { ProgramWithLogo } from "~/lib/types";
-import { Outlet, useLoaderData } from "@remix-run/react";
+import type { Route } from "./+types/org";
+import type { Batch } from "@prisma/client";
+import { Outlet } from "react-router";
 import { Layout } from "~/components/layout";
-//import { Breadcrumbs } from "~/components/breadcrumbs";
 import { SidebarAdmin } from "~/components/sidebar-admin";
 import { Search } from "lucide-react";
 import { Input } from "~/components/ui/input";
@@ -18,11 +16,11 @@ import { requireAdmin, getUser } from "~/lib/auth.server";
 import { getProgramsByAdmin } from "~/lib/program.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  return [{ title: `${data.org?.name} Certificates` }];
-};
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: `${data?.org?.name} Certificates` }];
+}
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   const adminId = await requireAdmin(request);
   const user = await getUser(request);
 
@@ -41,7 +39,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     };
   }
 
-  const programs = await getProgramsByAdmin(adminId, { logo: true });
+  const programs = await getProgramsByAdmin(adminId);
 
   let latestBatch: Batch | null = null;
   if (params.programId) {
@@ -56,33 +54,25 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return { user, org, programs, latestBatch };
-};
+}
 
-export type LoaderReturnType = {
-  user: User;
-  org: Organisation;
-  programs: ProgramWithLogo[];
-  latestBatch: Batch;
-};
-
-export default function OrgDashboard() {
-  const { org, user, programs, latestBatch } = useLoaderData<typeof loader>();
+export default function OrgDashboard({ loaderData }: Route.ComponentProps) {
+  const { org, user, programs, latestBatch } = loaderData;
   return (
     <Layout type="full">
       <TooltipProvider delayDuration={0}>
         <SidebarProvider>
           <SidebarAdmin
             org={org}
-            user={user}
+            user={user ?? undefined}
             programs={programs}
-            latestBatch={latestBatch}
+            latestBatch={latestBatch ?? undefined}
           />
 
           <SidebarInset className="gap-4 py-3 bg-transparent">
             <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
-              {/*<Breadcrumbs />*/}
               <div className="relative ml-auto flex-1 md:grow-0">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input

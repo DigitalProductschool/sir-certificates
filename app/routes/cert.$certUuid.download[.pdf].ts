@@ -1,5 +1,5 @@
 import slug from "slug";
-import type { LoaderFunction } from "@remix-run/node";
+import type { LoaderFunction } from "react-router";
 
 import { prisma } from "~/lib/prisma.server";
 import { generateCertificate } from "~/lib/pdf.server";
@@ -36,7 +36,9 @@ export const loader: LoaderFunction = async ({ params }) => {
 		status: 200,
 		headers: {
 			"Content-Type": "application/pdf",
-			"Content-Disposition": `attachment; filename=${slug(`${certificate.firstName} ${certificate.lastName}`)}.certificate.pdf`,
+			"Content-Disposition": `attachment; filename=${slug(
+				`${certificate.firstName} ${certificate.lastName}`,
+			)}.certificate.pdf`,
 		},
 	});
 };

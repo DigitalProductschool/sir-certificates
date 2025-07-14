@@ -1,7 +1,7 @@
-import type { Organisation, User, Batch } from "@prisma/client";
-import type { ProgramWithLogo } from "~/lib/types";
+import type { Organisation, Batch } from "@prisma/client";
+import type { ProgramWithLogo, UserAuthenticated } from "~/lib/types";
 import { useEffect } from "react";
-import { Link, NavLink, useParams } from "@remix-run/react";
+import { Link, NavLink, useLocation, useParams } from "react-router";
 import {
   BadgeCheck,
   BookType,
@@ -51,13 +51,12 @@ export function SidebarAdmin({
   latestBatch,
 }: {
   org: Organisation;
-  user: User;
+  user?: UserAuthenticated;
   programs: ProgramWithLogo[];
-  latestBatch: Batch;
+  latestBatch?: Batch;
 }) {
   const { programId, batchId } = useParams();
-  /* const { org, user, programs, latestBatch } =
-    useLoaderData<LoaderReturnType>(); */
+  const { pathname } = useLocation();
 
   const [lastProgramId, setLastProgramId] = useStickyState(
     "lastActiveProgram",
@@ -269,7 +268,7 @@ export function SidebarAdmin({
               </SidebarMenu>
             </SidebarGroup>*/}
 
-            {user.isSuperAdmin && (
+            {user?.isSuperAdmin && (
               <SidebarGroup className="mb-1">
                 <SidebarGroupLabel>{org.name}</SidebarGroupLabel>
                 <SidebarMenu>
@@ -325,17 +324,17 @@ export function SidebarAdmin({
                   <Avatar className="h-8 w-8 rounded">
                     <AvatarImage
                       src="/user/photo/preview.png"
-                      alt={user.firstName}
+                      alt={user?.firstName}
                     />
-                    <AvatarFallback className="rounded-lg">{`${user.firstName.charAt(
+                    <AvatarFallback className="rounded-lg">{`${user?.firstName.charAt(
                       0,
-                    )}${user.lastName.charAt(0)}`}</AvatarFallback>
+                    )}${user?.lastName.charAt(0)}`}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
-                      {user.firstName}
+                      {user?.firstName}
                     </span>
-                    <span className="truncate text-xs">{user.email}</span>
+                    <span className="truncate text-xs">{user?.email}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -351,17 +350,17 @@ export function SidebarAdmin({
                     <Avatar className="h-8 w-8 rounded">
                       <AvatarImage
                         src="/user/photo/preview.png"
-                        alt={user.firstName}
+                        alt={user?.firstName}
                       />
-                      <AvatarFallback className="rounded-lg">{`${user.firstName.charAt(
+                      <AvatarFallback className="rounded-lg">{`${user?.firstName.charAt(
                         0,
-                      )}${user.lastName.charAt(0)}`}</AvatarFallback>
+                      )}${user?.lastName.charAt(0)}`}</AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">
-                        {user.firstName} {user.lastName}
+                        {user?.firstName} {user?.lastName}
                       </span>
-                      <span className="truncate text-xs">{user.email}</span>
+                      <span className="truncate text-xs">{user?.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
@@ -374,7 +373,7 @@ export function SidebarAdmin({
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/user/photo">
+                    <Link to="/user/photo" state={{ fromPath: pathname }}>
                       <SquareUser className="ml-0.5 mr-3.5 w-5 h-5" />
                       Account Settings
                     </Link>

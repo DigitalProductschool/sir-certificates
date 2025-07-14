@@ -1,11 +1,11 @@
-import type { ActionFunction, ErrorResponse } from "@remix-run/node";
+import type { ActionFunction, ErrorResponse } from "react-router";
 import { useEffect } from "react";
-import { redirect } from "@remix-run/node";
 import {
+  redirect,
   useNavigate,
   useRouteError,
   isRouteErrorResponse,
-} from "@remix-run/react";
+} from "react-router";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 

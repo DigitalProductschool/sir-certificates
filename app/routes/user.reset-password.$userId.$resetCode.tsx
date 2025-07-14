@@ -1,20 +1,16 @@
-import type {
-	ActionFunction,
-	LoaderFunction,
-	ErrorResponse,
-} from "@remix-run/node";
+import type { Route } from "./+types/user.reset-password.$userId.$resetCode";
+import type { ErrorResponse } from "react-router";
 import type { UserPasswordReset } from "@prisma/client";
 import type { PasswordAssessment } from "~/components/password-indicator";
 
 import { useState } from "react";
-import { redirect, data } from "@remix-run/node";
 import {
 	Form,
-	useActionData,
-	useLoaderData,
+	data,
+	redirect,
 	useRouteError,
 	isRouteErrorResponse,
-} from "@remix-run/react";
+} from "react-router";
 import { FormField } from "~/components/form-field";
 import {
 	PasswordIndicator,
@@ -40,18 +36,24 @@ function isTooOld(reset: UserPasswordReset) {
 	return reset.createdAt < oneHourAgo;
 }
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
 	const form = await request.formData();
 	const password = form.get("password");
 
 	if (typeof password !== "string") {
-		return data({ error: `Invalid Form Data` }, { status: 400 });
+		return data(
+			{ error: `Invalid Form Data`, errors: { password: undefined } },
+			{ status: 400 },
+		);
 	}
 
 	const strength = assessPassword(password);
 	if (!strength.enough) {
 		return data(
-			{ error: "Please choose a stronger password." },
+			{
+				error: "Please choose a stronger password.",
+				errors: { password: undefined },
+			},
 			{ status: 400 },
 		);
 	}
@@ -98,9 +100,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	const searchParams = new URLSearchParams([["reset", "done"]]);
 	return redirect(`/user/sign/in?${searchParams}`);
-};
+}
 
-export const loader: LoaderFunction = async ({ params }) => {
+export async function loader({ params }: Route.LoaderArgs) {
 	if (!params.userId) {
 		throw new Response(null, {
 			status: 400,
@@ -144,16 +146,17 @@ export const loader: LoaderFunction = async ({ params }) => {
 	});
 
 	return { org };
-};
+}
 
-export default function ResetPassword() {
-	const actionData = useActionData<typeof action>();
-	const { org } = useLoaderData<typeof loader>();
+export default function ResetPassword({
+	loaderData,
+	actionData,
+}: Route.ComponentProps) {
+	const { org } = loaderData;
 	const [formData, setFormData] = useState({
 		password: "",
 	});
 
-	const errors = actionData?.errors || {};
 	const formError = actionData?.error;
 
 	// Updates the form data when an input changes
@@ -210,7 +213,7 @@ export default function ResetPassword() {
 							type="password"
 							value={formData.password}
 							onChange={(e) => handleInputChange(e, "password")}
-							error={errors?.password}
+							error={actionData?.errors?.password}
 						/>
 
 						<Label>
@@ -231,7 +234,7 @@ export default function ResetPassword() {
 				</CardContent>
 			</Card>
 			<div className="grow flex flex-row justify-center items-end gap-4 pb-5 text-xs">
-				{org.imprintUrl && (
+				{org?.imprintUrl && (
 					<a
 						href={org.imprintUrl}
 						target="_blank"
@@ -240,7 +243,7 @@ export default function ResetPassword() {
 						Imprint
 					</a>
 				)}
-				{org.privacyUrl && (
+				{org?.privacyUrl && (
 					<a
 						href={org.privacyUrl}
 						target="_blank"
@@ -261,7 +264,7 @@ export function ErrorBoundary() {
 	if (isRouteErrorResponse(error)) {
 		// error is type `ErrorResponse`
 		const routeError = error as ErrorResponse;
-		errorMessage = routeError.error?.message || routeError.statusText;
+		errorMessage = routeError.data?.error?.message || routeError.statusText;
 	} else if (error instanceof Error) {
 		errorMessage = error.message;
 	} else if (typeof error === "string") {

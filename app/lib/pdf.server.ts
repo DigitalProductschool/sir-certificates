@@ -8,7 +8,7 @@ import { PassThrough } from "stream";
 
 import archiver from "archiver";
 import { convert } from "pdf-img-convert";
-import { PDFDocument, PDFPage, PDFFont, Color, rgb } from "pdf-lib";
+import { PDFDocument, PDFPage, PDFFont, type Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import slug from "slug";
 
@@ -22,6 +22,7 @@ import {
   openFile as lazyOpenFile,
   writeFile as lazyWriteFile,
 } from "@mjackson/lazy-file/fs";
+import type { CertificatesWithBatch } from "./types";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -100,7 +101,7 @@ async function assembleTypefacesFromLayout(
 
 export async function generateCertificate(
   batch: Batch,
-  certificate: Certificate,
+  certificate: CertificatesWithBatch,
   template: Template,
   skipIfExists = true,
 ) {

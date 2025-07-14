@@ -1,11 +1,10 @@
-import type { LoaderFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import type { Route } from "./+types/user.forgot-password_.next-steps";
+import { redirect } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
 	// If there's already a user in the session, redirect to the home page
 	const user = await getUser(request);
 	if (user) return redirect("/");
@@ -20,10 +19,13 @@ export const loader: LoaderFunction = async ({ request }) => {
 	});
 
 	return { org };
-};
+}
 
-export default function ForgotPasswordNextSteps() {
-	const { org } = useLoaderData<typeof loader>();
+export default function ForgotPasswordNextSteps({
+	loaderData,
+}: Route.ComponentProps) {
+	// @todo use org from root/index
+	const { org } = loaderData;
 
 	return (
 		<div className="h-screen flex flex-col items-center justify-center px-4 dark:bg-black">
@@ -53,7 +55,7 @@ export default function ForgotPasswordNextSteps() {
 				</CardContent>
 			</Card>
 			<div className="grow flex flex-row justify-center items-end gap-4 pb-5 text-xs">
-				{org.imprintUrl && (
+				{org?.imprintUrl && (
 					<a
 						href={org.imprintUrl}
 						target="_blank"
@@ -62,7 +64,7 @@ export default function ForgotPasswordNextSteps() {
 						Imprint
 					</a>
 				)}
-				{org.privacyUrl && (
+				{org?.privacyUrl && (
 					<a
 						href={org.privacyUrl}
 						target="_blank"

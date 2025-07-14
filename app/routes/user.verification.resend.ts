@@ -1,12 +1,12 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
 import { prisma } from "~/lib/prisma.server";
 import { sendVerificationEmail } from "~/lib/user.server";
 import { validateEmail } from "~/lib/validators.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const form = await request.formData();
-	const email = form.get("email");
+	const email = form.get("email") as string;
 	const emailError = validateEmail(email);
 
 	if (emailError) {

@@ -1,12 +1,7 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
+import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.$certId.edit";
 import type { Template } from "@prisma/client";
 import { useEffect, useState, useRef } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, redirect, useNavigate } from "react-router";
 
 import { Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -40,15 +35,15 @@ import {
 } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Edit Certificate" }];
-};
+}
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
   const certificate = await prisma.certificate.update({
     where: {
@@ -86,9 +81,9 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return redirect(`../`);
-};
+}
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const certificate = await prisma.certificate.findUnique({
@@ -125,10 +120,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   });
 
   return { certificate, templates };
-};
+}
 
-export default function EditCertificateDialog() {
-  const { certificate, templates } = useLoaderData<typeof loader>();
+export default function EditCertificateDialog({
+  loaderData,
+}: Route.ComponentProps) {
+  const { certificate, templates } = loaderData;
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -185,7 +182,7 @@ export default function EditCertificateDialog() {
           <Input
             id="teamName"
             name="teamName"
-            defaultValue={certificate.teamName}
+            defaultValue={certificate.teamName ?? ""}
             className="mb-2"
           />
           <Label htmlFor="templateId">Template</Label>

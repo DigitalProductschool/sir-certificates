@@ -1,16 +1,15 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-
+import type { Route } from "./+types/org.program.$programId.emails";
 import { requireAdmin } from "~/lib/auth.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Email Templates" }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
   await requireAdmin(request);
 
   return {};
-};
+}
 
 export default function ProgramEmailsPage() {
   return <div>Email Templates</div>;

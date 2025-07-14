@@ -1,16 +1,8 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/org.program.$programId.batch";
 import type { Batch } from "@prisma/client";
-import type { ProgramWithBatches } from "~/lib/types";
 
 import { useEffect } from "react";
-import {
-  Link,
-  Outlet,
-  useLoaderData,
-  useNavigate,
-  useMatches,
-  useParams,
-} from "@remix-run/react";
+import { Link, Outlet, useNavigate } from "react-router";
 
 import { Settings } from "lucide-react";
 
@@ -31,11 +23,11 @@ import {
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  return [{ title: `${data.program?.name} Batches` }];
-};
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: `${data?.program?.name} Batches` }];
+}
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdmin(request); // access to program is managed at parent route
 
   const program = await prisma.program.findUnique({
@@ -59,39 +51,15 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return { program };
-};
+}
 
-type LoaderReturnType = {
-  program: ProgramWithBatches;
-};
-
-type Match = {
-  id: string;
-  pathname: string;
-  data: LoaderReturnType;
-  params: Record<string, string>;
-};
-
-export const handle = {
-  breadcrumb: (match: Match) =>
-    match.params.batchId ? (
-      <Link to="#">
-        {
-          match.data.program.batches.find(
-            (batch) => batch.id === Number(match.params.batchId),
-          )?.name
-        }
-      </Link>
-    ) : (
-      <Link to="#">Batches</Link>
-    ),
-};
-
-export default function BatchPage() {
-  const { program } = useLoaderData<typeof loader>();
-  const params = useParams();
+export default function BatchPage({
+  loaderData,
+  params,
+  matches,
+}: Route.ComponentProps) {
+  const { program } = loaderData;
   const navigate = useNavigate();
-  const matches = useMatches();
 
   const latestBatch =
     program.batches.length > 0 ? program.batches[0] : undefined;

@@ -1,7 +1,9 @@
-import type { User } from "@prisma/client";
-import type { CertificatesWithBatchAndProgram } from "~/lib/types";
+import type {
+  CertificatesWithBatchAndProgram,
+  UserAuthenticated,
+} from "~/lib/types";
 
-import { Link, NavLink } from "@remix-run/react";
+import { Link, NavLink, useLocation } from "react-router";
 import { ChevronsUpDown, LogOut, SquareUser, TowerControl } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -32,9 +34,11 @@ export function SidebarParticipant({
   user,
   certificates,
 }: {
-  user: User;
+  user: UserAuthenticated;
   certificates: CertificatesWithBatchAndProgram[];
 }) {
+  const { pathname } = useLocation();
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="duration-200 transition-all flex mt-2 pl-4 group-data-[collapsible=icon]:mt-1 group-data-[collapsible=icon]:pl-3">
@@ -155,7 +159,7 @@ export function SidebarParticipant({
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
-                    <Link to="/user/photo">
+                    <Link to="/user/photo" state={{ fromPath: pathname }}>
                       <SquareUser className="ml-0.5 mr-3.5 w-5 h-5" />
                       Account Settings
                     </Link>

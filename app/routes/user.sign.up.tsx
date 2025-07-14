@@ -1,18 +1,13 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
+import type { Route } from "./+types/user.sign.up";
 import { useEffect, useState } from "react";
-import { redirect, data } from "@remix-run/node";
 import {
   Form,
   Link,
-  useActionData,
+  data,
+  redirect,
   useSearchParams,
-  useLoaderData,
   useLocation,
-} from "@remix-run/react";
+} from "react-router";
 import { Balloons } from "~/components/balloons.client";
 import { FormField } from "~/components/form-field";
 import { Button } from "~/components/ui/button";
@@ -32,7 +27,7 @@ import {
   validatePassword,
 } from "~/lib/validators.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   const email = form.get("email");
   const password = form.get("password");
@@ -45,7 +40,16 @@ export const action: ActionFunction = async ({ request }) => {
     typeof firstName !== "string" ||
     typeof lastName !== "string"
   ) {
-    return data({ error: `Invalid Form Data` }, { status: 400 });
+    // @todo improve type signature of action errors
+    return data(
+      {
+        error: `Invalid Form Data`,
+        errors: undefined,
+        errorCode: undefined,
+        fields: undefined,
+      },
+      { status: 400 },
+    );
   }
 
   const errors = {
@@ -56,18 +60,21 @@ export const action: ActionFunction = async ({ request }) => {
   };
 
   if (Object.values(errors).some(Boolean))
+    // @todo improve type signature of action errors
     return data(
       {
+        error: undefined,
         errors,
+        errorCode: undefined,
         fields: { email, password, firstName, lastName },
       },
       { status: 400 },
     );
 
   return await register({ email, password, firstName, lastName });
-};
+}
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
   // If there's already a user in the session, redirect to the home page
   const user = await getUser(request);
   if (user) return redirect("/");
@@ -82,9 +89,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   return { org };
-};
+}
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export function meta({ data }: Route.MetaArgs) {
   return [
     { title: `${data?.org?.name} Certificates` },
     {
@@ -94,12 +101,14 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
       } in one place.`,
     },
   ];
-};
+}
 
-export default function Login() {
+export default function UserSignUp({
+  loaderData,
+  actionData,
+}: Route.ComponentProps) {
   const location = useLocation();
-  const actionData = useActionData<typeof action>();
-  const { org } = useLoaderData<typeof loader>();
+  const { org } = loaderData;
   const [searchParams /*, setSearchParams*/] = useSearchParams();
   const [isClient, setIsClient] = useState(false);
   const [formData, setFormData] = useState({
@@ -112,8 +121,6 @@ export default function Login() {
   });
 
   const isMobile = useIsMobile();
-
-  const errors = actionData?.errors || {};
   const formError = actionData?.error;
 
   // Updates the form data when an input changes
@@ -214,7 +221,7 @@ export default function Login() {
                 label="Email"
                 value={formData.email}
                 onChange={(e) => handleInputChange(e, "email")}
-                error={errors?.email}
+                error={actionData?.errors?.email}
               />
               <FormField
                 htmlFor="password"
@@ -222,21 +229,21 @@ export default function Login() {
                 label="Password"
                 value={formData.password}
                 onChange={(e) => handleInputChange(e, "password")}
-                error={errors?.password}
+                error={actionData?.errors?.password}
               />
               <FormField
                 htmlFor="firstName"
                 label="First Name"
                 onChange={(e) => handleInputChange(e, "firstName")}
                 value={formData.firstName}
-                error={errors?.firstName}
+                error={actionData?.errors?.firstName}
               />
               <FormField
                 htmlFor="lastName"
                 label="Last Name"
                 onChange={(e) => handleInputChange(e, "lastName")}
                 value={formData.lastName}
-                error={errors?.lastName}
+                error={actionData?.errors?.lastName}
               />
 
               <Button type="submit" className="w-full">
@@ -262,12 +269,12 @@ export default function Login() {
           </CardContent>
         </Card>
         <div className="grow flex flex-row justify-center items-end gap-4 pb-5 text-xs">
-          {org.imprintUrl && (
+          {org?.imprintUrl && (
             <a href={org.imprintUrl} target="_blank" rel="noopener noreferrer">
               Imprint
             </a>
           )}
-          {org.privacyUrl && (
+          {org?.privacyUrl && (
             <a href={org.privacyUrl} target="_blank" rel="noopener noreferrer">
               Privacy
             </a>

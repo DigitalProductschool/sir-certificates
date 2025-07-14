@@ -1,6 +1,6 @@
-import type { ActionFunction, MetaFunction } from "@remix-run/node";
-import { ChangeEvent, useRef } from "react";
-import { Form, useFetcher, useRouteLoaderData } from "@remix-run/react";
+import type { ActionFunction } from "react-router";
+import { type ChangeEvent, useRef } from "react";
+import { Form, useFetcher, useRouteLoaderData } from "react-router";
 
 import { ImageUp, Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -12,11 +12,9 @@ import { FormUpdate } from "~/components/form-update";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-import { loader as programLoader } from "./org.program.$programId";
-
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Program Settings" }];
-};
+}
 
 const allowedUpdateFields = ["name", "achievement", "about", "website"];
 
@@ -24,7 +22,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
   const update: { [key: string]: string } = {};
 
@@ -45,9 +43,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export default function ProgramSettings() {
-  const { program } = useRouteLoaderData<typeof programLoader>(
-    "routes/org.program.$programId",
-  );
+  // @todo typesafe use of useRouteLoaderData
+  const { program } = useRouteLoaderData("routes/org.program.$programId");
   const fetcherIcon = useFetcher({ key: "program-icon" });
   const fileRef = useRef<HTMLInputElement | null>(null);
 

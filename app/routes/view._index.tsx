@@ -1,6 +1,5 @@
-import type { LoaderFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import { redirect } from "react-router";
 
-export const loader: LoaderFunction = async () => {
+export async function loader() {
   return redirect("/");
-};
+}

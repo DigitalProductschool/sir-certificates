@@ -1,6 +1,6 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import type { Program } from "@prisma/client";
-import { redirect } from "@remix-run/node";
+import { redirect } from "react-router";
 
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";

@@ -1,22 +1,16 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { ErrorResponse } from "@remix-run/react";
-import type { ProgramWithBatchesAndLogo } from "~/lib/types";
+import type { Route } from "./+types/org.program.$programId";
+import type { ErrorResponse } from "react-router";
 
-import {
-  Link,
-  Outlet,
-  isRouteErrorResponse,
-  useRouteError,
-} from "@remix-run/react";
+import { Outlet, isRouteErrorResponse, useRouteError } from "react-router";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export function meta({ data }: Route.MetaArgs) {
   return [{ title: `${data?.program?.name}` }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const program = await prisma.program.findUnique({
@@ -37,22 +31,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return { program };
-};
-
-type LoaderReturnType = {
-  program: ProgramWithBatchesAndLogo;
-};
-
-type Match = {
-  id: string;
-  pathname: string;
-  data: LoaderReturnType;
-  params: Record<string, string>;
-};
-
-export const handle = {
-  breadcrumb: (match: Match) => <Link to="#">{match.data.program.name}</Link>,
-};
+}
 
 // @todo add a program index page with an overview?
 

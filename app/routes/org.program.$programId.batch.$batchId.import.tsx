@@ -1,8 +1,8 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/org.program.$programId.batch.$batchId.import";
 import type { Template } from "@prisma/client";
 
 import { useState } from "react";
-import { Link, useParams, useLoaderData, useNavigate } from "@remix-run/react";
+import { Link, useNavigate } from "react-router";
 import {
   CircleFadingPlus,
   CircleFadingArrowUp,
@@ -45,11 +45,11 @@ import {
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Import Participants" }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const batch = await prisma.batch.findUnique({
@@ -79,7 +79,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   });
 
   return { batch, templates };
-};
+}
 
 /* type LoaderReturnType = {
   batch: Batch;
@@ -93,9 +93,7 @@ type Match = {
   params: Record<string, string>;
 };
 
-export const handle = {
-  breadcrumb: (match: Match) => <Link to="#">Import</Link>,
-}; */
+*/
 
 function StatusIndicator({ status, error }: { status: string; error: string }) {
   switch (status) {
@@ -118,10 +116,12 @@ function StatusIndicator({ status, error }: { status: string; error: string }) {
   return <></>;
 }
 
-export default function ImportBatchPage() {
-  const params = useParams();
+export default function ImportBatchPage({
+  loaderData,
+  params,
+}: Route.ComponentProps) {
+  const { templates } = loaderData;
   const navigate = useNavigate();
-  const { templates } = useLoaderData<typeof loader>();
   const [key, setKey] = useState(1);
   const [rows, setRows] = useState<Array<Record<string, string>>>([]);
   const { toast } = useToast();

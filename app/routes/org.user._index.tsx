@@ -1,11 +1,6 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Program, User, UserInvitation } from "@prisma/client";
-import type { UserWithAdminOfPrograms } from "~/lib/types";
-
-import { Form, Link, useLoaderData, useSearchParams } from "@remix-run/react";
-
+import type { Route } from "./+types/org.user._index";
+import { Form, Link, useSearchParams } from "react-router";
 import { ArrowDown, Settings, Trash2Icon } from "lucide-react";
-
 import { Button } from "~/components/ui/button";
 
 import {
@@ -26,11 +21,11 @@ import {
 import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "User" }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
   await requireSuperAdmin(request);
 
   const user = await prisma.user.findMany({
@@ -58,28 +53,17 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   return { user, invitations };
-};
+}
 
-type Match = {
-  id: string;
-  pathname: string;
-  data: typeof loader;
-  params: Record<string, string>;
-};
-
-export const handle = {
-  breadcrumb: (match: Match) => <Link to={match.pathname}>User</Link>,
-};
-
-export default function UserIndexPage() {
-  const { user, invitations } = useLoaderData<typeof loader>();
+export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
+  const { user, invitations } = loaderData;
   const [searchParams, setSearchParams] = useSearchParams();
 
   let sortedUser = user;
   if (searchParams.has("sort")) {
     switch (searchParams.get("sort")) {
       case "name":
-        sortedUser = user.toSorted((a: User, b: User) => {
+        sortedUser = user.toSorted((a, b) => {
           if (a.firstName < b.firstName) {
             return -1;
           }
@@ -90,7 +74,7 @@ export default function UserIndexPage() {
         });
         break;
       case "email":
-        sortedUser = user.toSorted((a: User, b: User) => {
+        sortedUser = user.toSorted((a, b) => {
           if (a.email < b.email) {
             return -1;
           }
@@ -101,7 +85,7 @@ export default function UserIndexPage() {
         });
         break;
       case "permission":
-        sortedUser = user.toSorted((a: User, b: User) => {
+        sortedUser = user.toSorted((a, b) => {
           if (a.isSuperAdmin && !b.isSuperAdmin) {
             return -1;
           }
@@ -186,7 +170,7 @@ export default function UserIndexPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invitations.map((invite: UserInvitation) => (
+          {invitations.map((invite) => (
             <TableRow key={invite.id} className="text-muted-foreground">
               <TableCell>
                 {invite.firstName} {invite.lastName}
@@ -209,7 +193,7 @@ export default function UserIndexPage() {
               </TableCell>
             </TableRow>
           ))}
-          {sortedUser.map((u: UserWithAdminOfPrograms) => (
+          {sortedUser.map((u) => (
             <TableRow key={u.id}>
               <TableCell className="align-top">
                 {u.firstName} {u.lastName}
@@ -221,7 +205,7 @@ export default function UserIndexPage() {
                 ) : u.isAdmin ? (
                   <>
                     <b>Program Manager</b>:{" "}
-                    {u.adminOfPrograms.map((p: Program) => p.name).join(", ")}
+                    {u.adminOfPrograms.map((p) => p.name).join(", ")}
                   </>
                 ) : (
                   "View Certificates"

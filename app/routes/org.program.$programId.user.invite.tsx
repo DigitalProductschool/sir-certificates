@@ -1,7 +1,6 @@
-import type { ActionFunction, MetaFunction } from "@remix-run/node";
+import type { Route } from "./+types/org.program.$programId.user.invite";
 import { useEffect, useState } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, Link, useRouteLoaderData, useNavigate } from "@remix-run/react";
+import { Form, redirect, useRouteLoaderData, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -19,18 +18,16 @@ import { requireAdmin } from "~/lib/auth.server";
 import { requireAccessToProgram } from "~/lib/program.server";
 import { createUserInvitation } from "~/lib/user.server";
 
-import { loader as programLoader } from "./org.program.$programId";
-
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Invite Program Manager" }];
-};
+}
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   const adminId = await requireAdmin(request);
   const admin = await requireAccessToProgram(adminId, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
   // @todo add form validation
 
@@ -45,16 +42,11 @@ export const action: ActionFunction = async ({ request, params }) => {
   );
 
   return redirect(`/org/program/${params.programId}/user/`);
-};
-
-export const handle = {
-  breadcrumb: () => <Link to="#">Invite Admin</Link>,
-};
+}
 
 export default function InviteAdminDialog() {
-  const { program } = useRouteLoaderData<typeof programLoader>(
-    "routes/org.program.$programId",
-  );
+  // @todo typesafe use of useRouteLoaderData
+  const { program } = useRouteLoaderData("routes/org.program.$programId");
 
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);

@@ -1,4 +1,4 @@
-import zxcvbn, { ZXCVBNResult } from "zxcvbn";
+import zxcvbn, { type ZXCVBNResult } from "zxcvbn";
 import {
 	Tooltip,
 	TooltipContent,
