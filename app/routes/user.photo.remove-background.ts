@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { type LazyContent, LazyFile } from "@mjackson/lazy-file";
 
@@ -32,6 +32,7 @@ export const action: ActionFunction = async ({ request }) => {
 					alpha: "0",
 				},
 				body: fileUpload.stream(),
+				// @ts-expect-error duplex option is not defined in the RequestInit type, but necessary to avoid a runtime exception
 				duplex: "half",
 			});
 

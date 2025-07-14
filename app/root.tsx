@@ -1,5 +1,4 @@
-import type { LinksFunction } from "@remix-run/node";
-import type { ErrorResponse } from "@remix-run/react";
+import type { LinksFunction, ErrorResponse } from "react-router";
 
 import {
   Links,
@@ -9,7 +8,7 @@ import {
   ScrollRestoration,
   isRouteErrorResponse,
   useRouteError,
-} from "@remix-run/react";
+} from "react-router";
 
 import { Toaster } from "~/components/ui/toaster";
 

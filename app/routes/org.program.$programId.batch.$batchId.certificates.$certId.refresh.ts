@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import {

@@ -1,18 +1,18 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/view";
 import type { CertificatesWithBatchAndProgram } from "~/lib/types";
 
-import { Outlet, useLoaderData } from "@remix-run/react";
+import { Outlet } from "react-router";
 import { SidebarParticipant } from "~/components/sidebar-participant";
 import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 
 import { getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Certificates" }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
   // @todo refactor the loader into the subroutes, based on public/private access, with strict select statements
   const user = await getUser(request);
 
@@ -49,10 +49,10 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   // needed data for SidebarParticipant
   return { certificates, org, user };
-};
+}
 
-export default function Index() {
-  const { user, certificates } = useLoaderData<typeof loader>();
+export default function View({ loaderData }: Route.ComponentProps) {
+  const { user, certificates } = loaderData;
 
   return (
     <div className="flex min-h-screen w-full bg-muted">

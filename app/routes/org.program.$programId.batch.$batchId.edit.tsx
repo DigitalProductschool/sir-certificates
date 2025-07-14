@@ -1,12 +1,8 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
+import type { Route } from "./+types/org.program.$programId.batch.$batchId.edit";
+import type { ActionFunction } from "react-router";
 
 import { useEffect, useState, useRef } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, redirect, useNavigate } from "react-router";
 
 import { Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -29,15 +25,15 @@ import {
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Edit Batch" }];
-};
+}
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
   await prisma.batch.update({
     where: {
@@ -54,7 +50,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   return redirect(`../${params.batchId}/certificates`);
 };
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const batch = await prisma.batch.findUnique({
@@ -72,14 +68,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return { batch };
-};
+}
 
-export const handle = {
-  breadcrumb: () => <Link to="#">Batch XXX</Link>,
-};
-
-export default function EditBatchDialog() {
-  const { batch } = useLoaderData<typeof loader>();
+export default function EditBatchDialog({ loaderData }: Route.ComponentProps) {
+  const { batch } = loaderData;
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const formRef = useRef<HTMLFormElement | null>(null);

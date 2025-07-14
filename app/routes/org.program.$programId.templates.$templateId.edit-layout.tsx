@@ -1,21 +1,14 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-  ErrorResponse,
-} from "@remix-run/node";
-import type { Template } from "@prisma/client";
+import type { Route } from "./+types/org.program.$programId.templates.$templateId.edit-layout";
+import type { ActionFunction, ErrorResponse } from "react-router";
 import { useEffect, useState } from "react";
 import {
   Form,
-  Link,
-  useLoaderData,
   useParams,
   useNavigate,
   useNavigation,
   useRouteError,
   isRouteErrorResponse,
-} from "@remix-run/react";
+} from "react-router";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
@@ -41,15 +34,15 @@ import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 
 import { LayoutEditor } from "~/components/layout-editor";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export function meta({ data }: Route.MetaArgs) {
   return [{ title: `Template ${data?.template?.name}` }];
-};
+}
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
   let layoutJSON;
 
   // @todo verify schema of incoming JSON
@@ -86,7 +79,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   return { template };
 };
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const template = await prisma.template.findUnique({
@@ -106,27 +99,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const typefaces = await prisma.typeface.findMany();
 
   return { template, typefaces };
-};
+}
 
-type LoaderReturnType = {
-  template: Template;
-};
-
-type Match = {
-  id: string;
-  pathname: string;
-  data: LoaderReturnType;
-  params: Record<string, string>;
-};
-
-export const handle = {
-  breadcrumb: (match: Match) => (
-    <Link to="#">{match.data?.template?.name}</Link>
-  ),
-};
-
-export default function TemplateEditorPage() {
-  const { template, typefaces } = useLoaderData<typeof loader>();
+export default function TemplateEditorPage({
+  loaderData,
+}: Route.ComponentProps) {
+  const { template, typefaces } = loaderData;
   const navigation = useNavigation();
   const [layout, setLayout] = useState(template.layout);
   const [switchEditor, setSwitchEditor] = useState("visual");

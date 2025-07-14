@@ -1,4 +1,4 @@
-import type { LoaderFunction } from "@remix-run/node";
+import type { LoaderFunction } from "react-router";
 
 import { prisma } from "~/lib/prisma.server";
 import { generateSocialPreview } from "~/lib/social.server";

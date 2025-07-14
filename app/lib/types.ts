@@ -1,5 +1,19 @@
 import type { Prisma } from "@prisma/client";
 
+// Type declarations for PrismaJson fields
+declare global {
+	// eslint-disable-next-line @typescript-eslint/no-namespace
+	namespace PrismaJson {
+		type SocialPreviewLayout = {
+			photo: { x: number; y: number; size: number };
+			certificate: {
+				noPhoto: { x: number; y: number; w: number; h: number };
+				withPhoto: { x: number; y: number; w: number; h: number };
+			};
+		};
+	}
+}
+
 export type RegisterForm = {
 	email: string;
 	password: string;
@@ -21,6 +35,12 @@ export type InviteForm = {
 
 // @todo add types for other forms
 
+export type CertificatesWithBatch = Prisma.CertificateGetPayload<{
+	include: {
+		batch: true;
+	};
+}>;
+
 export type CertificatesWithBatchAndProgram = Prisma.CertificateGetPayload<{
 	include: {
 		batch: {
@@ -32,6 +52,25 @@ export type CertificatesWithBatchAndProgram = Prisma.CertificateGetPayload<{
 				};
 			};
 		};
+	};
+}>;
+
+export type CertificateView = Prisma.CertificateGetPayload<{
+	select: {
+		uuid: true;
+		firstName: true;
+		lastName: true;
+		email: true;
+		teamName: true;
+		updatedAt: true;
+	};
+}>;
+
+export type CertificateViewBatch = Prisma.BatchGetPayload<{
+	select: {
+		name: true;
+		startDate: true;
+		endDate: true;
 	};
 }>;
 
@@ -53,4 +92,17 @@ export type UserWithAdminOfPrograms = Prisma.UserGetPayload<{
 
 export type UserWithPhoto = Prisma.UserGetPayload<{
 	include: { photo: true };
+}>;
+
+export type UserAuthenticated = Prisma.UserGetPayload<{
+	select: {
+		id: true;
+		email: true;
+		firstName: true;
+		lastName: true;
+		isAdmin: true;
+		isSuperAdmin: true;
+		adminOfPrograms: true;
+		photo: true;
+	};
 }>;

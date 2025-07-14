@@ -1,19 +1,14 @@
 /* eslint-disable jsx-a11y/tabindex-no-positive */
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
+import type { Route } from "./+types/user.sign.in";
 import { useEffect, useState } from "react";
-import { redirect, data } from "@remix-run/node";
 import {
   Form,
   Link,
-  useActionData,
+  data,
+  redirect,
   useSearchParams,
-  useLoaderData,
   useLocation,
-} from "@remix-run/react";
+} from "react-router";
 import { CheckIcon } from "lucide-react";
 import { Balloons } from "~/components/balloons.client";
 import { FormField } from "~/components/form-field";
@@ -30,13 +25,22 @@ import { login, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { validateEmail, validatePassword } from "~/lib/validators.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   const email = form.get("email");
   const password = form.get("password");
 
+  // @todo improve type signature of action errors
   if (typeof email !== "string" || typeof password !== "string") {
-    return data({ error: `Invalid Form Data` }, { status: 400 });
+    return data(
+      {
+        error: `Invalid Form Data`,
+        errors: undefined,
+        errorCode: undefined,
+        fields: undefined,
+      },
+      { status: 400 },
+    );
   }
 
   const errors = {
@@ -47,16 +51,18 @@ export const action: ActionFunction = async ({ request }) => {
   if (Object.values(errors).some(Boolean))
     return data(
       {
+        error: undefined,
         errors,
+        errorCode: undefined,
         fields: { email, password },
       },
       { status: 400 },
     );
 
   return await login({ email, password });
-};
+}
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
   // If there's already a user in the session, redirect to the home page
   const user = await getUser(request);
   if (user) return redirect("/");
@@ -72,9 +78,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   return { org };
-};
+}
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export function meta({ data }: Route.MetaArgs) {
   return [
     { title: `${data?.org?.name} Certificates` },
     {
@@ -84,12 +90,14 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
       } in one place.`,
     },
   ];
-};
+}
 
-export default function Login() {
+export default function UserSignIn({
+  loaderData,
+  actionData,
+}: Route.ComponentProps) {
   const location = useLocation();
-  const actionData = useActionData<typeof action>();
-  const { org } = useLoaderData<typeof loader>();
+  const { org } = loaderData;
   const [searchParams /*, setSearchParams*/] = useSearchParams();
   const [isClient, setIsClient] = useState(false);
   const [formData, setFormData] = useState({
@@ -99,7 +107,6 @@ export default function Login() {
 
   const isMobile = useIsMobile();
 
-  const errors = actionData?.errors || {};
   const formError = actionData?.error;
   const formErrorCode = actionData?.errorCode;
 
@@ -218,7 +225,7 @@ export default function Login() {
                 label="Email"
                 value={formData.email}
                 onChange={(e) => handleInputChange(e, "email")}
-                error={errors?.email}
+                error={actionData?.errors?.email}
                 tabindex={1}
               />
               <FormField
@@ -227,7 +234,7 @@ export default function Login() {
                 label="Password"
                 value={formData.password}
                 onChange={(e) => handleInputChange(e, "password")}
-                error={errors?.password}
+                error={actionData?.errors?.password}
                 tabindex={2}
                 hint={
                   <Link
@@ -271,12 +278,12 @@ export default function Login() {
           </CardContent>
         </Card>
         <div className="grow flex flex-row justify-center items-end gap-4 pb-5 text-xs">
-          {org.imprintUrl && (
+          {org?.imprintUrl && (
             <a href={org.imprintUrl} target="_blank" rel="noopener noreferrer">
               Imprint
             </a>
           )}
-          {org.privacyUrl && (
+          {org?.privacyUrl && (
             <a href={org.privacyUrl} target="_blank" rel="noopener noreferrer">
               Privacy
             </a>

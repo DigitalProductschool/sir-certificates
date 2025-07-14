@@ -1,6 +1,6 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates";
 import type { Certificate, Template } from "@prisma/client";
-import { Link, Outlet, useLoaderData, useParams } from "@remix-run/react";
+import { Link, Outlet, useParams } from "react-router";
 
 import { ChevronDown, Eye, MailCheck, Settings } from "lucide-react";
 
@@ -36,11 +36,11 @@ import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { AsyncAction } from "~/components/async-action";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Certificates" }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const certificates = await prisma.certificate.findMany({
@@ -68,11 +68,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   });
 
   return { certificates, templates };
-};
+}
 
-export default function BatchCertificatesPage() {
+export default function BatchCertificatesPage({
+  loaderData,
+}: Route.ComponentProps) {
   const { programId } = useParams();
-  const { certificates, templates } = useLoaderData<typeof loader>();
+  const { certificates, templates } = loaderData;
 
   const templatesMap = new Map<number, Template>();
   for (const template of templates) {

@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
@@ -11,7 +11,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
   let layoutJSON;
 
   // @todo verify schema of incoming JSON as typeof SocialPreviewLayout
@@ -34,7 +34,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         layout: layoutJSON,
       },
       create: {
-        layout: inputs.layout,
+        layout: layoutJSON,
         contentType: "",
         program: {
           connect: { id: Number(params.programId) },

@@ -1,7 +1,6 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { useEffect } from "react";
-import { redirect } from "@remix-run/node";
-import { useNavigate, useRouteError } from "@remix-run/react";
+import { redirect, useNavigate, useRouteError } from "react-router";
 import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 

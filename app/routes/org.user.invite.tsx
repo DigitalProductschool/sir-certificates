@@ -1,12 +1,8 @@
-import type {
-  ActionFunction,
-  MetaFunction,
-  LoaderFunction,
-} from "@remix-run/node";
+import type { Route } from "./+types/org.user.invite";
+import type { ActionFunction } from "react-router";
 import type { Program } from "@prisma/client";
 import { useEffect, useState } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, redirect, useNavigate } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -26,16 +22,16 @@ import { prisma } from "~/lib/prisma.server";
 import { getProgramsByAdmin } from "~/lib/program.server";
 import { createUserInvitation } from "~/lib/user.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Invite Admin" }];
-};
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const adminId = await requireSuperAdmin(request);
   const admin = await prisma.user.findUnique({ where: { id: adminId } });
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
   // @todo add form validation
 
@@ -56,7 +52,7 @@ export const action: ActionFunction = async ({ request }) => {
   return redirect(`/org/user`);
 };
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
   const adminId = await requireSuperAdmin(request);
   const admin = await prisma.user.findUnique({
     where: {
@@ -73,19 +69,17 @@ export const loader: LoaderFunction = async ({ request }) => {
   const programs = await getProgramsByAdmin(adminId);
 
   return { admin, programs };
-};
+}
 
-export const handle = {
-  breadcrumb: () => <Link to="#">Invite Admin</Link>,
-};
-
-export default function InviteAdminDialog() {
-  const { programs } = useLoaderData<typeof loader>();
+export default function InviteAdminDialog({
+  loaderData,
+}: Route.ComponentProps) {
+  const { programs } = loaderData;
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
 
   const programList = programs.map((p: Program) => {
-    return { value: p.id, label: p.name };
+    return { value: p.id.toString(), label: p.name };
   });
 
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);

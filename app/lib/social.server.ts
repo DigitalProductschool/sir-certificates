@@ -4,7 +4,6 @@ import type {
   SocialPreview,
   Template,
   UserPhoto,
-  Prisma,
 } from "@prisma/client";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -88,13 +87,13 @@ export async function addPhotoToPreview(social: SocialPreview) {
 
   if (background && photo) {
     const composition = await composeImages(
-      social.layout as SocialPreviewLayout,
+      social.layout as PrismaJson.SocialPreviewLayout,
       background,
     );
     await writeFile(`${socialDir}/${social.id}.noPhoto.png`, composition);
 
     const compositionWithPhoto = await composeImages(
-      social.layout as SocialPreviewLayout,
+      social.layout as PrismaJson.SocialPreviewLayout,
       background,
       undefined,
       photo,
@@ -118,14 +117,14 @@ export async function addTemplateAndPhotoToPreview(
 
   if (background && certificate && photo) {
     const composition = await composeImages(
-      social.layout as SocialPreviewLayout,
+      social.layout as PrismaJson.SocialPreviewLayout,
       background,
       certificate,
     );
     await writeFile(`${socialDir}/${social.id}.noPhoto.png`, composition);
 
     const compositionWithPhoto = await composeImages(
-      social.layout as SocialPreviewLayout,
+      social.layout as PrismaJson.SocialPreviewLayout,
       background,
       certificate,
       photo,
@@ -160,7 +159,7 @@ export async function generateSocialPreview(
     const certificateBuffer = Buffer.from(certificatePreview);
 
     const composition = await composeImages(
-      social.layout as SocialPreviewLayout,
+      social.layout as PrismaJson.SocialPreviewLayout,
       background,
       certificateBuffer,
       photo ? photo : undefined,
@@ -192,14 +191,6 @@ export async function deleteSocialComposites(socialId: number) {
   return await unlink(`${socialDir}/${socialId}.withPhoto.png`);
 }
 
-export type SocialPreviewLayout = Prisma.JsonObject & {
-  photo: { x: number; y: number; size: number };
-  certificate: {
-    noPhoto: { x: number; y: number; w: number; h: number };
-    withPhoto: { x: number; y: number; w: number; h: number };
-  };
-};
-
 export const defaultLayout = {
   photo: {
     x: 450,
@@ -220,10 +211,10 @@ export const defaultLayout = {
       h: 260,
     },
   },
-} as SocialPreviewLayout;
+} as PrismaJson.SocialPreviewLayout;
 
 async function composeImages(
-  layout: SocialPreviewLayout,
+  layout: PrismaJson.SocialPreviewLayout,
   background: Buffer,
   certificate?: Buffer,
   photo?: Buffer,

@@ -1,7 +1,7 @@
-import type { ActionFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/org.program.$programId.templates.$templateId.edit-meta";
+import type { ActionFunction } from "react-router";
 import { useEffect, useState, useRef } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, redirect, useNavigate } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 
 import { Trash2Icon } from "lucide-react";
@@ -94,7 +94,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   );
 };
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const template = await prisma.template.findUnique({
@@ -112,10 +112,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return { template };
-};
+}
 
-export default function EditTemplateDialog() {
-  const { template } = useLoaderData<typeof loader>();
+export default function EditTemplateDialog({
+  loaderData,
+}: Route.ComponentProps) {
+  const { template } = loaderData;
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const formRef = useRef<HTMLFormElement | null>(null);

@@ -1,11 +1,7 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
+import type { Route } from "./+types/org.program.$programId.edit";
+import type { ActionFunction } from "react-router";
 import { useEffect, useState, useRef } from "react";
-import { redirect } from "@remix-run/node";
-import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, redirect, useNavigate } from "react-router";
 
 import { Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -29,15 +25,15 @@ import {
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Edit Program" }];
-};
+}
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData);
+  const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
   await prisma.program.update({
     where: {
@@ -54,7 +50,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   return redirect(`/org/program`);
 };
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const program = await prisma.program.findUnique({
@@ -71,10 +67,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return { program };
-};
+}
 
-export default function EditBatchDialog() {
-  const { program } = useLoaderData<typeof loader>();
+export default function EditBatchDialog({ loaderData }: Route.ComponentProps) {
+  const { program } = loaderData;
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -114,14 +110,14 @@ export default function EditBatchDialog() {
             <Textarea
               id="achievement"
               name="achievement"
-              defaultValue={program.achievement}
+              defaultValue={program.achievement ?? ""}
             />
 
             <Label htmlFor="about">About the program</Label>
             <Textarea
               id="about"
               name="about"
-              defaultValue={program.about}
+              defaultValue={program.about ?? ""}
               rows={6}
             />
 
@@ -129,7 +125,7 @@ export default function EditBatchDialog() {
             <Input
               id="website"
               name="website"
-              defaultValue={program.website}
+              defaultValue={program.website ?? ""}
               placeholder="https://"
             />
           </div>

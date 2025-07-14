@@ -1,11 +1,6 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/view.$certUuid";
 import { useEffect, useState } from "react";
-import {
-  Link,
-  useLoaderData,
-  useRouteLoaderData,
-  useSearchParams,
-} from "@remix-run/react";
+import { Link, useRouteLoaderData, useSearchParams } from "react-router";
 import { ArrowRight, Download, Share } from "lucide-react";
 import Markdown from "markdown-to-jsx";
 import { Button } from "~/components/ui/button";
@@ -20,49 +15,53 @@ import { getUser } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
 import { prisma } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/text-variables";
-import { loader as viewLoader } from "./view";
 
 // @todo replace domain config
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+// @todo create a CertificateSelected type and use it here
+export function meta({ data }: Route.MetaArgs) {
   return [
     {
-      title: `${data.certificate.firstName} ${data.certificate.lastName} is certified by ${data.certificate.batch.program.name}`,
+      title: `${data?.certificate.firstName} ${data?.certificate.lastName} is certified by ${data?.certificate.batch.program.name}`,
     },
     {
       name: "description",
-      content: replaceVariables(
-        data.certificate.batch.program.achievement,
-        data.certificate.template.locale,
-        data.certificate,
-        data.certificate.batch,
-      ),
+      content: data?.certificate
+        ? replaceVariables(
+            data?.certificate.batch.program.achievement ?? "",
+            data?.certificate.template.locale,
+            data?.certificate,
+            data?.certificate.batch,
+          )
+        : "",
     },
     {
       property: "og:title",
-      content: `${data.certificate.firstName} ${data.certificate.lastName} is certified by ${data.certificate.batch.program.name}`,
+      content: `${data?.certificate.firstName} ${data?.certificate.lastName} is certified by ${data?.certificate.batch.program.name}`,
     },
     {
       property: "og:description",
-      content: replaceVariables(
-        data.certificate.batch.program.achievement,
-        data.certificate.template.locale,
-        data.certificate,
-        data.certificate.batch,
-      ),
+      content: data?.certificate
+        ? replaceVariables(
+            data?.certificate.batch.program.achievement ?? "",
+            data?.certificate.template.locale,
+            data?.certificate,
+            data?.certificate.batch,
+          )
+        : "",
     },
     {
       property: "og:image",
-      content: `${data.domain}/cert/${data.certificate.uuid}/social-preview.png?t=${data.certificate.updatedAt}`,
+      content: `${data?.domain}/cert/${data?.certificate.uuid}/social-preview.png?t=${data?.certificate.updatedAt}`,
     },
     {
       property: "og:url",
-      content: `${data.domain}/view/${data.certificate.uuid}`,
+      content: `${data?.domain}/view/${data?.certificate.uuid}`,
     },
   ];
-};
+}
 
 // @todo select relevant individual fields for certificate, batch and program
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await getUser(request);
 
   const certificate = await prisma.certificate.findUnique({
@@ -74,6 +73,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       firstName: true,
       lastName: true,
       email: true,
+      teamName: true,
       updatedAt: true,
       batch: {
         select: {
@@ -113,11 +113,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   // Remove certificate email to prevent exposure // @todo Improve type safety for this
   certificate.email = "";
   return { certificate, userIsOwner, domain };
-};
+}
 
-export default function Index() {
-  const { certificate, userIsOwner } = useLoaderData<typeof loader>();
-  const { org, user } = useRouteLoaderData<typeof viewLoader>("routes/view");
+export default function ViewCertificate({ loaderData }: Route.ComponentProps) {
+  const { certificate, userIsOwner } = loaderData;
+  const { org, user } = useRouteLoaderData("routes/view");
   const [signUpMail, setSignUpMail] = useState<string | null>(null);
   const [signInMail, setSignInMail] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -254,14 +254,14 @@ export default function Index() {
         }
 
         <div className="text-xs mt-8">
-          {org.name}&emsp;&middot;&emsp;
-          {org.imprintUrl && (
+          {org?.name}&emsp;&middot;&emsp;
+          {org?.imprintUrl && (
             <a href={org.imprintUrl} target="_blank" rel="noopener noreferrer">
               Imprint
             </a>
           )}
           &emsp;&middot;&emsp;
-          {org.privacyUrl && (
+          {org?.privacyUrl && (
             <a href={org.privacyUrl} target="_blank" rel="noopener noreferrer">
               Privacy
             </a>

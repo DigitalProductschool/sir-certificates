@@ -1,12 +1,6 @@
-import type { ActionFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/user.forgot-password";
 import { useState } from "react";
-import { redirect, data } from "@remix-run/node";
-import {
-	Form,
-	useActionData,
-	useSearchParams,
-	useLoaderData,
-} from "@remix-run/react";
+import { Form, data, redirect, useSearchParams } from "react-router";
 import { FormField } from "~/components/form-field";
 import { Button } from "~/components/ui/button";
 import {
@@ -20,12 +14,20 @@ import { getUser, sendPasswordResetLink } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { validateEmail } from "~/lib/validators.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
 	const form = await request.formData();
 	const email = form.get("email");
 
 	if (typeof email !== "string") {
-		return data({ error: `Invalid Form Data` }, { status: 400 });
+		return data(
+			{
+				error: `Invalid Form Data`,
+				errors: { email: undefined },
+				fields: { email: undefined },
+				errorCode: "",
+			},
+			{ status: 400 },
+		);
 	}
 
 	const errors = {
@@ -35,8 +37,10 @@ export const action: ActionFunction = async ({ request }) => {
 	if (Object.values(errors).some(Boolean))
 		return data(
 			{
+				error: "",
 				errors,
 				fields: { email },
+				errorCode: "",
 			},
 			{ status: 400 },
 		);
@@ -54,9 +58,9 @@ export const action: ActionFunction = async ({ request }) => {
 	// https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/03-Identity_Management_Testing/04-Testing_for_Account_Enumeration_and_Guessable_User_Account
 
 	return redirect("/user/forgot-password/next-steps");
-};
+}
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
 	// If there's already a user in the session, redirect to the home page
 	const user = await getUser(request);
 	if (user) return redirect("/");
@@ -71,17 +75,19 @@ export const loader: LoaderFunction = async ({ request }) => {
 	});
 
 	return { org };
-};
+}
 
-export default function ForgotPassword() {
-	const actionData = useActionData<typeof action>();
-	const { org } = useLoaderData<typeof loader>();
+export default function ForgotPassword({
+	loaderData,
+	actionData,
+}: Route.ComponentProps) {
+	const { org } = loaderData;
 	const [searchParams /*, setSearchParams */] = useSearchParams();
 	const [formData, setFormData] = useState({
 		email: actionData?.fields?.email || searchParams.get("email") || "",
 	});
 
-	const errors = actionData?.errors || {};
+	const errors = actionData?.errors || { email: "" };
 	const formError = actionData?.error;
 	const formErrorCode = actionData?.errorCode;
 
@@ -159,7 +165,7 @@ export default function ForgotPassword() {
 				</CardContent>
 			</Card>
 			<div className="grow flex flex-row justify-center items-end gap-4 pb-5 text-xs">
-				{org.imprintUrl && (
+				{org?.imprintUrl && (
 					<a
 						href={org.imprintUrl}
 						target="_blank"
@@ -168,7 +174,7 @@ export default function ForgotPassword() {
 						Imprint
 					</a>
 				)}
-				{org.privacyUrl && (
+				{org?.privacyUrl && (
 					<a
 						href={org.privacyUrl}
 						target="_blank"

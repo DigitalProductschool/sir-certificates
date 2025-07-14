@@ -1,14 +1,8 @@
-import type { LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/user.photo";
 import type { Point, Area } from "react-easy-crop";
 import { useCallback, useEffect, useState, useRef } from "react";
 import Cropper from "react-easy-crop";
-import {
-	Form,
-	Link,
-	useNavigate,
-	useFetcher,
-	useLoaderData,
-} from "@remix-run/react";
+import { Form, Link, useNavigate, useFetcher, useLocation } from "react-router";
 import { UserRound, Loader2, Trash2Icon } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
@@ -33,7 +27,7 @@ import {
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
 	const userId = await requireUserId(request);
 	const userPhoto = await prisma.userPhoto.findUnique({
 		where: {
@@ -41,11 +35,16 @@ export const loader: LoaderFunction = async ({ request }) => {
 		},
 	});
 	return { userId, userPhoto };
-};
+}
 
-export default function UserUploadPictureDialog() {
-	const { userPhoto } = useLoaderData<typeof loader>();
+export default function UserUploadPictureDialog({
+	loaderData,
+}: Route.ComponentProps) {
+	const { userPhoto } = loaderData;
 	const navigate = useNavigate();
+	const {
+		state: { fromPath },
+	} = useLocation();
 	const [open, setOpen] = useState(true);
 	const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(
 		null,
@@ -353,7 +352,23 @@ export default function UserUploadPictureDialog() {
 							<div className="mt-4 aspect-square relative bg-gradient-to-t from-[#8B0490] to-[#1B1575] rounded-lg">
 								{originalPreviewUrl || transparentPreviewUrl ? (
 									<div
-										className={`relative w-full h-full rounded-lg border-8 ${leftEdgeTransparent ? "border-l-green-400" : "border-l-amber-400"} ${rightEdgeTransparent ? "border-r-green-400" : "border-r-amber-400"} ${topEdgeTransparent ? "border-t-green-400" : "border-t-amber-400"} ${bottomEdgeTransparent ? "border-b-amber-400" : "border-b-green-400"}`}
+										className={`relative w-full h-full rounded-lg border-8 ${
+											leftEdgeTransparent
+												? "border-l-green-400"
+												: "border-l-amber-400"
+										} ${
+											rightEdgeTransparent
+												? "border-r-green-400"
+												: "border-r-amber-400"
+										} ${
+											topEdgeTransparent
+												? "border-t-green-400"
+												: "border-t-amber-400"
+										} ${
+											bottomEdgeTransparent
+												? "border-b-amber-400"
+												: "border-b-green-400"
+										}`}
 									>
 										<div className="absolute inset-0 transition-opacity duration-1000 ease-in-out">
 											{originalPreviewUrl && (
@@ -499,7 +514,7 @@ export default function UserUploadPictureDialog() {
 							</Tooltip>
 						</Form>
 						<Button type="button" variant="outline" asChild>
-							<Link to={-1}>Back</Link>
+							<Link to={fromPath ?? "/"}>Back</Link>
 						</Button>
 						<Button
 							type="button"

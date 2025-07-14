@@ -1,6 +1,6 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/org.typeface._index";
 import type { Typeface } from "@prisma/client";
-import { Form, Link, useLoaderData } from "@remix-run/react";
+import { Form, Link } from "react-router";
 
 import { Trash2Icon } from "lucide-react";
 
@@ -34,11 +34,11 @@ function capitalizeFirst(string: string) {
   return string[0].toUpperCase() + string.slice(1);
 }
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Typefaces" }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
   await requireSuperAdmin(request);
 
   const typefaces = await prisma.typeface.findMany({
@@ -50,21 +50,12 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   return { typefaces };
-};
+}
 
-type Match = {
-  id: string;
-  pathname: string;
-  data: typeof loader;
-  params: Record<string, string>;
-};
-
-export const handle = {
-  breadcrumb: (match: Match) => <Link to={match.pathname}>Typefaces</Link>,
-};
-
-export default function TypefaceIndexPage() {
-  const { typefaces } = useLoaderData<typeof loader>();
+export default function TypefaceIndexPage({
+  loaderData,
+}: Route.ComponentProps) {
+  const { typefaces } = loaderData;
 
   return (
     <div className="flex flex-col gap-4">

@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
-import { useFetcher } from "@remix-run/react";
+import { useFetcher, type HTMLFormMethod } from "react-router";
 import { LoaderCircle, Undo2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 
 interface FormUpdateProps {
 	action?: string;
-	method?: string;
+	method?: HTMLFormMethod;
 	className?: string;
 	children: React.ReactNode;
 }

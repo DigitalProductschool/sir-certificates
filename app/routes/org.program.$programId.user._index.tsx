@@ -1,15 +1,6 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { User, UserInvitation } from "@prisma/client";
-import {
-  Form,
-  Link,
-  useLoaderData,
-  useRouteLoaderData,
-  useSearchParams,
-} from "@remix-run/react";
-
+import type { Route } from "./+types/org.program.$programId.user._index";
+import { Form, Link, useRouteLoaderData, useSearchParams } from "react-router";
 import { ArrowDown, UserPlus, UserX, MailX } from "lucide-react";
-
 import { Button } from "~/components/ui/button";
 
 import {
@@ -30,13 +21,11 @@ import {
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-import { loader as programLoader } from "./org.program.$programId";
+export function meta() {
+  return [{ title: "Program User" }];
+}
 
-export const meta: MetaFunction = () => {
-  return [{ title: "User" }];
-};
-
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   const programId = Number(params.programId);
   await requireAdminWithProgram(request, Number(params.programId));
 
@@ -76,31 +65,19 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   });
 
   return { user, invitations };
-};
+}
 
-type Match = {
-  id: string;
-  pathname: string;
-  data: typeof loader;
-  params: Record<string, string>;
-};
-
-export const handle = {
-  breadcrumb: (match: Match) => <Link to={match.pathname}>User</Link>,
-};
-
-export default function UserIndexPage() {
-  const { user, invitations } = useLoaderData<typeof loader>();
-  const { program } = useRouteLoaderData<typeof programLoader>(
-    "routes/org.program.$programId",
-  );
+export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
+  const { user, invitations } = loaderData;
+  // @todo typesafe use of useRouteLoaderData
+  const { program } = useRouteLoaderData("routes/org.program.$programId");
   const [searchParams, setSearchParams] = useSearchParams();
 
   let sortedUser = user;
   if (searchParams.has("sort")) {
     switch (searchParams.get("sort")) {
       case "name":
-        sortedUser = user.toSorted((a: User, b: User) => {
+        sortedUser = user.toSorted((a, b) => {
           if (a.firstName < b.firstName) {
             return -1;
           }
@@ -111,7 +88,7 @@ export default function UserIndexPage() {
         });
         break;
       case "email":
-        sortedUser = user.toSorted((a: User, b: User) => {
+        sortedUser = user.toSorted((a, b) => {
           if (a.email < b.email) {
             return -1;
           }
@@ -122,7 +99,7 @@ export default function UserIndexPage() {
         });
         break;
       case "permission":
-        sortedUser = user.toSorted((a: User, b: User) => {
+        sortedUser = user.toSorted((a, b) => {
           if (a.isSuperAdmin && !b.isSuperAdmin) {
             return -1;
           }
@@ -208,7 +185,7 @@ export default function UserIndexPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invitations.map((invite: UserInvitation) => (
+          {invitations.map((invite) => (
             <TableRow key={invite.id} className="text-muted-foreground">
               <TableCell>
                 {invite.firstName} {invite.lastName}
@@ -231,7 +208,7 @@ export default function UserIndexPage() {
               </TableCell>
             </TableRow>
           ))}
-          {sortedUser.map((u: User) => (
+          {sortedUser.map((u) => (
             <TableRow key={u.id}>
               <TableCell>
                 {u.firstName} {u.lastName}

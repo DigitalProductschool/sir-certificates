@@ -1,6 +1,6 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/view.$certUuid_.share";
 import { useState } from "react";
-import { Link, useLoaderData, useRouteLoaderData } from "@remix-run/react";
+import { Link, useLocation, useRouteLoaderData } from "react-router";
 import Markdown from "markdown-to-jsx";
 import { ClipboardCopy, ClipboardCheck, SquareUserRound } from "lucide-react";
 import {
@@ -19,13 +19,11 @@ import { requireUserId, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/text-variables";
 
-import { loader as viewLoader } from "./view";
-
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Share certificate" }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireUserId(request);
   const user = await getUser(request);
 
@@ -68,11 +66,15 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   });
 
   return { certificate, social, domain };
-};
+}
 
-export default function Index() {
-  const { certificate, social, domain } = useLoaderData<typeof loader>();
-  const { user } = useRouteLoaderData<typeof viewLoader>("routes/view");
+export default function ViewCertificateShare({
+  loaderData,
+}: Route.ComponentProps) {
+  const { certificate, social, domain } = loaderData;
+  // @todo figure out if useRouteLoaderData can by typed
+  const { user } = useRouteLoaderData("routes/view");
+  const { pathname } = useLocation();
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
   const certificateUrl = `${domain}/view/${certificate.uuid}`;
@@ -137,7 +139,7 @@ export default function Index() {
                   {
                     /* @todo add variable replacements and Markdown render */
                     replaceVariables(
-                      certificate.batch.program.achievement,
+                      certificate.batch.program.achievement ?? "",
                       certificate.template.locale,
                       certificate,
                       certificate.batch,
@@ -165,6 +167,7 @@ export default function Index() {
                   <Link
                     to="/user/photo"
                     className="col-start-1 row-start-1 opacity-0 hover:opacity-100"
+                    state={{ fromPath: pathname }}
                   >
                     <img
                       src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}&withPlaceholder=1`}

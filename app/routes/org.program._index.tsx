@@ -1,6 +1,5 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { ProgramWithLogo } from "~/lib/types";
-import { useLoaderData, Link } from "@remix-run/react";
+import type { Route } from "./+types/org.program._index";
+import { Link } from "react-router";
 import { FileBadge, FilePen, Settings, UsersIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -13,13 +12,13 @@ import { requireAdmin } from "~/lib/auth.server";
 import { getProgramsByAdmin } from "~/lib/program.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Programs" }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
   const adminId = await requireAdmin(request);
-  const programs = await getProgramsByAdmin(adminId, { logo: true });
+  const programs = await getProgramsByAdmin(adminId);
   const batches = await prisma.batch.findMany({
     where: {
       programId: {
@@ -36,21 +35,10 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   return { programs, batches };
-};
+}
 
-type Match = {
-  id: string;
-  pathname: string;
-  data: typeof loader;
-  params: Record<string, string>;
-};
-
-export const handle = {
-  breadcrumb: (match: Match) => <Link to={match.pathname}>Programs</Link>,
-};
-
-export default function OrgIndex() {
-  const { programs, batches } = useLoaderData<typeof loader>();
+export default function OrgIndex({ loaderData }: Route.ComponentProps) {
+  const { programs, batches } = loaderData;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 items-start gap-4 md:gap-8">
@@ -60,7 +48,7 @@ export default function OrgIndex() {
         </Button>
       </div>
 
-      {programs.map((program: ProgramWithLogo) => {
+      {programs.map((program) => {
         let countCertificates = 0;
         batches.forEach(
           (b: { programId: number; _count: { certificates: number } }) => {

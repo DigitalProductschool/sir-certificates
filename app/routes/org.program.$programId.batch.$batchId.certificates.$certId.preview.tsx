@@ -1,6 +1,5 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Certificate } from "@prisma/client";
-import { Link, useLoaderData } from "@remix-run/react";
+import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.$certId.preview";
+import { Link } from "react-router";
 
 import { XIcon } from "lucide-react";
 import { H2 } from "~/components/typography/headlines";
@@ -9,11 +8,11 @@ import { Button } from "~/components/ui/button";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Preview Certificate" }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const certificate = await prisma.certificate.findUnique({
@@ -30,29 +29,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return { certificate };
-};
+}
 
-type LoaderReturnType = {
-  certificate: Certificate;
-};
-
-type Match = {
-  id: string;
-  pathname: string;
-  data: LoaderReturnType;
-  params: Record<string, string>;
-};
-
-export const handle = {
-  breadcrumb: (match: Match) => (
-    <Link to="#">
-      {match.data.certificate.firstName} {match.data.certificate.lastName}
-    </Link>
-  ),
-};
-
-export default function CertificatePage() {
-  const { certificate } = useLoaderData<typeof loader>();
+export default function CertificatePage({ loaderData }: Route.ComponentProps) {
+  const { certificate } = loaderData;
 
   return (
     <div className="flex flex-col bg-background h-full w-[40%] mt-24 fixed z-50 bottom-0 right-0 p-4 gap-8 pb-12 overflow-auto drop-shadow-xl">

@@ -1,9 +1,8 @@
-import type { ActionFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/user.accept-invite.$inviteId.$code";
 import type { PasswordAssessment } from "~/components/password-indicator";
 import bcrypt from "bcryptjs";
 import { useState } from "react";
-import { data } from "@remix-run/node";
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { Form, data } from "react-router";
 import { Layout } from "~/components/layout";
 
 import {
@@ -26,7 +25,7 @@ import {
 import { createUserSessionAndRedirect } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
 	if (params.inviteId && params.code) {
 		const invite = await prisma.userInvitation.findUnique({
 			where: {
@@ -43,7 +42,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 
 		const formData = await request.formData();
-		const inputs = Object.fromEntries(formData);
+		const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
 		const strength = assessPassword(inputs.password);
 		if (!strength.enough) {
@@ -103,9 +102,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 		status: 400,
 		statusText: "Could not verify the code.",
 	});
-};
+}
 
-export const loader: LoaderFunction = async ({ params }) => {
+export async function loader({ params }: Route.LoaderArgs) {
 	if (params.inviteId && params.code) {
 		const invite = await prisma.userInvitation.findUnique({
 			where: {
@@ -138,11 +137,13 @@ export const loader: LoaderFunction = async ({ params }) => {
 		status: 404,
 		statusText: "Invite not found",
 	});
-};
+}
 
-export default function AcceptInvitationPage() {
-	const actionData = useActionData<typeof action>();
-	const { invite, org } = useLoaderData<typeof loader>();
+export default function AcceptInvitationPage({
+	loaderData,
+	actionData,
+}: Route.ComponentProps) {
+	const { invite, org } = loaderData;
 	const [password, setPassword] = useState("");
 
 	const formError = actionData?.error;
@@ -218,8 +219,8 @@ export default function AcceptInvitationPage() {
 			</Card>
 			<div className="text-xs grow flex flex-row items-end pb-12">
 				{org?.name}&emsp;&middot;&emsp;
-				<a href={org?.imprintUrl}>Imprint</a>&emsp;&middot;&emsp;
-				<a href={org?.privacyUrl}>Privacy</a>
+				<a href={org?.imprintUrl ?? ""}>Imprint</a>&emsp;&middot;&emsp;
+				<a href={org?.privacyUrl ?? ""}>Privacy</a>
 			</div>
 		</Layout>
 	);

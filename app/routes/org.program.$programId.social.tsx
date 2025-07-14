@@ -1,7 +1,6 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import type { Prisma } from "@prisma/client";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { Form, useLoaderData, useFetcher } from "@remix-run/react";
+import type { Route } from "./+types/org.program.$programId.social";
+import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import { Form, useFetcher } from "react-router";
 import { ImageUp, Paintbrush, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
@@ -28,11 +27,11 @@ function calculateCertificateHeight(width: number, top: number) {
   return h;
 }
 
-export const meta: MetaFunction = () => {
+export function meta() {
   return [{ title: "Social Preview" }];
-};
+}
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   // @todo refactor to program route loader to avoid duplicate data loading
@@ -56,7 +55,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   });
 
   // If layout was not initialized yet, return the default layout
-  let layout = social?.layout as Prisma.JsonObject | undefined;
+  let layout = social?.layout;
   if (!layout || !layout.photo || !layout.certificate) {
     layout = defaultLayout;
   }
@@ -66,10 +65,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     social,
     socialLayout: layout,
   };
-};
+}
 
-export default function ProgramSocialPage() {
-  const { program, social, socialLayout } = useLoaderData<typeof loader>();
+export default function ProgramSocialPage({
+  loaderData,
+}: Route.ComponentProps) {
+  const { program, social, socialLayout } = loaderData;
   const fetcherImage = useFetcher({ key: "social-image" });
   const fetcherLayout = useFetcher({ key: "social-layout" });
   const fileRef = useRef<HTMLInputElement | null>(null);

@@ -1,9 +1,8 @@
-import type { MetaFunction, LoaderFunction } from "@remix-run/node";
+import type { Route } from "./+types/_index";
 import type { Organisation, Program, User } from "@prisma/client";
 import type { CertificatesWithBatchAndProgram } from "~/lib/types";
 
-import { redirect } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, redirect } from "react-router";
 import Markdown from "markdown-to-jsx";
 import { SidebarParticipant } from "~/components/sidebar-participant";
 import {
@@ -23,7 +22,7 @@ import {
 import { requireUserId, getUser, logout } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export function meta({ data }: Route.MetaArgs) {
   return [
     { title: `${data?.org?.name} Certificates` },
     {
@@ -33,9 +32,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
       } in one place.`,
     },
   ];
-};
+}
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
   await requireUserId(request);
   const user = await getUser(request);
 
@@ -102,7 +101,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   return { user, org, programs, certificates };
-};
+}
 
 // Loader from /_index route
 export type LoaderReturnType = {
@@ -111,8 +110,8 @@ export type LoaderReturnType = {
   certificates: CertificatesWithBatchAndProgram[];
 };
 
-export default function Index() {
-  const { user, org, programs, certificates } = useLoaderData<typeof loader>();
+export default function Index({ loaderData }: Route.ComponentProps) {
+  const { user, org, programs, certificates } = loaderData;
 
   // @todo fix unintended change of open/close state of the sidebar when navigating between _index and /view
 

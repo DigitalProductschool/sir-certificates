@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import type { ProgramLogo } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
