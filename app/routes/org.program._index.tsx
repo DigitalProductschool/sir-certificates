@@ -41,7 +41,7 @@ export default function OrgIndex({ loaderData }: Route.ComponentProps) {
   const { programs, batches } = loaderData;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 items-start gap-4 md:gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 items-stretch gap-4 md:gap-8">
       <div className="col-span-1 lg:col-span-2 xl:col-span-3">
         <Button asChild>
           <Link to="create">Add Program</Link>
@@ -58,7 +58,7 @@ export default function OrgIndex({ loaderData }: Route.ComponentProps) {
           },
         );
         return (
-          <Card key={program.id}>
+          <Card key={program.id} className="justify-between">
             <CardHeader className="pb-4">
               <CardTitle className="grow">
                 <Link

@@ -206,14 +206,14 @@ function Toolbar({ settings, onChange, onDelete }: any) {
             aria-label="Toggle align left"
             className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
           >
-            <AlignLeft className="h-4 w-4" />
+            <AlignLeft />
           </ToggleGroupItem>
           <ToggleGroupItem
             value="center"
             aria-label="Toggle align center"
             className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
           >
-            <AlignCenter className="h-4 w-4" />
+            <AlignCenter />
           </ToggleGroupItem>
           <ToggleGroupItem
             value="right"
@@ -221,13 +221,18 @@ function Toolbar({ settings, onChange, onDelete }: any) {
             className="data-[state=off]:text-muted-foreground"
             disabled
           >
-            <AlignRight className="h-4 w-4" />
+            <AlignRight />
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
-      <Button type="button" variant="ghost" size="icon" onClick={onDelete}>
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button type="button" variant="ghost" size="icon" onClick={onDelete}>
+            <Trash2 />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">Remove block</TooltipContent>
+      </Tooltip>
     </div>
   );
 }
@@ -244,6 +249,7 @@ function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
   return (
     <div className="flex px-4 gap-2">
       <Input
+        id={`${lineId}-text`}
         key={`${lineId}-text`}
         value={settings.text}
         onChange={(event) =>
@@ -257,7 +263,7 @@ function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="my-button">
-            <Braces className="w-4 h-4" />
+            <Braces />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -365,7 +371,7 @@ function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
           });
         }}
       >
-        <SelectTrigger className="w-[280px]">
+        <SelectTrigger>
           <SelectValue placeholder="Select typeface" />
         </SelectTrigger>
         <SelectContent>
@@ -376,9 +382,14 @@ function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
           ))}
         </SelectContent>
       </Select>
-      <Button type="button" variant="ghost" size="icon" onClick={onDelete}>
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button type="button" variant="ghost" size="icon" onClick={onDelete} className="px-0">
+            <Trash2 />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">Remove segment</TooltipContent>
+      </Tooltip>
     </div>
   );
 }

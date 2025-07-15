@@ -72,7 +72,7 @@ export function SidebarParticipant({
                 <SidebarMenuButton
                   tooltip={`${cert.batch.program.name} – ${cert.batch.name}`}
                   asChild
-                  className="aria-current:bg-accent aria-current:font-bold !h-9 group-data-[collapsible=icon]:w-10"
+                  className="aria-[current]:bg-accent aria-[current]:font-bold !h-9 group-data-[collapsible=icon]:w-10"
                 >
                   <NavLink to={`/view/${cert.uuid}`}>
                     {cert.batch.program.logo ? (
@@ -124,9 +124,9 @@ export function SidebarParticipant({
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="bottom"
-                align="end"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-60 rounded-lg"
+                side="top"
+                align="start"
                 sideOffset={4}
               >
                 <DropdownMenuLabel className="p-0 font-normal">
