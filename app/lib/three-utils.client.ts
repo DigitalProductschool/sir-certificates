@@ -4,7 +4,6 @@
 import { Pass, Effect, RenderPass, Selection } from "postprocessing";
 import {
   Color,
-  ColorRepresentation,
   ShaderChunk,
   ShaderLib,
   UniformsUtils,
@@ -106,7 +105,7 @@ const col = /*@__PURE__*/ new Color();
 let aC: boolean, bC: boolean, cC: boolean;
 export function dampC(
   current: Color,
-  target: ColorRepresentation | [r: number, g: number, b: number],
+  target: [r: number, g: number, b: number],
   smoothTime?: number,
   delta?: number,
   maxSpeed?: number,
@@ -1372,7 +1371,9 @@ newPosition = velocityMatrix * vec4( transformed, 1.0 );
 
 // Get the previous vertex position
 transformed = vec3( position );
-${ShaderChunk.skinbase_vertex.replace(/mat4 /g, "").replace(/getBoneMatrix/g, "getPrevBoneMatrix")}
+${ShaderChunk.skinbase_vertex
+  .replace(/mat4 /g, "")
+  .replace(/getBoneMatrix/g, "getPrevBoneMatrix")}
 ${ShaderChunk.skinning_vertex.replace(/vec4 /g, "")}
 prevPosition = prevVelocityMatrix * vec4( transformed, 1.0 );
 

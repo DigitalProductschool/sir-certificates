@@ -114,7 +114,7 @@ export default function ViewCertificateShare({
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
             <Button asChild>
-              <Link to="/user/photo">
+              <Link to="/user/photo" state={{ fromPath: pathname }}>
                 <SquareUserRound />
                 {user.photo ? "Change" : "Add"} photo
               </Link>

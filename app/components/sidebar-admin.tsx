@@ -112,7 +112,7 @@ export function SidebarAdmin({
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-60 rounded-lg"
                 align="start"
                 side="bottom"
                 sideOffset={4}
@@ -180,7 +180,7 @@ export function SidebarAdmin({
                   <SidebarMenuButton tooltip="Program Managers" asChild>
                     <NavLink
                       to={`/org/program/${activeProgram?.id}/user`}
-                      className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
                     >
                       <UsersIcon />
                       <span>Program Managers</span>
@@ -191,7 +191,7 @@ export function SidebarAdmin({
                   <SidebarMenuButton tooltip="Program Settings" asChild>
                     <NavLink
                       to={`/org/program/${activeProgram?.id}/settings`}
-                      className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
                     >
                       <Settings />
                       <span>Settings</span>
@@ -200,7 +200,10 @@ export function SidebarAdmin({
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton tooltip="Social Media" asChild>
-                    <NavLink to={`/org/program/${activeProgram?.id}/social`}>
+                    <NavLink
+                      to={`/org/program/${activeProgram?.id}/social`}
+                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
+                    >
                       <Share2 />
                       <span>Social Media</span>
                     </NavLink>
@@ -218,7 +221,7 @@ export function SidebarAdmin({
                       to={`/org/program/${activeProgram?.id}/batch/${
                         activeBatchId ? activeBatchId + "/certificates" : ""
                       }`}
-                      className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
                     >
                       <FileBadge />
                       <span>Batches</span>
@@ -233,7 +236,7 @@ export function SidebarAdmin({
                           ? `/org/program/${activeProgram?.id}/batch/${activeBatchId}/import`
                           : `/org/program/${activeProgram?.id}/batch/create`
                       }
-                      className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
                     >
                       <FileUp />
                       <span>Import</span>
@@ -244,7 +247,7 @@ export function SidebarAdmin({
                   <SidebarMenuButton tooltip="PDF Templates" asChild>
                     <NavLink
                       to={`/org/program/${activeProgram?.id}/templates/`}
-                      className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
                     >
                       <FilePen className="w-6 h-6" size={24} />
                       <span>Templates</span>
@@ -276,7 +279,7 @@ export function SidebarAdmin({
                     <SidebarMenuButton tooltip="Organisation Settings" asChild>
                       <NavLink
                         to={`/org/settings`}
-                        className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                        className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
                       >
                         <Home />
                         <span>Organisation</span>
@@ -287,7 +290,7 @@ export function SidebarAdmin({
                     <SidebarMenuButton tooltip="User" asChild>
                       <NavLink
                         to={`/org/user`}
-                        className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                        className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
                       >
                         <UsersIcon />
                         <span>User</span>
@@ -298,7 +301,7 @@ export function SidebarAdmin({
                     <SidebarMenuButton tooltip="Typefaces" asChild>
                       <NavLink
                         to={`/org/typeface`}
-                        className="aria-current:bg-sidebar-accent aria-current:font-bold"
+                        className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
                       >
                         <BookType />
                         <span>Typefaces</span>
@@ -340,9 +343,9 @@ export function SidebarAdmin({
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="bottom"
-                align="end"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-60 rounded-lg"
+                side="top"
+                align="start"
                 sideOffset={4}
               >
                 <DropdownMenuLabel className="p-0 font-normal">

@@ -70,6 +70,7 @@ export default function TypefaceIndexPage({
             <TableHead className="font-medium">Name</TableHead>
             <TableHead>Weight</TableHead>
             <TableHead>Style</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -84,8 +85,8 @@ export default function TypefaceIndexPage({
                 <Form action={`${tf.id}/delete`} method="POST">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button type="submit" variant="outline" size="icon">
-                        <Trash2Icon className="h-4 w-4" />
+                      <Button type="submit" variant="outline">
+                        <Trash2Icon className="h-4 w-4" /> Delete
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">Delete typeface</TooltipContent>

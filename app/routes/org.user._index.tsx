@@ -195,11 +195,11 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
           ))}
           {sortedUser.map((u) => (
             <TableRow key={u.id}>
-              <TableCell className="align-top">
+              <TableCell className="align-top py-4">
                 {u.firstName} {u.lastName}
               </TableCell>
-              <TableCell className="align-top font-medium">{u.email}</TableCell>
-              <TableCell className="align-top">
+              <TableCell className="align-top py-4 font-medium">{u.email}</TableCell>
+              <TableCell className="align-top py-4">
                 {u.isSuperAdmin ? (
                   "Super Admin"
                 ) : u.isAdmin ? (
