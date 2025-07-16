@@ -1,8 +1,8 @@
 # Base Node.js image
-FROM node:20-alpine as base
+FROM node:20-alpine AS base
 
 # Set for base and all layer that inherit from it
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 RUN apk add --no-cache \
 	bash \
@@ -19,7 +19,7 @@ RUN apk add --no-cache \
 #RUN apt-get update && apt-get install -y openssl
 
 # Install all node_modules, including dev dependencies
-FROM base as deps
+FROM base AS deps
 
 WORKDIR /app-certificates
 
@@ -28,7 +28,7 @@ ADD package.json ./
 RUN npm install --include=dev
 
 # Setup production node_modules
-FROM base as production-deps
+FROM base AS production-deps
 
 WORKDIR /app-certificates
 
@@ -37,13 +37,14 @@ ADD package.json ./
 RUN npm prune --omit=dev
 
 # Build the app
-FROM base as build
+FROM base AS build
 
 WORKDIR /app-certificates
 
 COPY --from=deps /app-certificates/node_modules /app-certificates/node_modules
 
 ADD . .
+RUN npx prisma generate
 RUN npm run build
 
 # Finally, build the production image with minimal footprint
@@ -61,5 +62,4 @@ COPY --from=build /app-certificates/public /app-certificates/public
 COPY --from=build /app-certificates/prisma /app-certificates/prisma
 COPY --from=build /app-certificates/package.json /app-certificates/package.json
 
-RUN npx prisma generate
 CMD [ "npm", "run", "start" ]
