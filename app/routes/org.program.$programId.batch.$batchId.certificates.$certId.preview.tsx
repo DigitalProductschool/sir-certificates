@@ -28,11 +28,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     });
   }
 
-  return { certificate };
+  const socialPreview = await prisma.socialPreview.findUnique({
+    where: {
+      programId: Number(params.programId),
+    },
+  });
+
+  return { certificate, socialPreview };
 }
 
 export default function CertificatePage({ loaderData }: Route.ComponentProps) {
-  const { certificate } = loaderData;
+  const { certificate, socialPreview } = loaderData;
 
   return (
     <div className="flex flex-col bg-background h-full w-[40%] mt-24 fixed z-50 bottom-0 right-0 p-4 gap-8 pb-12 overflow-auto drop-shadow-xl">
@@ -63,6 +69,19 @@ export default function CertificatePage({ loaderData }: Route.ComponentProps) {
         src={`/cert/${certificate.uuid}/preview.png?t=${certificate.updatedAt}`}
         alt="Preview of the certificate"
       />
+
+      {socialPreview && (
+        <div className="px-8">
+          <span className="text-sm font-semibold text-muted-foreground">
+            Social Media Preview
+          </span>
+          <img
+            src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}`}
+            className="drop-shadow-xl aspect-[1.91/1]"
+            alt="Social media preview for shared certificates"
+          />
+        </div>
+      )}
     </div>
   );
 }
