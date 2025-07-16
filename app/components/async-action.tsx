@@ -1,5 +1,5 @@
-import { useFetcher } from "@remix-run/react";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
+import { useFetcher } from "react-router";
 
 interface AsyncActionProps {
 	action: string;
