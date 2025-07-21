@@ -1,4 +1,5 @@
 import type { Route } from "./+types/org.program.$programId.social.update";
+import { redirect } from "react-router";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
@@ -69,4 +70,8 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   return { social };
+}
+
+export async function loader({ params }: Route.LoaderArgs) {  
+  return redirect(`/org/program/${params.programId}/social`);
 }

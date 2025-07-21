@@ -1,5 +1,6 @@
 import type { Route } from "./+types/cert.import";
 import { randomUUID } from "node:crypto";
+import { redirect } from "react-router";
 
 import { requireAdmin } from "~/lib/auth.server";
 import {
@@ -79,4 +80,9 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 
 	return { certificate };
+}
+
+export async function loader() {
+	// @todo redirect to the correct program/batch overview?
+	return redirect(`/org/program`);
 }
