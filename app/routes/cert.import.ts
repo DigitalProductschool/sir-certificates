@@ -1,6 +1,5 @@
-// @todo rename route to cert.import
+import type { Route } from "./+types/cert.import";
 import { randomUUID } from "node:crypto";
-import type { ActionFunction } from "react-router";
 
 import { requireAdmin } from "~/lib/auth.server";
 import {
@@ -9,7 +8,7 @@ import {
 } from "~/lib/pdf.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
 	await requireAdmin(request);
 	// @todo @security refactor to program-specific route and program-specific access
 
@@ -80,4 +79,4 @@ export const action: ActionFunction = async ({ request }) => {
 	}
 
 	return { certificate };
-};
+}

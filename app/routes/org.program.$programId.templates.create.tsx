@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.templates.create";
 import type { Template } from "@prisma/client";
 import { useEffect, useState } from "react";
 
@@ -34,7 +34,7 @@ import {
 } from "~/lib/pdf.server";
 import { locales, defaultLocale } from "~/lib/template-locales";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   let template: Template | void = undefined;
@@ -111,7 +111,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     status: 500,
     statusText: "Unkown error when creating new template",
   });
-};
+}
 
 export default function CreateTemplateDialog() {
   const [templateName, setTemplateName] = useState("");

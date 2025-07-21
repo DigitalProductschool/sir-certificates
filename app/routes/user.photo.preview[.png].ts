@@ -1,10 +1,10 @@
-import type { LoaderFunction } from "react-router";
+import type { Route } from "./+types/user.photo.preview[.png]";
 
 import { prisma } from "~/lib/prisma.server";
 import { requireUserId } from "~/lib/auth.server";
 import { readPhoto } from "~/lib/user.server";
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: Route.LoaderArgs) {
 	const userId = await requireUserId(request);
 
 	const userPhoto = await prisma.userPhoto.findUnique({
@@ -35,4 +35,4 @@ export const loader: LoaderFunction = async ({ request }) => {
 			statusText: "File not Found",
 		});
 	}
-};
+}

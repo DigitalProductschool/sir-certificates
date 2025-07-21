@@ -1,5 +1,4 @@
 import type { Route } from "./+types/org.program.$programId.templates.$templateId.edit-meta";
-import type { ActionFunction } from "react-router";
 import { useEffect, useState, useRef } from "react";
 import { Form, redirect, useNavigate } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
@@ -38,7 +37,7 @@ import {
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { defaultLocale, locales } from "~/lib/template-locales";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const existing = await prisma.template.findUnique({
@@ -92,7 +91,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   return redirect(
     `/org/program/${params.programId}/templates/${params.templateId}/edit-layout`,
   );
-};
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));

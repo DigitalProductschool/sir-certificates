@@ -1,11 +1,11 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/user.photo.upload";
 import type { UserPhoto } from "@prisma/client";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireUserId } from "~/lib/auth.server";
 import { saveTransparentPhotoUpload } from "~/lib/user.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
 	const userId = await requireUserId(request);
 	let userPhoto: UserPhoto | void = undefined;
 
@@ -60,4 +60,4 @@ export const action: ActionFunction = async ({ request }) => {
 	}
 
 	return { userPhoto };
-};
+}

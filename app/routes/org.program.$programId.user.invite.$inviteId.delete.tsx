@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.user.invite.$inviteId.delete";
 import { useEffect } from "react";
 import { redirect, useNavigate, useRouteError } from "react-router";
 import { requireAdminWithProgram } from "~/lib/auth.server";
@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   // @todo – if the invitation was also for programs, that the current admin user does not have access to what's the best way to proceed?
@@ -35,7 +35,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     });
 
   return redirect(`/org/program/${params.programId}/user/`);
-};
+}
 
 export function ErrorBoundary() {
   const error = useRouteError();

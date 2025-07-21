@@ -1,10 +1,10 @@
-import type { LoaderFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.templates.$templateId.preview[.png]";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { generatePreviewOfTemplate } from "~/lib/pdf.server";
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ params, request }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const template = await prisma.template.findUnique({
@@ -28,4 +28,4 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       "Content-Type": "image/png",
     },
   });
-};
+}

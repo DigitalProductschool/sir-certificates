@@ -1,10 +1,10 @@
-import type { LoaderFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.social.preview[.png]";
 
 import { prisma } from "~/lib/prisma.server";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { readBackgroundImage, readCompositeImage } from "~/lib/social.server";
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ params, request }: Route.LoaderArgs) {
 	await requireAdminWithProgram(request, Number(params.programId));
 
 	const url = new URL(request.url);
@@ -47,4 +47,4 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 			});
 		}
 	}
-};
+}

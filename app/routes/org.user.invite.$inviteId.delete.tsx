@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.user.invite.$inviteId.delete";
 import { useEffect } from "react";
 import { redirect, useNavigate, useRouteError } from "react-router";
 import { requireSuperAdmin } from "~/lib/auth.server";
@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireSuperAdmin(request);
 
   await prisma.userInvitation
@@ -29,7 +29,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     });
 
   return redirect("/org/user");
-};
+}
 
 export function ErrorBoundary() {
   const error = useRouteError();

@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.$certId.refresh";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import {
@@ -7,7 +7,7 @@ import {
 } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const certificate = await prisma.certificate.findUnique({
@@ -46,4 +46,4 @@ export const action: ActionFunction = async ({ request, params }) => {
   });
 
   return { certificate: certificateUpdate };
-};
+}

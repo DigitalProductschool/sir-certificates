@@ -1,9 +1,9 @@
-import type { LoaderFunction } from "react-router";
+import type { Route } from "./+types/cert.$certUuid.preview[.png]";
 
 import { prisma } from "~/lib/prisma.server";
 import { generatePreviewOfCertificate } from "~/lib/pdf.server";
 
-export const loader: LoaderFunction = async ({ params }) => {
+export async function loader({ params }: Route.LoaderArgs) {
 	// @todo is auth necessary or always public? For now it's public until "unpublish" is implemented
 
 	const certificate = await prisma.certificate.findUnique({
@@ -30,4 +30,4 @@ export const loader: LoaderFunction = async ({ params }) => {
 			"Content-Type": "image/png",
 		},
 	});
-};
+}

@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.social.update";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
@@ -7,7 +7,7 @@ import {
   addTemplateAndPhotoToPreview,
 } from "~/lib/social.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
@@ -69,4 +69,4 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return { social };
-};
+}

@@ -1,5 +1,4 @@
 import type { Route } from "./+types/org.user.$userId.edit";
-import type { ActionFunction } from "react-router";
 import { useEffect, useState } from "react";
 import { Form, redirect, useNavigate } from "react-router";
 
@@ -25,7 +24,7 @@ export function meta() {
   return [{ title: "Edit User" }];
 }
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   const adminId = await requireSuperAdmin(request);
   const admin = await prisma.user.findUnique({
     where: {
@@ -41,8 +40,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   const setAdminOfPrograms = inputs.adminOfPrograms
     ? inputs.adminOfPrograms.split(",").map((id: string) => {
-        return { id: Number(id) };
-      })
+      return { id: Number(id) };
+    })
     : [];
 
   // @todo add error handling (i.e. user not found)
@@ -83,7 +82,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   });
 
   return redirect(`/org/user`);
-};
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const adminId = await requireSuperAdmin(request);

@@ -1,10 +1,10 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/user.photo.delete";
 import { redirect } from "react-router";
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { deleteUserPhoto } from "~/lib/user.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
 	const userId = await requireUserId(request);
 	const userPhoto = await prisma.userPhoto.findUnique({
 		where: {
@@ -22,6 +22,6 @@ export const action: ActionFunction = async ({ request }) => {
 	await deleteUserPhoto(userPhoto);
 
 	return redirect(`/user/photo`);
-};
+}
 
 // @todo improve user-facing error handling with an ErrorBoundary and a Dialog

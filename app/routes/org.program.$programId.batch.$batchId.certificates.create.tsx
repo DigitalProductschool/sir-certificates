@@ -1,5 +1,4 @@
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.create";
-import type { ActionFunction } from "react-router";
 import type { Template } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { useEffect, useState, useRef } from "react";
@@ -35,7 +34,7 @@ export function meta() {
   return [{ title: "Add Certificate" }];
 }
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
@@ -75,7 +74,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return redirect(`../`);
-};
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));

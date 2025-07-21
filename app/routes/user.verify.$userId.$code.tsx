@@ -1,10 +1,10 @@
-import type { LoaderFunction } from "react-router";
+import type { Route } from "./+types/user.verify.$userId.$code";
 
 import { redirect } from "react-router";
 import { Layout } from "~/components/layout";
 import { prisma } from "~/lib/prisma.server";
 
-export const loader: LoaderFunction = async ({ params }) => {
+export async function loader({ params }: Route.LoaderArgs) {
 	if (params.userId && params.code) {
 		let user = await prisma.user.findUnique({
 			where: {
@@ -44,7 +44,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 		status: 400,
 		statusText: "Could not verify the code.",
 	});
-};
+}
 
 export default function VerifyUserPage() {
 	return <Layout type="modal">We did not expect you here.</Layout>;
