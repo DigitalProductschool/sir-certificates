@@ -1,5 +1,6 @@
 import type { Route } from "./+types/org.program.$programId.social.upload";
 import type { SocialPreview } from "@prisma/client";
+import { redirect } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
@@ -100,3 +101,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   return { social };
 }
+
+export async function loader({ params }: Route.LoaderArgs) {  
+  return redirect(`/org/program/${params.programId}/social`);
+}
+

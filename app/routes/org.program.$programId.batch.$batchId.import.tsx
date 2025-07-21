@@ -81,20 +81,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { batch, templates };
 }
 
-/* type LoaderReturnType = {
-  batch: Batch;
-  templates: Template[];
-};
-
-type Match = {
-  id: string;
-  pathname: string;
-  data: LoaderReturnType;
-  params: Record<string, string>;
-};
-
-*/
-
 function StatusIndicator({ status, error }: { status: string; error: string }) {
   switch (status) {
     case "todo":

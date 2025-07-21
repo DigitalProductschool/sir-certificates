@@ -1,3 +1,4 @@
+import { redirect } from "react-router";
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.$certId.refresh";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
@@ -46,4 +47,8 @@ export async function action({ request, params }: Route.ActionArgs) {
   });
 
   return { certificate: certificateUpdate };
+}
+
+export async function loader({ params }: Route.LoaderArgs) {  
+  return redirect(`/org/program/${params.programId}/batch/${params.batchId}/certificates`);
 }

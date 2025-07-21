@@ -36,3 +36,7 @@ export async function action({ request }: Route.ActionArgs) {
 		return redirect("/user/verification-info");
 	}
 }
+
+export async function loader() {  
+	return redirect("/user/sign/in");
+}

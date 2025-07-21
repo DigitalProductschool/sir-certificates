@@ -24,4 +24,9 @@ export async function action({ request }: Route.ActionArgs) {
 	return redirect(`/user/photo`);
 }
 
+export async function loader() {  
+	return redirect(`/user/photo`);
+}
+
+
 // @todo improve user-facing error handling with an ErrorBoundary and a Dialog

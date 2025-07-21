@@ -11,4 +11,9 @@ export async function action({ request, params }: Route.ActionArgs) {
   return redirect(`/org/program/${params.programId}/templates`);
 }
 
+export async function loader({ params }: Route.LoaderArgs) {  
+  return redirect(`/org/program/${params.programId}/templates/${params.templateId}/edit-meta`);
+}
+
+
 // @todo improve user-facing error handling with an ErrorBoundary and a Dialog

@@ -37,6 +37,11 @@ export async function action({ request, params }: Route.ActionArgs) {
   return redirect(`/org/program/${params.programId}/user/`);
 }
 
+export async function loader({ params }: Route.LoaderArgs) {  
+  return redirect(`/org/program/${params.programId}/user`);
+}
+
+
 export function ErrorBoundary() {
   const error = useRouteError();
   const navigate = useNavigate();

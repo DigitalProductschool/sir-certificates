@@ -22,6 +22,10 @@ export async function action({ request, params }: Route.ActionArgs) {
   return redirect("/org/typeface");
 }
 
+export async function loader() {  
+  return redirect(`/org/typeface`);
+}
+
 export function ErrorBoundary() {
   const error = useRouteError();
   const navigate = useNavigate();

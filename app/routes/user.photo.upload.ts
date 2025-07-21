@@ -1,5 +1,6 @@
 import type { Route } from "./+types/user.photo.upload";
 import type { UserPhoto } from "@prisma/client";
+import { redirect } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireUserId } from "~/lib/auth.server";
 import { saveTransparentPhotoUpload } from "~/lib/user.server";
@@ -60,4 +61,8 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 
 	return { userPhoto };
+}
+
+export async function loader() {  
+	return redirect(`/user/photo`);
 }
