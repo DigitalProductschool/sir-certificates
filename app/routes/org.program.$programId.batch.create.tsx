@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.batch.create";
 import { useEffect, useState, useRef } from "react";
 import { Form, redirect, useNavigate } from "react-router";
 
@@ -21,7 +21,7 @@ export function meta() {
   return [{ title: "Add Batch" }];
 }
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
@@ -43,7 +43,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   });
 
   return redirect(`../${batch.id}/import`);
-};
+}
 
 export default function CreateBatchDialog() {
   const navigate = useNavigate();

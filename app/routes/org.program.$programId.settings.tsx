@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.settings";
 import { type ChangeEvent, useRef } from "react";
 import { Form, useFetcher, useRouteLoaderData } from "react-router";
 
@@ -18,7 +18,7 @@ export function meta() {
 
 const allowedUpdateFields = ["name", "achievement", "about", "website"];
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
@@ -40,7 +40,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   });
 
   return { program };
-};
+}
 
 export default function ProgramSettings() {
   // @todo typesafe use of useRouteLoaderData

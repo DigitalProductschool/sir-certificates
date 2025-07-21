@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.social.delete";
 import { redirect } from "react-router";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
@@ -8,7 +8,7 @@ import {
 } from "~/lib/social.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   // Clean up existing background image
@@ -37,4 +37,4 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return redirect(`/org/program/${params.programId}/social`);
-};
+}

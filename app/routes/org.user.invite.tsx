@@ -1,5 +1,4 @@
 import type { Route } from "./+types/org.user.invite";
-import type { ActionFunction } from "react-router";
 import type { Program } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { Form, redirect, useNavigate } from "react-router";
@@ -26,7 +25,7 @@ export function meta() {
   return [{ title: "Invite Admin" }];
 }
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
   const adminId = await requireSuperAdmin(request);
   const admin = await prisma.user.findUnique({ where: { id: adminId } });
 
@@ -50,7 +49,7 @@ export const action: ActionFunction = async ({ request }) => {
   );
 
   return redirect(`/org/user`);
-};
+}
 
 export async function loader({ request }: Route.LoaderArgs) {
   const adminId = await requireSuperAdmin(request);

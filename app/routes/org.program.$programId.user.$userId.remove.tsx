@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.user.$userId.remove";
 import type { Program } from "@prisma/client";
 import { redirect } from "react-router";
 
@@ -6,7 +6,7 @@ import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { requireAccessToProgram } from "~/lib/program.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   const userId = Number(params.userId);
   const adminId = await requireAdmin(request);
   await requireAccessToProgram(adminId, Number(params.programId));
@@ -53,4 +53,4 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return redirect(`/org/program/${params.programId}/user/`);
-};
+}

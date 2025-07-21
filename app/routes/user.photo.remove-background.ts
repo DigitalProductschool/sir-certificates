@@ -1,10 +1,10 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/user.photo.remove-background";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { type LazyContent, LazyFile } from "@mjackson/lazy-file";
 
 import { requireUserId } from "~/lib/auth.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
 	await requireUserId(request);
 
 	const uploadHandler = async (fileUpload: FileUpload) => {
@@ -98,4 +98,4 @@ export const action: ActionFunction = async ({ request }) => {
 			statusText: "Missing uploaded photo",
 		});
 	}
-};
+}

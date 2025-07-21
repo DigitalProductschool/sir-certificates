@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.social.upload";
 import type { SocialPreview } from "@prisma/client";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireAdminWithProgram } from "~/lib/auth.server";
@@ -11,7 +11,7 @@ import {
   defaultLayout,
 } from "~/lib/social.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   const programId = Number(params.programId);
   await requireAdminWithProgram(request, Number(params.programId));
 
@@ -99,4 +99,4 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return { social };
-};
+}

@@ -1,12 +1,13 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.settings.logo-delete";
 import type { ProgramLogo } from "@prisma/client";
 import { randomUUID } from "node:crypto";
+import { redirect } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { saveProgramLogoUpload } from "~/lib/program.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   let logo: ProgramLogo | void = undefined;
@@ -67,4 +68,9 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return { logo };
-};
+}
+
+export async function loader({ params }: Route.LoaderArgs) {
+  return redirect(`/org/program/${params.programId}/settings`);
+}
+

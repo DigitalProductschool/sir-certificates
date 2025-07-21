@@ -1,4 +1,6 @@
-import type { ActionFunction, ErrorResponse } from "react-router";
+import type { Route } from "./+types/org.program.$programId.batch.$batchId.delete";
+
+import type { ErrorResponse } from "react-router";
 import { useEffect } from "react";
 import {
   redirect,
@@ -19,7 +21,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   await prisma.batch
@@ -34,8 +36,12 @@ export const action: ActionFunction = async ({ request, params }) => {
       throwErrorResponse(error, "Could not delete batch");
     });
 
-  return redirect("../");
-};
+  return redirect(`/org/program/${params.programId}/batch`);
+}
+
+export async function loader({ params }: Route.LoaderArgs) {
+  return redirect(`/org/program/${params.programId}/batch/${params.batchId}`);
+}
 
 export function ErrorBoundary() {
   const error = useRouteError();

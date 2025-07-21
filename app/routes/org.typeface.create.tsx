@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.typeface.create";
 import type { Typeface } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { Form, redirect, useNavigate, useRouteError } from "react-router";
@@ -27,7 +27,7 @@ import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { saveTypefaceUpload } from "~/lib/typeface.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
   await requireSuperAdmin(request);
 
   let typeface: Typeface | void = undefined;
@@ -50,7 +50,7 @@ export const action: ActionFunction = async ({ request }) => {
         return await saveTypefaceUpload(typeface, fileUpload);
       }
     }
-  };
+  }
 
   // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
   const formData = await parseFormData(
@@ -89,7 +89,7 @@ export const action: ActionFunction = async ({ request }) => {
     });
 
   return redirect(`/org/typeface`);
-};
+}
 
 export default function CreateTypefaceDialog() {
   const [typefaceName, setTypefaceName] = useState("");

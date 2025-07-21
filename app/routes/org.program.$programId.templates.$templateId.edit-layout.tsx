@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.program.$programId.templates.$templateId.edit-layout";
-import type { ActionFunction, ErrorResponse } from "react-router";
+import type { ErrorResponse } from "react-router";
 import { useEffect, useState } from "react";
 import {
   Form,
@@ -38,7 +38,7 @@ export function meta({ data }: Route.MetaArgs) {
   return [{ title: `Template ${data?.template?.name}` }];
 }
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
@@ -77,7 +77,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return { template };
-};
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));

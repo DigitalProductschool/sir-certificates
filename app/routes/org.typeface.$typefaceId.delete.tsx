@@ -1,4 +1,4 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/org.typeface.$typefaceId.delete";
 import { useEffect } from "react";
 import { redirect, useNavigate, useRouteError } from "react-router";
 import { requireSuperAdmin } from "~/lib/auth.server";
@@ -14,13 +14,13 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireSuperAdmin(request);
 
   await deleteTypeface(Number(params.typefaceId));
 
   return redirect("/org/typeface");
-};
+}
 
 export function ErrorBoundary() {
   const error = useRouteError();

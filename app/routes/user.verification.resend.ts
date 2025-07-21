@@ -1,10 +1,10 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/user.verification.resend";
 import { redirect } from "react-router";
 import { prisma } from "~/lib/prisma.server";
 import { sendVerificationEmail } from "~/lib/user.server";
 import { validateEmail } from "~/lib/validators.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: Route.ActionArgs) {
 	const form = await request.formData();
 	const email = form.get("email") as string;
 	const emailError = validateEmail(email);
@@ -35,4 +35,4 @@ export const action: ActionFunction = async ({ request }) => {
 		await sendVerificationEmail(user);
 		return redirect("/user/verification-info");
 	}
-};
+}

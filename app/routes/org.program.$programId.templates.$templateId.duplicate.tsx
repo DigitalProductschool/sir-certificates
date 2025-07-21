@@ -1,5 +1,4 @@
 import type { Route } from "./+types/org.program.$programId.templates.$templateId.duplicate";
-import type { ActionFunction } from "react-router";
 import type { Prisma } from "@prisma/client";
 import { useEffect, useState, useRef } from "react";
 import { Form, redirect, useNavigate } from "react-router";
@@ -34,7 +33,7 @@ import {
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { locales } from "~/lib/template-locales";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const existing = await prisma.template.findUnique({
@@ -123,7 +122,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     status: 500,
     statusText: "Unkown error when duplicating template",
   });
-};
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));

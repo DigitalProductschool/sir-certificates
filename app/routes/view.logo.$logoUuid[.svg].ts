@@ -1,9 +1,9 @@
-import type { LoaderFunction } from "react-router";
+import type { Route } from "./+types/view.logo.$logoUuid[.svg]";
 
 import { prisma } from "~/lib/prisma.server";
 import { readProgramLogo } from "~/lib/program.server";
 
-export const loader: LoaderFunction = async ({ params }) => {
+export async function loader({ params }: Route.LoaderArgs) {
 	const logo = await prisma.programLogo.findUnique({
 		where: {
 			uuid: params.logoUuid,
@@ -32,4 +32,4 @@ export const loader: LoaderFunction = async ({ params }) => {
 			statusText: "File not Found",
 		});
 	}
-};
+}

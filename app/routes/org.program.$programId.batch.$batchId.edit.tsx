@@ -1,5 +1,4 @@
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.edit";
-import type { ActionFunction } from "react-router";
 
 import { useEffect, useState, useRef } from "react";
 import { Form, redirect, useNavigate } from "react-router";
@@ -29,7 +28,7 @@ export function meta() {
   return [{ title: "Edit Batch" }];
 }
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
@@ -48,7 +47,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   });
 
   return redirect(`../${params.batchId}/certificates`);
-};
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));

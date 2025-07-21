@@ -1,10 +1,10 @@
-import type { LoaderFunction } from "react-router";
+import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.download[.zip]";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { downloadCertificates } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ params, request }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const certificates = await prisma.certificate.findMany({
@@ -20,4 +20,4 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   });
 
   return downloadCertificates(certificates);
-};
+}

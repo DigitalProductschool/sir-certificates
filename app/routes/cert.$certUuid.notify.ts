@@ -1,4 +1,5 @@
-import type { ActionFunction } from "react-router";
+import type { Route } from "./+types/cert.$certUuid.notify";
+import { redirect } from "react-router";
 import slug from "slug";
 
 import { requireAdmin } from "~/lib/auth.server";
@@ -9,7 +10,7 @@ import { prisma } from "~/lib/prisma.server";
 
 // @todo refactor to route org.program.$programId.batch.batchId.certificates.$certId.notify.ts
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: Route.ActionArgs) {
   await requireAdmin(request);
 
   const certificate = await prisma.certificate.findUnique({
@@ -142,4 +143,9 @@ export const action: ActionFunction = async ({ request, params }) => {
   });
 
   return response.body;
-};
+}
+
+export async function loader() {
+  // @todo redirect to the correct program/batch overview?
+  return redirect(`/org/program`);
+}
