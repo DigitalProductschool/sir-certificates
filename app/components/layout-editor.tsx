@@ -237,7 +237,7 @@ function Toolbar({ settings, onChange, onDelete }: any) {
   );
 }
 
-function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
+function TextRow({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
   const addVariable = (variable: string) => {
     onChangeLine({
       id: lineId,
@@ -247,150 +247,167 @@ function TextLine({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
   };
 
   return (
-    <div className="flex px-4 gap-2">
-      <Input
-        id={`${lineId}-text`}
-        key={`${lineId}-text`}
-        value={settings.text}
-        onChange={(event) =>
-          onChangeLine({
-            id: lineId,
-            text: event.target.value,
-            font: settings.font,
-          })
-        }
-      />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="my-button">
-            <Braces />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuLabel>Add variable</DropdownMenuLabel>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>Batch</DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onSelect={() => addVariable("{batch.name}")}>
-                  Name
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{batch.startDate}")}
-                >
-                  Start date
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{batch.endDate}")}
-                >
-                  End date
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{batch.signatureDate}")}
-                >
-                  Signature date
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{batch.signatureDateLong}")}
-                >
-                  Signature date (long)
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>Certificate</DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{certificate.fullName}")}
-                >
-                  Full Name
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{certificate.firstName}")}
-                >
-                  First Name
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{certificate.lastName}")}
-                >
-                  Last Name
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{certificate.teamName}")}
-                >
-                  Team Name
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{certificate.fullNameCaps}")}
-                >
-                  FULL NAME
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{certificate.firstNameCaps}")}
-                >
-                  FIRST NAME
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{certificate.firstNameCaps}")}
-                >
-                  LAST NAME
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>Date</DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{datetime.currentDate}")}
-                >
-                  Current date
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addVariable("{datetime.currentMonth}")}
-                >
-                  Current month
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <Select
-        key={`${lineId}-font`}
-        value={settings.font}
-        onValueChange={(fontName) => {
-          onChangeLine({
-            id: lineId,
-            text: settings.text,
-            font: fontName,
-          });
-        }}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Select typeface" />
-        </SelectTrigger>
-        <SelectContent>
-          {fonts.map((font: Typeface) => (
-            <SelectItem key={font.id} value={font.name}>
-              {font.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button type="button" variant="ghost" size="icon" onClick={onDelete} className="px-0">
-            <Trash2 />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top">Remove segment</TooltipContent>
-      </Tooltip>
-    </div>
+    <tr>
+      <td className="pl-4 pr-1 py-0.5">
+        <Input
+          id={`${lineId}-text`}
+          key={`${lineId}-text`}
+          value={settings.text}
+          className="grow"
+          onChange={(event) =>
+            onChangeLine({
+              id: lineId,
+              text: event.target.value,
+              font: settings.font,
+            })
+          }
+        />
+      </td>
+      <td>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="my-button">
+              <Braces />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuLabel>Add variable</DropdownMenuLabel>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Batch</DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{batch.name}")}
+                  >
+                    Name
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{batch.startDate}")}
+                  >
+                    Start date
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{batch.endDate}")}
+                  >
+                    End date
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{batch.signatureDate}")}
+                  >
+                    Signature date
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{batch.signatureDateLong}")}
+                  >
+                    Signature date (long)
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Certificate</DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{certificate.fullName}")}
+                  >
+                    Full Name
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{certificate.firstName}")}
+                  >
+                    First Name
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{certificate.lastName}")}
+                  >
+                    Last Name
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{certificate.teamName}")}
+                  >
+                    Team Name
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{certificate.fullNameCaps}")}
+                  >
+                    FULL NAME
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{certificate.firstNameCaps}")}
+                  >
+                    FIRST NAME
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{certificate.firstNameCaps}")}
+                  >
+                    LAST NAME
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Date</DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{datetime.currentDate}")}
+                  >
+                    Current date
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{datetime.currentMonth}")}
+                  >
+                    Current month
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </td>
+      <td className="px-1">
+        <Select
+          key={`${lineId}-font`}
+          value={settings.font}
+          onValueChange={(fontName) => {
+            onChangeLine({
+              id: lineId,
+              text: settings.text,
+              font: fontName,
+            });
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select typeface" />
+          </SelectTrigger>
+          <SelectContent>
+            {fonts.map((font: Typeface) => (
+              <SelectItem key={font.id} value={font.name}>
+                {font.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </td>
+      <td className="pr-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onDelete}
+              className="px-0"
+            >
+              <Trash2 />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Remove segment</TooltipContent>
+        </Tooltip>
+      </td>
+    </tr>
   );
 }
 
@@ -398,7 +415,7 @@ function TextBlock({ blockId, settings, fonts, onChangeBlock, onDelete }: any) {
   const lines = settings.lines.map((line: any, index: number) => {
     const lineId = line.id || generateRandomId();
     return (
-      <TextLine
+      <TextRow
         key={lineId}
         lineId={lineId}
         settings={line}
@@ -428,7 +445,15 @@ function TextBlock({ blockId, settings, fonts, onChangeBlock, onDelete }: any) {
         }}
         onDelete={onDelete}
       />
-      {lines}
+      <table>
+        <colgroup>
+          <col width="70%" />
+          <col width="40" />
+          <col />
+          <col width="40" />
+        </colgroup>
+        <tbody>{lines}</tbody>
+      </table>
       <Button
         type="button"
         variant="ghost"
