@@ -74,6 +74,8 @@ model Organisation {
   name          String
   imprintUrl    String?   @db.VarChar(128)
   privacyUrl    String?   @db.VarChar(128)
+  senderEmail   String?   @db.VarChar(128)
+  senderName    String?   @db.VarChar(128) 
 
   @@map("organisation")  
 }

@@ -15,6 +15,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
 import { requireSuperAdmin } from "~/lib/auth.server";
+import { getOrg } from "~/lib/organisation.server";
 import { prisma } from "~/lib/prisma.server";
 
 export function meta() {
@@ -44,20 +45,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireSuperAdmin(request);
-
-  const org = await prisma.organisation.findUnique({
-    where: {
-      id: 1,
-    },
-  });
-
-  if (!org) {
-    throw new Response(null, {
-      status: 404,
-      statusText: "Not Found",
-    });
-  }
-
+  const org = await getOrg();
   return { org };
 }
 

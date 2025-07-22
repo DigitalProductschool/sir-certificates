@@ -5,6 +5,7 @@ import slug from "slug";
 import { requireAdmin } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
 import { mailjetSend } from "~/lib/email.server";
+import { getOrg } from "~/lib/organisation.server";
 import { generateCertificate } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
 
@@ -34,18 +35,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     });
   }
 
-  const org = await prisma.organisation.findUnique({
-    where: {
-      id: 1,
-    },
-  });
-
-  if (!org) {
-    throw new Response(null, {
-      status: 500,
-      statusText: "Missing organisation",
-    });
-  }
+  const org = await getOrg();
 
   const social = await prisma.socialPreview.findUnique({
     where: {
@@ -110,8 +100,8 @@ export async function action({ request, params }: Route.ActionArgs) {
         // @ts-expect-error CustomId is missing from the Message type
         CustomId: certificate.uuid,
         From: {
-          Email: "notifications@certificates.unternehmertum.de",
-          Name: `${org.name} Certificates`,
+          Email: org.senderEmail ?? "email-not-configured@example.com",
+          Name: org.senderName ?? "Please configure in organisation settings",
         },
         To: [
           {

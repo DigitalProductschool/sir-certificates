@@ -22,8 +22,8 @@ import {
 } from "~/components/ui/card";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { login, getUser } from "~/lib/auth.server";
-import { prisma } from "~/lib/prisma.server";
 import { validateEmail, validatePassword } from "~/lib/validators.server";
+import { getPublicOrg } from "~/lib/organisation.server";
 
 export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
@@ -68,15 +68,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (user) return redirect("/");
 
   // @todo refactor to routeLoaderData
-  const org = await prisma.organisation.findUnique({
-    where: { id: 1 },
-    select: {
-      name: true,
-      imprintUrl: true,
-      privacyUrl: true,
-    },
-  });
-
+  const org = await getPublicOrg();
   return { org };
 }
 

@@ -8,6 +8,7 @@ import { mailjetSend } from "./email.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 import { requireAccessToProgram } from "./program.server";
 import { createUser } from "./user.server";
+import { getOrg } from "./organisation.server";
 
 const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
@@ -248,6 +249,7 @@ export async function logout(request: Request) {
 }
 
 export async function sendPasswordResetLink(user: User) {
+	const org = await getOrg();
 	const reset = await prisma.userPasswordReset
 		.upsert({
 			where: {
@@ -279,8 +281,12 @@ export async function sendPasswordResetLink(user: User) {
 			Messages: [
 				{
 					From: {
-						Email: "registrations@certificates.unternehmertum.de",
-						Name: "UnternehmerTUM Certificates",
+						Email:
+							org.senderEmail ??
+							"email-not-configured@example.com",
+						Name:
+							org.senderName ??
+							"Please configure in organisation settings",
 					},
 					To: [
 						{
@@ -289,8 +295,8 @@ export async function sendPasswordResetLink(user: User) {
 						},
 					],
 					Subject: `Reset your password`,
-					TextPart: `Dear ${user.firstName} ${user.lastName},\n\nTo reset your password for UnternehmerTUM Certificates, please click on the following link:\n${resetUrl}\n\nIf you haven't requested this password reset, please ignore or report this email.\n\nThank you!`,
-					HTMLPart: `<p>Dear ${user.firstName} ${user.lastName},</p><p>To reset your password for UnternehmerTUM Certificates, please click on the following link:<br /><a href="${resetUrl}">${resetUrl}</a></p><p>If you haven't requested this password reset, please ignore or report this email.</p><p>Thank you!</p>`,
+					TextPart: `Dear ${user.firstName} ${user.lastName},\n\nTo reset your password for ${org.name} Certificates, please click on the following link:\n${resetUrl}\n\nIf you haven't requested this password reset, please ignore or report this email.\n\nThank you!`,
+					HTMLPart: `<p>Dear ${user.firstName} ${user.lastName},</p><p>To reset your password for ${org.name} Certificates, please click on the following link:<br /><a href="${resetUrl}">${resetUrl}</a></p><p>If you haven't requested this password reset, please ignore or report this email.</p><p>Thank you!</p>`,
 				},
 			],
 		}).catch((/*error*/) => {

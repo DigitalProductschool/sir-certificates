@@ -2,22 +2,14 @@ import type { Route } from "./+types/user.forgot-password_.next-steps";
 import { redirect } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { getUser } from "~/lib/auth.server";
-import { prisma } from "~/lib/prisma.server";
+import { getPublicOrg } from "~/lib/organisation.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
 	// If there's already a user in the session, redirect to the home page
 	const user = await getUser(request);
 	if (user) return redirect("/");
 
-	const org = await prisma.organisation.findUnique({
-		where: { id: 1 },
-		select: {
-			name: true,
-			imprintUrl: true,
-			privacyUrl: true,
-		},
-	});
-
+	const org = await getPublicOrg();
 	return { org };
 }
 
