@@ -9,6 +9,7 @@ export type PublicOrganisation = Prisma.OrganisationGetPayload<{
 	};
 }>;
 
+// @todo evaluate against potential race-conditions / how long is this value cached?
 let org: Organisation | null = null;
 let publicOrg: PublicOrganisation | null = null;
 
@@ -31,6 +32,7 @@ export async function getOrg(): Promise<Organisation> {
 				privacyUrl: null,
 				senderEmail: null,
 				senderName: null,
+				updatedAt: new Date(),
 			};
 		}
 	}
@@ -64,4 +66,16 @@ export async function getPublicOrg(): Promise<PublicOrganisation> {
 	}
 
 	return publicOrg;
+}
+
+export async function saveOrg(update: {
+	[k: string]: string;
+}): Promise<Organisation> {
+	org = await prisma.organisation.update({
+		where: {
+			id: 1,
+		},
+		data: update,
+	});
+	return org;
 }
