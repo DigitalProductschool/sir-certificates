@@ -70,13 +70,13 @@ model UserPhoto {
 
 
 model Organisation {
-  id            Int       @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())  
   name          String
   imprintUrl    String?   @db.VarChar(128)
   privacyUrl    String?   @db.VarChar(128)
   senderEmail   String?   @db.VarChar(128)
   senderName    String?   @db.VarChar(128) 
-
+  updatedAt     DateTime  @updatedAt
   @@map("organisation")  
 }
 
