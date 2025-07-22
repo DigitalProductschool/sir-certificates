@@ -24,6 +24,7 @@ import {
 
 import { createUserSessionAndRedirect } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { getPublicOrg } from "~/lib/organisation.server";
 
 export async function action({ request, params }: Route.ActionArgs) {
 	if (params.inviteId && params.code) {
@@ -123,12 +124,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 			});
 		}
 
-		const org = await prisma.organisation.findUnique({
-			where: {
-				id: 1,
-			},
-		});
-
+		const org = await getPublicOrg();
 		return { invite, org };
 	}
 

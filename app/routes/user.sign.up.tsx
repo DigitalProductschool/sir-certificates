@@ -20,7 +20,7 @@ import {
 } from "~/components/ui/card";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { register, getUser } from "~/lib/auth.server";
-import { prisma } from "~/lib/prisma.server";
+import { getPublicOrg } from "~/lib/organisation.server";
 import {
   validateEmail,
   validateName,
@@ -79,15 +79,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const user = await getUser(request);
   if (user) return redirect("/");
 
-  const org = await prisma.organisation.findUnique({
-    where: { id: 1 },
-    select: {
-      name: true,
-      imprintUrl: true,
-      privacyUrl: true,
-    },
-  });
-
+  const org = await getPublicOrg();
   return { org };
 }
 

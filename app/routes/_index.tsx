@@ -21,6 +21,7 @@ import {
 
 import { requireUserId, getUser, logout } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { getPublicOrg } from "~/lib/organisation.server";
 
 export function meta({ data }: Route.MetaArgs) {
   return [
@@ -40,28 +41,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   if (!user) {
     return await logout(request);
-    /* return new Response(null, {
-      status: 500,
-      statusText: "Error while retrieving user information.",
-    }); */
   }
 
   // @todo parallelize DB requests instead of awaiting each one
-
-  let org = await prisma.organisation.findUnique({
-    where: {
-      id: 1,
-    },
-  });
-
-  if (!org) {
-    org = {
-      id: 1,
-      name: "Unknown Organisation",
-      imprintUrl: null,
-      privacyUrl: null,
-    };
-  }
+  const org = await getPublicOrg();
 
   const certificates = await prisma.certificate.findMany({
     where: {

@@ -7,6 +7,7 @@ import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 
 import { getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { getPublicOrg } from "~/lib/organisation.server";
 
 export function meta() {
   return [{ title: "Certificates" }];
@@ -15,12 +16,7 @@ export function meta() {
 export async function loader({ request }: Route.LoaderArgs) {
   // @todo refactor the loader into the subroutes, based on public/private access, with strict select statements
   const user = await getUser(request);
-
-  const org = await prisma.organisation.findUnique({
-    where: {
-      id: 1,
-    },
-  });
+  const org = await getPublicOrg();
 
   let certificates: CertificatesWithBatchAndProgram[] = [];
   if (user) {

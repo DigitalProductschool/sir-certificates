@@ -27,6 +27,7 @@ import {
 import { Label } from "~/components/ui/label";
 import { prisma } from "~/lib/prisma.server";
 import { changePassword } from "~/lib/user.server";
+import { getPublicOrg } from "~/lib/organisation.server";
 
 const oneHour = 60 * 60 * 1000;
 
@@ -139,12 +140,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 		});
 	}
 
-	const org = await prisma.organisation.findUnique({
-		where: {
-			id: 1,
-		},
-	});
-
+	const org = await getPublicOrg();
 	return { org };
 }
 

@@ -15,6 +15,7 @@ import { TooltipProvider } from "~/components/ui/tooltip";
 import { requireAdmin, getUser } from "~/lib/auth.server";
 import { getProgramsByAdmin } from "~/lib/program.server";
 import { prisma } from "~/lib/prisma.server";
+import { getOrg } from "~/lib/organisation.server";
 
 export function meta({ data }: Route.MetaArgs) {
   return [{ title: `${data?.org?.name} Certificates` }];
@@ -24,20 +25,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const adminId = await requireAdmin(request);
   const user = await getUser(request);
 
-  let org = await prisma.organisation.findUnique({
-    where: {
-      id: 1,
-    },
-  });
-
-  if (!org) {
-    org = {
-      id: 1,
-      name: "Unknown Organisation",
-      imprintUrl: null,
-      privacyUrl: null,
-    };
-  }
+  const org = await getOrg();
 
   const programs = await getProgramsByAdmin(adminId);
 

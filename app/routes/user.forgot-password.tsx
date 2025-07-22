@@ -11,6 +11,7 @@ import {
 	CardTitle,
 } from "~/components/ui/card";
 import { getUser, sendPasswordResetLink } from "~/lib/auth.server";
+import { getPublicOrg } from "~/lib/organisation.server";
 import { prisma } from "~/lib/prisma.server";
 import { validateEmail } from "~/lib/validators.server";
 
@@ -65,15 +66,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const user = await getUser(request);
 	if (user) return redirect("/");
 
-	const org = await prisma.organisation.findUnique({
-		where: { id: 1 },
-		select: {
-			name: true,
-			imprintUrl: true,
-			privacyUrl: true,
-		},
-	});
-
+	const org = await getPublicOrg();
 	return { org };
 }
 

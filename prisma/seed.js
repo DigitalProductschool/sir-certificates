@@ -4,20 +4,20 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Sample data for UnternehmerTUM
+  // Sample data for Certiffy
   const org = await prisma.organisation.upsert({
     where: { id: 1 },
     update: {},
     create: {
-      name: "UnternehmerTUM",
-      imprintUrl: "https://www.unternehmertum.de/impressum",
-      privacyUrl: "https://www.unternehmertum.de/datenschutz"
+      name: "Your Certiffy Organisation",
+      imprintUrl: "https://www.certiffy.eu/imprint",
+      privacyUrl: "https://www.certiffy.eu/privacy",
     },
   });
   console.log("Organisation:", org);
 
   // Sample user
-  const passwordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 10);
+  const passwordHash = bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 10);
   const admin = await prisma.user.upsert({
     where: {
       id: 1,
@@ -45,71 +45,35 @@ async function main() {
   console.log("Admin:", admin);
 
   // Sample programs
-
   const program1 = await prisma.program.upsert({
     where: { id: 1 },
     update: {},
     create: {
-      name: "Digital Product School",
-      about: `Digital Product School is Europe's most successful training program for **cross-fuctional teams** building digital products.  
-
-Our participants experience a progressive start-up environment, learn by doing and taking action and use latest tech and methods to solve real challenges from our partners.`,
-      achievement: "You did this",
-      website: "https://digitalproductschool.io",
+      name: "Your Certiffy Program",
+      about:
+        "Add a short and sweet description about your program. You can use Markdown syntax for adding **emphasis**.",
+      achievement:
+        "Describe the achievement you are certifying in 1-2 sentences.",
+      website: "https://certiffy.eu",
     },
   });
 
-  const program2 = await prisma.program.upsert({
-    where: { id: 2 },
+  console.log("Programs:", program1);
+
+  // Sample batch
+  const batch = await prisma.batch.upsert({
+    where: { id: 1 },
     update: {},
     create: {
-      name: "Manage and More",
-    },
-  });
-
-  const program3 = await prisma.program.upsert({
-    where: { id: 3 },
-    update: {},
-    create: {
-      name: "Innovation Sprint",
-    },
-  });
-
-  const program4 = await prisma.program.upsert({
-    where: { id: 4 },
-    update: {},
-    create: {
-      name: "Innovative Entrepreneurs",
-    },
-  });
-
-  const program5 = await prisma.program.upsert({
-    where: { id: 5 },
-    update: {},
-    create: {
-      name: "XPLORE",
-    },
-  });
-
-  console.log("Programs:", program1, program2, program3, program4, program5);
-
-  // Sample batches
-
-  for (let i = 1; i < 22; i++) {
-    const batch = await prisma.batch.upsert({
-      where: { id: i },
-      update: {},
-      create: {
-        name: `Batch ${i}`,
-        startDate: new Date(),
-        endDate: new Date(),
-        program: {
-          connect: { id: 1 },
-        },
+      name: "Batch 1",
+      startDate: new Date(),
+      endDate: new Date(),
+      program: {
+        connect: { id: 1 },
       },
-    });
-    console.log("Batch", i, batch);
-  }
+    },
+  });
+  console.log("Batch", batch);
 }
 
 main()
