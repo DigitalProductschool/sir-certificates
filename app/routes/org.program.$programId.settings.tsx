@@ -134,7 +134,7 @@ export default function ProgramSettings() {
             <div className="border rounded-lg aspect-square w-48 bg-white flex justify-center items-center">
               {program.logo ? (
                 <img
-                  src={`/view/logo/${program.logo.uuid}.svg`}
+                  src={`/logo/program/${program.logo.uuid}.svg?t=${program.logo.updatedAt}`}
                   alt=""
                   role="presentation"
                 />

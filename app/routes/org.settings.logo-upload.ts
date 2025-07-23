@@ -1,27 +1,30 @@
-import type { Route } from "./+types/org.program.$programId.settings.logo-upload";
-import type { ProgramLogo } from "@prisma/client";
+import type { Route } from "./+types/org.settings.logo-upload";
+import type { OrganisationLogo } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { redirect } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
-import { requireAdminWithProgram } from "~/lib/auth.server";
-import { saveProgramLogoUpload } from "~/lib/program.server";
+import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
+import {
+  refreshCachedOrg,
+  saveOrganisationLogoUpload,
+} from "~/lib/organisation.server";
 
-export async function action({ request, params }: Route.ActionArgs) {
-  await requireAdminWithProgram(request, Number(params.programId));
+export async function action({ request }: Route.ActionArgs) {
+  await requireSuperAdmin(request);
 
-  let logo: ProgramLogo | void = undefined;
+  let logo: OrganisationLogo | void = undefined;
 
   const uploadHandler = async (fileUpload: FileUpload) => {
     if (
-      fileUpload.fieldName === "programLogo" &&
+      fileUpload.fieldName === "orgLogo" &&
       fileUpload.type === "image/svg+xml"
     ) {
-      // Create or update ProgramLogo
-      logo = await prisma.programLogo
+      // Create or update OrganisationLogo
+      logo = await prisma.organisationLogo
         .upsert({
           where: {
-            programId: Number(params.programId),
+            orgId: 1,
           },
           update: {
             uuid: randomUUID(),
@@ -30,24 +33,27 @@ export async function action({ request, params }: Route.ActionArgs) {
           create: {
             uuid: randomUUID(),
             contentType: fileUpload.type,
-            program: {
-              connect: { id: Number(params.programId) },
+            org: {
+              connect: { id: 1 },
             },
           },
         })
         .catch((error) => {
           console.error(error);
-          throwErrorResponse(error, "Could not create/update program logo");
+          throwErrorResponse(
+            error,
+            "Could not create/update organisation logo",
+          );
         });
 
       if (!logo) {
         throw new Response(null, {
           status: 500,
-          statusText: "Missing program logo record",
+          statusText: "Missing organisation logo record",
         });
       }
 
-      return saveProgramLogoUpload(logo, fileUpload);
+      return saveOrganisationLogoUpload(logo, fileUpload);
     }
   };
 
@@ -58,18 +64,19 @@ export async function action({ request, params }: Route.ActionArgs) {
     uploadHandler,
   );
 
-  const programLogo = formData.get("programLogo") as File;
+  const orgLogo = formData.get("orgLogo") as File;
 
-  if (!programLogo || logo === undefined) {
+  if (!orgLogo || logo === undefined) {
     return new Response(null, {
       status: 400,
       statusText: "Missing uploaded image",
     });
   }
 
+  await refreshCachedOrg();
   return { logo };
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
-  return redirect(`/org/program/${params.programId}/settings`);
+export async function loader() {
+  return redirect(`/org/settings`);
 }

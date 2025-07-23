@@ -67,7 +67,7 @@ export default function OrgIndex({ loaderData }: Route.ComponentProps) {
                 >
                   {program.logo && (
                     <img
-                      src={`/view/logo/${program.logo.uuid}.svg`}
+                      src={`/logo/program/${program.logo.uuid}.svg`}
                       alt=""
                       role="presentation"
                       className="w-8 aspect-square"
