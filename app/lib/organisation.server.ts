@@ -1,25 +1,44 @@
-import type { Organisation, Prisma } from "@prisma/client";
-import { prisma } from "./prisma.server";
+import type { OrganisationLogo, Prisma } from "@prisma/client";
+import type { FileUpload } from "@mjackson/form-data-parser";
+import { unlink } from "node:fs/promises";
+import {
+	openFile as lazyOpenFile,
+	writeFile as lazyWriteFile,
+} from "@mjackson/lazy-file/fs";
 
-export type PublicOrganisation = Prisma.OrganisationGetPayload<{
+import { prisma } from "./prisma.server";
+import { ensureFolderExists, readFileIfExists } from "./fs.server";
+import { logoDir } from "./program.server";
+
+export type OrgWithLogo = Prisma.OrganisationGetPayload<{
+	include: {
+		logo: true;
+	};
+}>;
+
+export type PublicOrgWithLogo = Prisma.OrganisationGetPayload<{
 	select: {
 		name: true;
 		imprintUrl: true;
 		privacyUrl: true;
+		logo: true;
 	};
 }>;
 
 // @todo evaluate against potential race-conditions / how long is this value cached?
-let org: Organisation | null = null;
-let publicOrg: PublicOrganisation | null = null;
+let org: OrgWithLogo | null = null;
+let publicOrg: PublicOrgWithLogo | null = null;
 
-export async function getOrg(): Promise<Organisation> {
+export async function getOrg(): Promise<OrgWithLogo> {
 	if (org === null) {
 		// not cached yet
 
 		org = await prisma.organisation.findUnique({
 			where: {
 				id: 1,
+			},
+			include: {
+				logo: true,
 			},
 		});
 
@@ -33,6 +52,7 @@ export async function getOrg(): Promise<Organisation> {
 				senderEmail: null,
 				senderName: null,
 				updatedAt: new Date(),
+				logo: null,
 			};
 		}
 	}
@@ -40,7 +60,7 @@ export async function getOrg(): Promise<Organisation> {
 	return org;
 }
 
-export async function getPublicOrg(): Promise<PublicOrganisation> {
+export async function getPublicOrg(): Promise<PublicOrgWithLogo> {
 	if (publicOrg === null) {
 		// not cached yet
 
@@ -52,6 +72,7 @@ export async function getPublicOrg(): Promise<PublicOrganisation> {
 				name: true,
 				imprintUrl: true,
 				privacyUrl: true,
+				logo: true,
 			},
 		});
 
@@ -61,6 +82,7 @@ export async function getPublicOrg(): Promise<PublicOrganisation> {
 				name: "(Configure Organisation)",
 				imprintUrl: null,
 				privacyUrl: null,
+				logo: null,
 			};
 		}
 	}
@@ -70,12 +92,90 @@ export async function getPublicOrg(): Promise<PublicOrganisation> {
 
 export async function saveOrg(update: {
 	[k: string]: string;
-}): Promise<Organisation> {
+}): Promise<OrgWithLogo> {
+	// save and update cache
 	org = await prisma.organisation.update({
 		where: {
 			id: 1,
 		},
 		data: update,
+		include: {
+			logo: true,
+		},
 	});
 	return org;
+}
+
+export async function refreshCachedOrg() {
+	org = await prisma.organisation.findUnique({
+		where: {
+			id: 1,
+		},
+		include: {
+			logo: true,
+		},
+	});
+	publicOrg = await prisma.organisation.findUnique({
+		where: {
+			id: 1,
+		},
+		select: {
+			name: true,
+			imprintUrl: true,
+			privacyUrl: true,
+			logo: true,
+		},
+	});
+	return { org, publicOrg };
+}
+
+export async function saveOrganisationLogoUpload(
+	logo: OrganisationLogo,
+	image: FileUpload,
+) {
+	const folderCreated = await ensureFolderExists(logoDir);
+	if (!folderCreated) {
+		throw new Error("Could not create social storage folder");
+	}
+
+	let extension: "svg" | "unkown";
+	switch (image.type) {
+		case "image/svg+xml":
+			extension = "svg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	const filepath = `${logoDir}/_org.${logo.id}.logo.${extension}`;
+	await lazyWriteFile(filepath, image);
+	return lazyOpenFile(filepath);
+}
+
+export async function readOrganisationLogo(logo: OrganisationLogo) {
+	let extension: "svg" | "unkown";
+	switch (logo.contentType) {
+		case "image/svg+xml":
+			extension = "svg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	return await readFileIfExists(
+		`${logoDir}/_org.${logo.id}.logo.${extension}`,
+	);
+}
+
+export async function deleteOrganisationLogo(logo: OrganisationLogo) {
+	let extension: "svg" | "unkown";
+	switch (logo.contentType) {
+		case "image/svg+xml":
+			extension = "svg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	return await unlink(`${logoDir}/_org.${logo.id}.logo.${extension}`);
 }

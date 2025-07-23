@@ -77,7 +77,20 @@ model Organisation {
   senderEmail   String?   @db.VarChar(128)
   senderName    String?   @db.VarChar(128) 
   updatedAt     DateTime  @updatedAt
+  logo          OrganisationLogo?  
+
   @@map("organisation")  
+}
+
+model OrganisationLogo {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique @db.Uuid  
+  contentType   String    @db.VarChar(64)
+  updatedAt     DateTime  @updatedAt    
+  org           Organisation   @relation(fields: [orgId], references: [id])
+  orgId         Int       @unique
+
+  @@map("organisation_logo")
 }
 
 model Program {

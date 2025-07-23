@@ -1,4 +1,4 @@
-import type { Route } from "./+types/view.logo.$logoUuid[.svg]";
+import type { Route } from "./+types/logo.program.$logoUuid[.svg]";
 
 import { prisma } from "~/lib/prisma.server";
 import { readProgramLogo } from "~/lib/program.server";
