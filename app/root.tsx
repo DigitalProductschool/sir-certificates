@@ -1,3 +1,4 @@
+import type { Route } from "./+types/root";
 import type { LinksFunction, ErrorResponse } from "react-router";
 
 import {
@@ -11,10 +12,28 @@ import {
 } from "react-router";
 
 import { Toaster } from "~/components/ui/toaster";
+import { getPublicOrg } from "./lib/organisation.server";
 
 import styles from "./tailwind.css?url";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+
+export function meta({ data }: Route.MetaArgs) {
+  return [
+    { title: `${data?.org?.name} Certificates` },
+    {
+      name: "description",
+      content: `All of your certificates from ${
+        data?.org?.name || "this organisation"
+      } in one place.`,
+    },
+  ];
+}
+
+export async function loader() {
+  const org = await getPublicOrg();
+  return { org };
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
