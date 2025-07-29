@@ -57,8 +57,8 @@ export default function OrgDashboard({ loaderData }: Route.ComponentProps) {
             latestBatch={latestBatch ?? undefined}
           />
 
-          <SidebarInset className="gap-4 py-3 bg-transparent">
-            <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent">
+          <SidebarInset className="gap-4 bg-transparent">
+            <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 py-2 sm:static sm:h-auto sm:border-0 sm:bg-transparent">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
               <div className="relative ml-auto flex-1 md:grow-0">

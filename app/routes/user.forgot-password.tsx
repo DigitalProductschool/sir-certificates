@@ -93,13 +93,12 @@ export default function ForgotPassword({
 	};
 
 	return (
-		<div className="h-screen flex flex-col items-center justify-center px-4 dark:bg-black">
+		<div className="h-screen flex flex-col items-center justify-center px-4">
 			<div className="grow"></div>
-
             <img
               src={`/logo/org.svg`}
               alt=""
-              className="size-12"
+              className="size-20 dark:invert"
               role="presentation"
             />
 
