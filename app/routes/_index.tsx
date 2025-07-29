@@ -103,8 +103,8 @@ export default function Index({ loaderData }: Route.ComponentProps) {
       <SidebarProvider defaultOpen={false}>
         <SidebarParticipant user={user} certificates={certificates} />
 
-        <SidebarInset className="flex flex-col gap-4 px-4 py-3">
-          <header className="sticky top-0 flex h-14 items-center gap-4 border-b sm:static sm:h-auto sm:border-0 sm:bg-transparent">
+        <SidebarInset className="flex flex-col gap-4">
+          <header className="sticky top-0 flex h-14 items-center gap-4 px-4 py-2 border-b sm:static sm:h-auto sm:border-0 sm:bg-transparent">
             <SidebarTrigger className="-ml-1" />
           </header>
 

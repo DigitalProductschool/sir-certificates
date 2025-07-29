@@ -176,7 +176,7 @@ export default function ResetPassword({
 			<img
 				src={`/logo/org.svg`}
 				alt=""
-				className="size-12"
+				className="size-20"
 				role="presentation"
 			/>
 

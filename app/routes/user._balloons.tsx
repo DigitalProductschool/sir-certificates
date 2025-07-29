@@ -48,7 +48,7 @@ export default function UserBalloons() {
         </div>
       )}
       <div
-        className={`h-screen flex flex-col items-center justify-center px-4 dark:bg-black ${
+        className={`h-screen flex flex-col items-center justify-center px-4 ${
           isMobile ? "col-span-2" : ""
         }`}
       >
@@ -71,7 +71,7 @@ export default function UserBalloons() {
             <img
               src={`/logo/org.svg`}
               alt=""
-              className="size-12 fill-current"
+              className="size-20 fill-current"
               role="presentation"
             />
           </>
