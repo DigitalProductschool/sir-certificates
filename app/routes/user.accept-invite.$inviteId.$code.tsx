@@ -157,7 +157,7 @@ export default function AcceptInvitationPage({
 			<img
 				src={`/logo/org.svg`}
 				alt=""
-				className="size-20"
+				className="size-20 dark:invert"
 				role="presentation"
 			/>
 

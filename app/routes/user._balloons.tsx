@@ -71,7 +71,7 @@ export default function UserBalloons() {
             <img
               src={`/logo/org.svg`}
               alt=""
-              className="size-20 fill-current"
+              className="size-20 dark:invert"
               role="presentation"
             />
           </>
