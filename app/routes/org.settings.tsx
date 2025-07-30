@@ -147,12 +147,24 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
         </p>
         <div className="flex gap-4 mt-2">
           {/* @todo implement a preview -> save workflow for changing the logo */}
-          <div className="border rounded-lg aspect-square w-48 bg-white flex justify-center items-center">
+          <div className="border rounded-lg aspect-square w-36 p-4 bg-white flex justify-center items-center">
             {org.logo ? (
               <img
                 src={`/logo/org.svg?t=${org.logo.updatedAt}`}
                 alt=""
                 role="presentation"
+              />
+            ) : (
+              "No Logo"
+            )}
+          </div>
+          <div className="border rounded-lg border-slate-600 aspect-square w-36 p-4 bg-slate-900 flex justify-center items-center">
+            {org.logo ? (
+              <img
+                src={`/logo/org.svg?t=${org.logo.updatedAt}`}
+                alt=""
+                role="presentation"
+                className="invert"
               />
             ) : (
               "No Logo"
