@@ -138,10 +138,10 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
         <h2>Logo</h2>
         <p className="text-sm text-muted-foreground max-w-[500px]">
           Add the black logo mark of your organisation. If available, a compact
-          (square-ish) version of the logo works best.
+          (square-ish) version of the logo works best. We will show the inverted logo when the user has dark mode enabled.
         </p>
         <p className="text-sm text-muted-foreground max-w-[500px]">
-          This needs to be scalable vector image (SVG) and the logo should be
+          This needs to be a scalable vector image (SVG) and the logo should be
           placed in the center of a transparent canvas with no additional
           padding around the edges.
         </p>
@@ -160,6 +160,7 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
           </div>
           <div className="border rounded-lg border-slate-600 aspect-square w-36 p-4 bg-slate-900 flex justify-center items-center">
             {org.logo ? (
+
               <img
                 src={`/logo/org.svg?t=${org.logo.updatedAt}`}
                 alt=""
