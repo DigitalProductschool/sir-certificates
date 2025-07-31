@@ -3,11 +3,13 @@ import type { RegisterForm, LoginForm, UserAuthenticated } from "./types";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
 import { redirect, data, createCookieSessionStorage } from "react-router";
+import { Authenticator } from "remix-auth";
+import { GoogleStrategy } from "./auth.google.server";
 import { domain } from "./config.server";
 import { mailjetSend } from "./email.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 import { requireAccessToProgram } from "./program.server";
-import { createUser } from "./user.server";
+import { createUser, createUserOAuth } from "./user.server";
 import { getOrg } from "./organisation.server";
 
 const sessionSecret = process.env.SESSION_SECRET;
@@ -26,6 +28,34 @@ const storage = createCookieSessionStorage({
 		httpOnly: true,
 	},
 });
+
+const googleStrategy = new GoogleStrategy(
+	{
+		clientId: process.env.GOOGLE_LOGIN_CLIENT_ID ?? "MISSING CLIENT ID",
+		clientSecret:
+			process.env.GOOGLE_LOGIN_CLIENT_SECRET ?? "MISSING CLIENT SECRET",
+		redirectURI: `${domain}/auth/google/callback`,
+	},
+	async ({ tokens }) => {
+		// Get the user data from your DB or API using the tokens and profile
+		const profile = await GoogleStrategy.userProfile(tokens);
+		const user = await getUserByEmail(profile.emails[0].value);
+		if (user !== null) {
+			return user;
+		}
+		return createUserOAuth(
+			{
+				email: profile.emails[0].value,
+				firstName: profile.name.givenName,
+				lastName: profile.name.familyName,
+			},
+			"google",
+		);
+	},
+);
+
+export const authenticator = new Authenticator<UserAuthenticated>();
+authenticator.use(googleStrategy);
 
 function getUserSession(request: Request) {
 	return storage.getSession(request.headers.get("Cookie"));
@@ -237,6 +267,24 @@ export async function getUser(
 	} catch {
 		throw logout(request);
 	}
+}
+
+export async function getUserByEmail(
+	email: string,
+): Promise<UserAuthenticated | null> {
+	return await prisma.user.findUnique({
+		where: { email },
+		select: {
+			id: true,
+			email: true,
+			firstName: true,
+			lastName: true,
+			isAdmin: true,
+			isSuperAdmin: true,
+			adminOfPrograms: true,
+			photo: true,
+		},
+	});
 }
 
 export async function logout(request: Request) {

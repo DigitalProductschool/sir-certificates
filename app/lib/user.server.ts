@@ -1,6 +1,6 @@
 import type { User, UserInvitation, UserPhoto } from "@prisma/client";
 import type { FileUpload } from "@mjackson/form-data-parser";
-import type { RegisterForm, InviteForm } from "./types";
+import type { RegisterForm, InviteForm, UserAuthenticated } from "./types";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -36,6 +36,44 @@ export const createUser = async (user: RegisterForm) => {
 
   await sendVerificationEmail(newUser);
   return { id: newUser.id, email: emailLowerCase };
+};
+
+export const createUserOAuth = async (
+  user: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  },
+  source: string,
+): Promise<UserAuthenticated> => {
+  const emailLowerCase = user.email.toLowerCase();
+  const verifyCode = randomUUID();
+
+  const userCreated = await prisma.user.create({
+    data: {
+      email: emailLowerCase,
+      password: `oauth:${source}`,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      verifyCode,
+      isAdmin: false,
+      isSuperAdmin: false,
+      isVerified: true,
+    },
+    include: {
+      adminOfPrograms: true,
+      photo: true,
+    },
+  });
+
+  if (userCreated !== null) {
+    return userCreated;
+  }
+
+  throw new Response("Could not create user", {
+    status: 500,
+    statusText: "Could not create user",
+  });
 };
 
 export const changePassword = async (user: User, newPassword: string) => {
