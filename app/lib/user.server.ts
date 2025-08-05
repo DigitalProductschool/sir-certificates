@@ -32,6 +32,10 @@ export const createUser = async (user: RegisterForm) => {
       lastName: user.lastName,
       verifyCode,
     },
+    include: {
+      adminOfPrograms: true,
+      photo: true
+    }
   });
 
   await sendVerificationEmail(newUser);
