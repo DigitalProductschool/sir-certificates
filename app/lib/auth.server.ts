@@ -29,6 +29,11 @@ const storage = createCookieSessionStorage({
 	},
 });
 
+export const googleLoginIsConfigured: boolean =
+	process.env.GOOGLE_LOGIN_CLIENT_ID && process.env.GOOGLE_LOGIN_CLIENT_SECRET
+		? true
+		: false;
+
 const googleStrategy = new GoogleStrategy(
 	{
 		clientId: process.env.GOOGLE_LOGIN_CLIENT_ID ?? "MISSING CLIENT ID",
@@ -55,7 +60,9 @@ const googleStrategy = new GoogleStrategy(
 );
 
 export const authenticator = new Authenticator<UserAuthenticated>();
-authenticator.use(googleStrategy);
+if (googleLoginIsConfigured) {
+	authenticator.use(googleStrategy);
+}
 
 function getUserSession(request: Request) {
 	return storage.getSession(request.headers.get("Cookie"));
