@@ -10,6 +10,7 @@ import {
   useLocation,
 } from "react-router";
 import { FormField } from "~/components/form-field";
+import GoogleIcon from "~/components/icons/google-login";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -171,8 +172,16 @@ export default function UserSignIn({ actionData }: Route.ComponentProps) {
             </Button>
           </div>
         </Form>
+        <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+          <span className="bg-muted text-muted-foreground relative z-10 px-2">
+            or
+          </span>
+        </div>
         <Form action="/auth/google" method="GET">
-          <button>Login with Google</button>
+          <Button variant="outline" className="w-full">
+            <GoogleIcon />
+            Continue with Google
+          </Button>
         </Form>
       </CardContent>
     </Card>
