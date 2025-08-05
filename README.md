@@ -9,6 +9,13 @@
 3. Adjust `DATABASE_URL` in `.env` to match you settings.
 4. Adjust the `SEED_ADMIN_*` settings for your admin user.
 
+If you want to enable Login with Google, also configure the following environment variables
+
+- GOOGLE_LOGIN_CLIENT_ID
+- GOOGLE_LOGIN_CLIENT_SECRET
+
+Instructions for setting up the Google APIs and getting a key can be found here: https://developers.google.com/identity/protocols/oauth2/web-server#creatingcred
+
 
 Install dependencies:
 
