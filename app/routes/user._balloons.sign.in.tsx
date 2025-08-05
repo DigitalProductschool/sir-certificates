@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { login, getUser } from "~/lib/auth.server";
+import { login, getUser, googleLoginIsConfigured } from "~/lib/auth.server";
 import { validateEmail, validatePassword } from "~/lib/validators.server";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -63,10 +63,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   // If there's already a user in the session, redirect to the home page
   const user = await getUser(request);
   if (user) return redirect("/");
-  return null;
+  const auth = {
+    email: true,
+    google: googleLoginIsConfigured,
+  };
+  return { auth };
 }
 
-export default function UserSignIn({ actionData }: Route.ComponentProps) {
+export default function UserSignIn({
+  actionData,
+  loaderData,
+}: Route.ComponentProps) {
   const location = useLocation();
   const [searchParams /*, setSearchParams*/] = useSearchParams();
   const [formData, setFormData] = useState({
@@ -172,17 +179,21 @@ export default function UserSignIn({ actionData }: Route.ComponentProps) {
             </Button>
           </div>
         </Form>
-        <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-          <span className="bg-muted text-muted-foreground relative z-10 px-2">
-            or
-          </span>
-        </div>
-        <Form action="/auth/google" method="GET">
-          <Button variant="outline" className="w-full">
-            <GoogleIcon />
-            Continue with Google
-          </Button>
-        </Form>
+        {loaderData.auth.google && (
+          <>
+            <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+              <span className="bg-muted text-muted-foreground relative z-10 px-2">
+                or
+              </span>
+            </div>
+            <Form action="/auth/google" method="GET">
+              <Button variant="outline" className="w-full">
+                <GoogleIcon />
+                Continue with Google
+              </Button>
+            </Form>
+          </>
+        )}
       </CardContent>
     </Card>
   );
