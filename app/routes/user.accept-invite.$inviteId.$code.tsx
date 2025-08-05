@@ -80,6 +80,10 @@ export async function action({ request, params }: Route.ActionArgs) {
 				adminOfPrograms: { connect: setAdminOfPrograms },
 				isVerified: true,
 			},
+			include: {
+				adminOfPrograms: true,
+				photo: true,
+			},
 		});
 
 		if (user) {

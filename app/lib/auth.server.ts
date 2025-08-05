@@ -112,6 +112,10 @@ export async function register(user: RegisterForm) {
 export async function login({ email, password }: LoginForm) {
 	const user = await prisma.user.findUnique({
 		where: { email: email.toLowerCase() },
+		include: {
+			adminOfPrograms: true,
+			photo: true,
+		},
 	});
 
 	if (!user || !(await bcrypt.compare(password, user.password)))
@@ -145,7 +149,7 @@ export async function login({ email, password }: LoginForm) {
 }
 
 export async function createUserSessionAndRedirect(
-	user: User,
+	user: UserAuthenticated, // @todo reduce required User properties and remove db query includes above
 	redirectTo: string,
 ) {
 	const session = await storage.getSession();

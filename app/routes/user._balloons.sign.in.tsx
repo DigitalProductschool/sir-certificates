@@ -171,6 +171,9 @@ export default function UserSignIn({ actionData }: Route.ComponentProps) {
             </Button>
           </div>
         </Form>
+        <Form action="/auth/google" method="GET">
+          <button>Login with Google</button>
+        </Form>
       </CardContent>
     </Card>
   );
