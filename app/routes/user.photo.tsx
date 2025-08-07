@@ -26,6 +26,7 @@ import {
 
 import { requireUserId } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { backgroundRemovalIsConfigured } from "~/lib/user.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const userId = await requireUserId(request);
@@ -34,17 +35,19 @@ export async function loader({ request }: Route.LoaderArgs) {
 			userId,
 		},
 	});
-	return { userId, userPhoto };
+	return {
+		userId,
+		userPhoto,
+		canRemoveBackground: backgroundRemovalIsConfigured,
+	};
 }
 
 export default function UserUploadPictureDialog({
 	loaderData,
 }: Route.ComponentProps) {
-	const { userPhoto } = loaderData;
+	const { userPhoto, canRemoveBackground } = loaderData;
 	const navigate = useNavigate();
-	const {
-		state: { fromPath },
-	} = useLocation();
+	const location = useLocation();
 	const [open, setOpen] = useState(true);
 	const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(
 		null,
@@ -81,15 +84,20 @@ export default function UserUploadPictureDialog({
 			setOriginalPreviewUrl(originalUrl);
 			setTransparentPreviewUrl(null);
 
-			try {
-				const transparentImage = await removeBackground(file);
-				const transparentImageUrl =
-					URL.createObjectURL(transparentImage);
-				setTransparentPreviewUrl(transparentImageUrl);
-			} catch (err) {
-				setError("Failed to remove background. Please try again.");
-				console.error("Background removal error:", err);
-			} finally {
+			if (canRemoveBackground) {
+				try {
+					const transparentImage = await removeBackground(file);
+					const transparentImageUrl =
+						URL.createObjectURL(transparentImage);
+					setTransparentPreviewUrl(transparentImageUrl);
+				} catch (err) {
+					setError("Failed to remove background. Please try again.");
+					console.error("Background removal error:", err);
+				} finally {
+					setIsLoading(false);
+				}
+			} else {
+				setTransparentPreviewUrl(originalUrl);
 				setIsLoading(false);
 			}
 		}
@@ -119,7 +127,7 @@ export default function UserUploadPictureDialog({
 	const onCropComplete = useCallback(
 		(croppedArea: Area, croppedAreaPixels: Area) => {
 			setCroppedAreaPixels(croppedAreaPixels);
-			checkEdgeTransparency(croppedAreaPixels);
+			if (canRemoveBackground) checkEdgeTransparency(croppedAreaPixels);
 		},
 		[croppedAreaPixels],
 	);
@@ -353,19 +361,23 @@ export default function UserUploadPictureDialog({
 								{originalPreviewUrl || transparentPreviewUrl ? (
 									<div
 										className={`relative w-full h-full rounded-lg border-8 ${
-											leftEdgeTransparent
+											leftEdgeTransparent ||
+											!canRemoveBackground
 												? "border-l-green-400"
 												: "border-l-amber-400"
 										} ${
-											rightEdgeTransparent
+											rightEdgeTransparent ||
+											!canRemoveBackground
 												? "border-r-green-400"
 												: "border-r-amber-400"
 										} ${
-											topEdgeTransparent
+											topEdgeTransparent ||
+											!canRemoveBackground
 												? "border-t-green-400"
 												: "border-t-amber-400"
 										} ${
-											bottomEdgeTransparent
+											bottomEdgeTransparent ||
+											canRemoveBackground
 												? "border-b-amber-400"
 												: "border-b-green-400"
 										}`}
@@ -514,7 +526,9 @@ export default function UserUploadPictureDialog({
 							</Tooltip>
 						</Form>
 						<Button type="button" variant="outline" asChild>
-							<Link to={fromPath ?? "/"}>Back</Link>
+							<Link to={location.state?.fromPath ?? "/"}>
+								Back
+							</Link>
 						</Button>
 						<Button
 							type="button"
