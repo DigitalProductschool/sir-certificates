@@ -296,6 +296,18 @@ export default function UserUploadPictureDialog({
 		}
 	};
 
+	const handleReset = () => {
+		setOriginalPreviewUrl(null);
+		setTransparentPreviewUrl(null);
+		setCrop({ x: 0, y: 0 });
+		setZoom(1);
+		setCroppedAreaPixels(null);
+		setIsLoading(false);
+		setError(null);
+
+		if (fileInputRef.current) fileInputRef.current.value = "";
+	};
+
 	useEffect(() => {
 		const down = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
@@ -311,13 +323,7 @@ export default function UserUploadPictureDialog({
 	useEffect(() => {
 		// If we have data, then the picture was uploaded and we can reset the state
 		if (fetcher.data && fetcher.data.userPhoto) {
-			setOriginalPreviewUrl(null);
-			setTransparentPreviewUrl(null);
-			setCrop({ x: 0, y: 0 });
-			setZoom(1);
-			setCroppedAreaPixels(null);
-			setIsLoading(false);
-			setError(null);
+			handleReset();
 
 			// Close the dialog
 			navigate(-1);
@@ -376,7 +382,7 @@ export default function UserUploadPictureDialog({
 												? "border-t-green-400"
 												: "border-t-amber-400"
 										} ${
-											bottomEdgeTransparent ||
+											bottomEdgeTransparent &&
 											canRemoveBackground
 												? "border-b-amber-400"
 												: "border-b-green-400"
@@ -448,7 +454,7 @@ export default function UserUploadPictureDialog({
 										)}
 										{(isLoading ||
 											fetcher.state !== "idle") && (
-											<div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+											<div className="absolute inset-0 flex items-center justify-center bg-black/40">
 												<div className="text-white text-center">
 													<Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
 													<p>
@@ -465,7 +471,7 @@ export default function UserUploadPictureDialog({
 										{userPhoto ? (
 											<img
 												src={`/user/photo/preview.png?t=${userPhoto.updatedAt}`}
-												className="h-100"
+												className=""
 												alt="This will be used on the social media preview of your certificates"
 											/>
 										) : (
@@ -505,26 +511,28 @@ export default function UserUploadPictureDialog({
 					</fetcher.Form>
 
 					<DialogFooter>
-						<Form
-							action="/user/photo/delete"
-							method="POST"
-							className="flex grow"
-						>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button
-										type="submit"
-										variant="destructive"
-										size="icon"
-									>
-										<Trash2Icon className="h-4 w-4" />
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent side="top">
-									Delete photo
-								</TooltipContent>
-							</Tooltip>
-						</Form>
+						{userPhoto && (
+							<Form
+								action="/user/photo/delete"
+								method="POST"
+								className="flex grow"
+							>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											type="submit"
+											variant="destructive"
+											size="icon"
+										>
+											<Trash2Icon className="h-4 w-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent side="top">
+										Delete photo
+									</TooltipContent>
+								</Tooltip>
+							</Form>
+						)}
 						<Button type="button" variant="outline" asChild>
 							<Link to={location.state?.fromPath ?? "/"}>
 								Back
