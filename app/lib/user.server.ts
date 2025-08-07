@@ -20,6 +20,11 @@ import { getOrg } from "./organisation.server";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const userPhotoDir = resolve(__dirname, "../../storage/user/photos");
 
+export const backgroundRemovalIsConfigured: boolean = process.env
+  .BACKGROUND_REMOVAL_URL
+  ? true
+  : false;
+
 export const createUser = async (user: RegisterForm) => {
   const emailLowerCase = user.email.toLowerCase();
   const passwordHash = await bcrypt.hash(user.password, 10);
@@ -34,8 +39,8 @@ export const createUser = async (user: RegisterForm) => {
     },
     include: {
       adminOfPrograms: true,
-      photo: true
-    }
+      photo: true,
+    },
   });
 
   await sendVerificationEmail(newUser);
