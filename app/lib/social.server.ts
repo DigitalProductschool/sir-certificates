@@ -183,12 +183,31 @@ export async function deleteSocialBackground(social: SocialPreview) {
       extension = "unkown";
   }
 
-  return await unlink(`${socialDir}/${social.id}.background.${extension}`);
+  return await unlink(
+    `${socialDir}/${social.id}.background.${extension}`,
+  ).catch((error) => {
+    console.error(
+      `Encountered the following error when trying to delete the social preview background image file in storage for ID ${social.id}:`,
+    );
+    console.error(error);
+  });
 }
 
 export async function deleteSocialComposites(socialId: number) {
-  await unlink(`${socialDir}/${socialId}.noPhoto.png`);
-  return await unlink(`${socialDir}/${socialId}.withPhoto.png`);
+  await unlink(`${socialDir}/${socialId}.noPhoto.png`).catch((error) => {
+    console.error(
+      `Encountered the following error when trying to delete the social preview without a photo file in storage for ID ${socialId}:`,
+    );
+    console.error(error);
+  });
+  return await unlink(`${socialDir}/${socialId}.withPhoto.png`).catch(
+    (error) => {
+      console.log(
+        `Encountered the following error when trying to delete the social preview with a photo file in storage for ID ${socialId}:`,
+      );
+      console.error(error);
+    },
+  );
 }
 
 export const defaultLayout = {

@@ -130,5 +130,12 @@ export async function deleteProgramLogo(logo: ProgramLogo) {
       extension = "unkown";
   }
 
-  return await unlink(`${logoDir}/${logo.id}.logo.${extension}`);
+  return await unlink(`${logoDir}/${logo.id}.logo.${extension}`).catch(
+    (error) => {
+      console.error(
+        `Encountered the following error when trying to delete the program logo file in storage for ID ${logo.id}:`,
+      );
+      console.error(error);
+    },
+  );
 }

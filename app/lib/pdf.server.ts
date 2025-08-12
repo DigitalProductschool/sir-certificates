@@ -441,11 +441,21 @@ export async function duplicateTemplate(
 }
 
 export async function deleteCertificatePreview(certificateId: number) {
-  return await unlink(`${previewDir}/${certificateId}.png`);
+  return await unlink(`${previewDir}/${certificateId}.png`).catch((error) => {
+    console.error(
+      `Encountered the following error when trying to delete the certificate preview file in storage for ID ${certificateId}:`,
+    );
+    console.error(error);
+  });
 }
 
 export async function deleteCertificatePDF(certificateId: number) {
-  return await unlink(`${certDir}/${certificateId}.pdf`);
+  return await unlink(`${certDir}/${certificateId}.pdf`).catch((error) => {
+    console.error(
+      `Encountered the following error when trying to delete the certificate PDF file in storage for ID ${certificateId}:`,
+    );
+    console.error(error);
+  });
 }
 
 export async function deleteCertificate(certificateId: number) {

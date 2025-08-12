@@ -230,7 +230,14 @@ export async function readPhoto(userPhoto: UserPhoto) {
 }
 
 export async function deleteUserPhoto(userPhoto: UserPhoto) {
-  await unlink(`${userPhotoDir}/${userPhoto.id}.transparent.png`);
+  await unlink(`${userPhotoDir}/${userPhoto.id}.transparent.png`).catch(
+    (error) => {
+      console.error(
+        `Encountered the following error when trying to delete the transparent photo file in storage for UserPhoto ID ${userPhoto.id}:`,
+      );
+      console.error(error);
+    },
+  );
   return await prisma.userPhoto
     .delete({
       where: {
