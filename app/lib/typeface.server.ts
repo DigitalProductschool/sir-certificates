@@ -30,7 +30,12 @@ export async function saveTypefaceUpload(
 }
 
 export async function deleteTypefaceTTF(typefaceId: number) {
-  return await unlink(`${typefaceDir}/${typefaceId}.ttf`);
+  return await unlink(`${typefaceDir}/${typefaceId}.ttf`).catch((error) => {
+    console.log(
+      `Encountered the following error when trying to delete the typeface file in storage for ID ${typefaceId}:`,
+    );
+    console.error(error);
+  });
 }
 
 export async function deleteTypeface(typefaceId: number) {
