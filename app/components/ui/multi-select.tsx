@@ -235,11 +235,11 @@ export const MultiSelect = React.forwardRef<
 													}}
 												>
 													{IconComponent && (
-														<IconComponent className="h-4 w-4 mr-2" />
+														<IconComponent className="mr-2" />
 													)}
 													{option?.label}
 													<XCircle
-														className="ml-2 h-4 w-4 cursor-pointer"
+														className="ml-2 cursor-pointer"
 														onClick={(event) => {
 															event.stopPropagation();
 															toggleOption(value);
@@ -263,9 +263,11 @@ export const MultiSelect = React.forwardRef<
 												animationDuration: `${animation}s`,
 											}}
 										>
-											{`+ ${selectedValues.length - maxCount} more`}
+											{`+ ${
+												selectedValues.length - maxCount
+											} more`}
 											<XCircle
-												className="ml-2 h-4 w-4 cursor-pointer"
+												className="ml-2 cursor-pointer"
 												onClick={(event) => {
 													event.stopPropagation();
 													clearExtraOptions();
@@ -276,7 +278,7 @@ export const MultiSelect = React.forwardRef<
 								</div>
 								<div className="flex items-center justify-between">
 									<XIcon
-										className="h-4 mx-2 cursor-pointer text-muted-foreground"
+										className="mx-2 cursor-pointer text-muted-foreground"
 										onClick={(event) => {
 											event.stopPropagation();
 											handleClear();
@@ -286,7 +288,7 @@ export const MultiSelect = React.forwardRef<
 										orientation="vertical"
 										className="flex min-h-6 h-full"
 									/>
-									<ChevronDown className="h-4 mx-2 cursor-pointer text-muted-foreground" />
+									<ChevronDown className="mx-2 cursor-pointer text-muted-foreground" />
 								</div>
 							</div>
 						) : (
@@ -294,7 +296,7 @@ export const MultiSelect = React.forwardRef<
 								<span className="text-sm text-muted-foreground mx-3">
 									{placeholder}
 								</span>
-								<ChevronDown className="h-4 cursor-pointer text-muted-foreground mx-2" />
+								<ChevronDown className="cursor-pointer text-muted-foreground mx-2" />
 							</div>
 						)}
 					</Button>
@@ -320,10 +322,10 @@ export const MultiSelect = React.forwardRef<
 								>
 									<div
 										className={cn(
-											"mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+											"mr-2 flex items-center justify-center rounded-sm border border-primary",
 											selectedValues.length ===
 												options.length
-												? "bg-primary text-primary-foreground"
+												? "bg-input text-input-foreground"
 												: "opacity-50 [&_svg]:invisible",
 										)}
 									>
@@ -345,16 +347,16 @@ export const MultiSelect = React.forwardRef<
 										>
 											<div
 												className={cn(
-													"mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+													"mr-2 flex items-center justify-center rounded-sm border border-primary",
 													isSelected
-														? "bg-primary text-primary-foreground"
+														? "bg-input text-input-foreground"
 														: "opacity-50 [&_svg]:invisible",
 												)}
 											>
-												<CheckIcon className="h-4 w-4" />
+												<CheckIcon />
 											</div>
 											{option.icon && (
-												<option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+												<option.icon className="mr-2 text-muted-foreground" />
 											)}
 											<span>{option.label}</span>
 										</CommandItem>
