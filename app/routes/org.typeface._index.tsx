@@ -86,7 +86,7 @@ export default function TypefaceIndexPage({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button type="submit" variant="outline">
-                        <Trash2Icon className="h-4 w-4" /> Delete
+                        <Trash2Icon /> Delete
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">Delete typeface</TooltipContent>

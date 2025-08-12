@@ -112,18 +112,18 @@ export function TaskRunner({
 			>
 				{isRunning ? (
 					<>
-						<Pause className="mr-2 h-4 w-4" />
+						<Pause className="mr-2" />
 						{pauseLabel ?? "Pause"}
 					</>
 				) : (
 					<>
-						<Play className="mr-2 h-4 w-4" />
+						<Play className="mr-2" />
 						{startLabel ?? "Start"}
 					</>
 				)}
 			</Button>
 			<Button onClick={handleReset} variant="outline">
-				<ListRestart className="mr-2 h-4 w-4" /> Reset
+				<ListRestart className="mr-2" /> Reset
 			</Button>
 			<div className="grow"></div>
 			<div className="text-sm">

@@ -466,7 +466,7 @@ function TextBlock({ blockId, settings, fonts, onChangeBlock, onDelete }: any) {
           onChangeBlock(updateBlock);
         }}
       >
-        <PlusIcon className="mr-2 h-4 w-4" /> Add Segment
+        <PlusIcon className="mr-2" /> Add Segment
       </Button>
     </div>
   );
@@ -510,7 +510,7 @@ export function LayoutEditor({ layout, fonts, onChange }: any) {
           onChange(updateLayout);
         }}
       >
-        <PlusIcon className="mr-2 h-4 w-4" /> Add Block
+        <PlusIcon className="mr-2" /> Add Block
       </Button>
     </div>
   );

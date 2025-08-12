@@ -197,7 +197,7 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline">
-                        <MailX className="h-4 w-4" /> Cancel
+                        <MailX /> Cancel
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">
@@ -231,7 +231,7 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
                           variant="outline"
                           aria-label="Remove program manager permissions"
                         >
-                          <UserX className="h-4 w-4" /> Remove
+                          <UserX /> Remove
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="top">Remove access</TooltipContent>

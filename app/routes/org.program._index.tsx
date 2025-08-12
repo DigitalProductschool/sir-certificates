@@ -80,7 +80,7 @@ export default function OrgIndex({ loaderData }: Route.ComponentProps) {
             <CardContent className="grid grid-cols-2 gap-2">
               <Button variant="outline" asChild>
                 <Link to={`${program.id}/batch`}>
-                  <FileBadge className="h-4 w-4" /> {countCertificates}{" "}
+                  <FileBadge /> {countCertificates}{" "}
                   {countCertificates === 1 ? "Certificate" : "Certificates"}
                 </Link>
               </Button>
@@ -89,7 +89,7 @@ export default function OrgIndex({ loaderData }: Route.ComponentProps) {
                   <TooltipTrigger asChild>
                     <Button variant="outline" size="icon" asChild>
                       <Link to={`${program.id}/templates`}>
-                        <FilePen className="h-4 w-4" />
+                        <FilePen />
                       </Link>
                     </Button>
                   </TooltipTrigger>
@@ -102,7 +102,7 @@ export default function OrgIndex({ loaderData }: Route.ComponentProps) {
                         to={`${program.id}/user`}
                         aria-label="Manage access"
                       >
-                        <UsersIcon className="h-4 w-4" />
+                        <UsersIcon />
                       </Link>
                     </Button>
                   </TooltipTrigger>
@@ -115,7 +115,7 @@ export default function OrgIndex({ loaderData }: Route.ComponentProps) {
                         to={`${program.id}/settings`}
                         aria-label="Edit program"
                       >
-                        <Settings className="h-4 w-4" />
+                        <Settings />
                       </Link>
                     </Button>
                   </TooltipTrigger>

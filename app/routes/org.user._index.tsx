@@ -182,7 +182,7 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline">
-                        <Trash2Icon className="h-4 w-4" /> Cancel
+                        <Trash2Icon /> Cancel
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">
@@ -198,7 +198,9 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
               <TableCell className="align-top py-4">
                 {u.firstName} {u.lastName}
               </TableCell>
-              <TableCell className="align-top py-4 font-medium">{u.email}</TableCell>
+              <TableCell className="align-top py-4 font-medium">
+                {u.email}
+              </TableCell>
               <TableCell className="align-top py-4">
                 {u.isSuperAdmin ? (
                   "Super Admin"
@@ -217,7 +219,7 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
                   <TooltipTrigger asChild>
                     <Button variant="outline" asChild>
                       <Link to={`${u.id}/edit`} aria-label="Edit user settings">
-                        <Settings className="h-4 w-4" /> Edit
+                        <Settings /> Edit
                       </Link>
                     </Button>
                   </TooltipTrigger>

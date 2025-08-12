@@ -129,7 +129,7 @@ export default function EditBatchDialog({ loaderData }: Route.ComponentProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button type="submit" variant="destructive" size="icon">
-                  <Trash2Icon className="h-4 w-4" />
+                  <Trash2Icon />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">Delete this batch</TooltipContent>

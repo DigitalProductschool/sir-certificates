@@ -113,7 +113,7 @@ export default function ProgramTemplatesPage({
                   to={`${params.templateId}/edit-meta`}
                   aria-label="Edit template settings"
                 >
-                  <Settings className="h-4 w-4" />
+                  <Settings />
                 </Link>
               </Button>
             </TooltipTrigger>

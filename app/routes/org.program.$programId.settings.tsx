@@ -173,7 +173,7 @@ export default function ProgramSettings() {
                   className="flex grow"
                 >
                   <Button type="submit" variant="outline">
-                    <Trash2Icon className="h-4 w-4" /> Remove logo
+                    <Trash2Icon /> Remove logo
                   </Button>
                 </Form>
               )}
@@ -191,7 +191,7 @@ export default function ProgramSettings() {
 
         <Form action={`../delete`} method="POST" className="flex grow">
           <Button type="submit" variant="destructive">
-            <Trash2Icon className="h-4 w-4" /> Delete this program
+            <Trash2Icon /> Delete this program
           </Button>
         </Form>
       </section>

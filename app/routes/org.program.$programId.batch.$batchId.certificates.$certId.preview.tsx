@@ -45,7 +45,7 @@ export default function CertificatePage({ loaderData }: Route.ComponentProps) {
       <div className="flex justify-end">
         <Button variant="outline" size="icon" asChild>
           <Link to="../">
-            <XIcon className="h-4 w-4" />
+            <XIcon />
           </Link>
         </Button>
       </div>

@@ -198,7 +198,7 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
             {org.logo && (
               <Form action={`logo-delete`} method="POST" className="flex grow">
                 <Button type="submit" variant="outline">
-                  <Trash2Icon className="h-4 w-4" /> Remove logo
+                  <Trash2Icon /> Remove logo
                 </Button>
               </Form>
             )}

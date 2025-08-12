@@ -130,14 +130,14 @@ export default function TemplateEditorPage({
               aria-label="Toggle visual editor"
               className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
             >
-              <EyeIcon className="h-4 w-4" />
+              <EyeIcon />
             </ToggleGroupItem>
             <ToggleGroupItem
               value="code"
               aria-label="Toggle code editor"
               className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
             >
-              <Brackets className="h-4 w-4" />
+              <Brackets />
             </ToggleGroupItem>
           </ToggleGroup>{" "}
           <Label className="grow">Layout Editor</Label>
