@@ -152,6 +152,7 @@ export default function CreateTemplateDialog() {
               id="pdf"
               name="pdf"
               type="file"
+              accept="application/pdf"
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
                   let filename = e.target.files[0].name;
