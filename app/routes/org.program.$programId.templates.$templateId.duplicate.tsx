@@ -206,7 +206,7 @@ export default function DuplicateTemplateDialog({
           </Select>
 
           <Label htmlFor="pdf">Replace PDF template</Label>
-          <Input id="pdf" name="pdf" type="file" />
+          <Input id="pdf" name="pdf" type="file" accept="application/pdf" />
         </Form>
         <DialogFooter>
           <Button variant="outline" onClick={() => navigate(-1)}>

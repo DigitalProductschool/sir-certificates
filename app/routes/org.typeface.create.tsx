@@ -130,6 +130,7 @@ export default function CreateTypefaceDialog() {
               id="ttf"
               name="ttf"
               type="file"
+              accept="font/ttf"
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
                   let filename = e.target.files[0].name;

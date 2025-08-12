@@ -172,7 +172,7 @@ export default function EditTemplateDialog({
           </Select>
 
           <Label htmlFor="pdf">Replace PDF template</Label>
-          <Input id="pdf" name="pdf" type="file" />
+          <Input id="pdf" name="pdf" type="file" accept="application/pdf" />
         </Form>
         <DialogFooter>
           <Form

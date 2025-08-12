@@ -147,6 +147,7 @@ export default function ProgramSocialPage({
               <input
                 type="file"
                 name="backgroundImage"
+                accept="image/png, image/jpeg"
                 ref={fileRef}
                 hidden
                 onChange={handleFileChanged}
