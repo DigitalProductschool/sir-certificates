@@ -51,7 +51,7 @@ export function meta({ data }: Route.MetaArgs) {
     },
     {
       property: "og:image",
-      content: `${data?.domain}/cert/${data?.certificate.uuid}/social-preview.png?t=${data?.certificate.updatedAt}`,
+      content: `${data?.domain}/cert/${data?.certificate.uuid}/social-preview.png?t=${data?.certificate.updatedAt.getTime()}`,
     },
     {
       property: "og:url",
