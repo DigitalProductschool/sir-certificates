@@ -177,5 +177,12 @@ export async function deleteOrganisationLogo(logo: OrganisationLogo) {
 			extension = "unkown";
 	}
 
-	return await unlink(`${logoDir}/_org.${logo.id}.logo.${extension}`);
+	return await unlink(`${logoDir}/_org.${logo.id}.logo.${extension}`).catch(
+		(error) => {
+			console.error(
+				`Encountered the following error when trying to delete the organisation logo file in storage for ID ${logo.id}:`,
+			);
+			console.error(error);
+		},
+	);
 }
