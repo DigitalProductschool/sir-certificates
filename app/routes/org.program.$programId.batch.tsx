@@ -131,7 +131,7 @@ export default function BatchPage({
                   to={`${currentBatch.id}/edit`}
                   aria-label="Edit batch settings"
                 >
-                  <Settings className="h-4 w-4" />
+                  <Settings />
                 </Link>
               </Button>
             </TooltipTrigger>

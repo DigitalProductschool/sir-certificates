@@ -20,9 +20,9 @@ export function CertificateSendNotification({
 				variant={wasSent ? "outline" : "default"}
 			>
 				{fetcher.state !== "idle" ? (
-					<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+					<LoaderCircle className="mr-2 animate-spin" />
 				) : (
-					<SendIcon className="mr-2 h-4 w-4" />
+					<SendIcon className="mr-2" />
 				)}
 				{wasSent ? "Resend" : "Send"}
 			</Button>

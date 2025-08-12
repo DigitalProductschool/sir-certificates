@@ -24,7 +24,9 @@ export function CertificateRefresh({ certificate }: CertificateRefreshProps) {
 						disabled={fetcher.state !== "idle"}
 					>
 						<RefreshCw
-							className={`h-4 w-4 ${fetcher.state !== "idle" ? "animate-spin" : ""}`}
+							className={
+								fetcher.state !== "idle" ? "animate-spin" : ""
+							}
 						/>
 					</Button>
 				</TooltipTrigger>
