@@ -1,7 +1,7 @@
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.edit";
 
 import { useEffect, useState, useRef } from "react";
-import { Form, redirect, useNavigate } from "react-router";
+import { Form, Link, redirect, useNavigate } from "react-router";
 
 import { Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -69,7 +69,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { batch };
 }
 
-export default function EditBatchDialog({ loaderData }: Route.ComponentProps) {
+export default function EditBatchDialog({
+  loaderData,
+  params,
+}: Route.ComponentProps) {
   const { batch } = loaderData;
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
@@ -120,21 +123,20 @@ export default function EditBatchDialog({ loaderData }: Route.ComponentProps) {
             defaultValue={batch.endDate.toISOString().split("T")[0]}
           />
         </Form>
-        <DialogFooter>
-          <Form
-            action={`../${batch.id}/delete`}
-            method="POST"
-            className="flex grow"
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button type="submit" variant="destructive" size="icon">
+        <DialogFooter className="flex justify-between">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                to={`/org/program/${params.programId}/batch/${params.batchId}/delete`}
+              >
+                <Button variant="destructive" size="icon">
                   <Trash2Icon />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Delete this batch</TooltipContent>
-            </Tooltip>
-          </Form>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top">Delete this batch</TooltipContent>
+          </Tooltip>
+
           <Button onClick={() => formRef.current?.submit()}>
             Save changes
           </Button>

@@ -140,7 +140,7 @@ model Certificate {
   firstName     String  
   lastName      String
   email         String
-  batch         Batch @relation(fields: [batchId], references: [id])
+  batch         Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
   batchId       Int
   teamName      String?
 //team          Team? @relation(fields: [teamId], references: [id])
