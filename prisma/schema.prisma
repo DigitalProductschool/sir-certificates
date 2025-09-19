@@ -114,7 +114,7 @@ model ProgramLogo {
   uuid          String    @unique @db.Uuid  
   contentType   String    @db.VarChar(64)
   updatedAt     DateTime  @updatedAt    
-  program       Program   @relation(fields: [programId], references: [id])
+  program       Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
   programId     Int       @unique
 
   @@map("program_logos")
@@ -195,7 +195,7 @@ model SocialPreview {
 
   contentType   String    @db.VarChar(64)
   updatedAt     DateTime  @updatedAt    
-  program       Program   @relation(fields: [programId], references: [id])
+  program       Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
   programId     Int       @unique
 
   @@map("social_previews")
