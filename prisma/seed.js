@@ -17,7 +17,7 @@ async function main() {
   console.log("Organisation:", org);
 
   // Sample user
-  const passwordHash = bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 10);
+  const passwordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 10);
   const admin = await prisma.user.upsert({
     where: {
       id: 1,
