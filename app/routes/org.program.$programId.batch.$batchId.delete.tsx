@@ -85,6 +85,7 @@ export default function DeleteBatchDialog({
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const [isConfirmed, setIsConfirmed] = useState(false);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -118,10 +119,13 @@ export default function DeleteBatchDialog({
             id="confirm"
             name="confirm"
             value="Y"
-            defaultChecked={false}
+            checked={isConfirmed}
+            onCheckedChange={(checked) =>
+              setIsConfirmed(checked ? true : false)
+            }
           />
           <Label htmlFor="confirm">
-            Delete {batch._count.certificates} certificates and the batch.
+            Delete {batch._count.certificates} certificate{batch._count.certificates === 1 ? "" : "s"} and the batch.
           </Label>
         </Form>
         <p className="text-sm text-muted-foreground">
@@ -137,6 +141,7 @@ export default function DeleteBatchDialog({
           <Button
             onClick={() => formRef.current?.submit()}
             variant="destructive"
+            disabled={!isConfirmed}
           >
             <Trash2Icon /> Delete batch
           </Button>
