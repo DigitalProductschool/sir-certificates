@@ -11,19 +11,21 @@ import archiver from "archiver";
 import { convert } from "pdf-img-convert";
 import { PDFDocument, PDFPage, PDFFont, type Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { FileUpload } from "@mjackson/form-data-parser";
 import slug from "slug";
+import QRCode from "qrcode";
 
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 import { replaceVariables } from "./text-variables";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
-import { FileUpload } from "@mjackson/form-data-parser";
 
 import {
   openFile as lazyOpenFile,
   writeFile as lazyWriteFile,
 } from "@mjackson/lazy-file/fs";
 import type { CertificatesWithBatch } from "./types";
+import { domain } from "./config.server";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -172,6 +174,9 @@ export async function generateCertificate(
       });
     }
   });
+
+  // Add QR Code
+  drawQRCode(page, `${domain}/view/${certificate.uuid}`, 451, 762, 40);
 
   // Wrap up and return as buffer
   const pdfBytes = await pdf.save();
@@ -353,6 +358,50 @@ export function drawTextBoxCentered(
 
     y -= options.lineHeight || lineOptions.size * 1.4;
   });
+}
+
+export function drawQRCode(
+  page: PDFPage,
+  url: string,
+  left: number,
+  top: number,
+  width: number,
+) {
+  const qrMatrix = QRCode.create(url, { errorCorrectionLevel: "M" });
+  const modules = qrMatrix.modules;
+  const size = modules.size;
+  //const moduleSize = 1; // Size of each QR code square in PDF units
+
+  //const qrCodeSize = size * moduleSize;
+  const qrCodeSize = width;
+  const qrCodeX = left;
+  const qrCodeY = top;
+
+  const moduleSize = qrCodeSize / size;
+
+  // Draw white background for QR code
+  page.drawRectangle({
+    x: qrCodeX - moduleSize,
+    y: qrCodeY - moduleSize,
+    width: qrCodeSize + moduleSize * 2,
+    height: qrCodeSize + moduleSize * 2,
+    color: rgb(1, 1, 1), // White background
+  });
+
+  // Draw each module as a rectangle
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (modules.get(x, y)) {
+        page.drawRectangle({
+          x: qrCodeX + x * moduleSize,
+          y: qrCodeY + (size - 1 - y) * moduleSize, // Flip Y coordinate
+          width: moduleSize,
+          height: moduleSize,
+          color: rgb(0, 0, 0), // Black squares
+        });
+      }
+    }
+  }
 }
 
 export async function generatePreviewOfCertificate(
