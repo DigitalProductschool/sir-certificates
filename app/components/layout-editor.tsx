@@ -328,6 +328,11 @@ function TextRow({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
                   >
                     Team Name
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{certificate.id}")}
+                  >
+                    Unique ID
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={() => addVariable("{certificate.fullNameCaps}")}

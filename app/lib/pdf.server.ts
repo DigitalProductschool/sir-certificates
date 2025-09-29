@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Batch, Certificate, Template } from "@prisma/client";
 
+import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeFile, readFile, unlink, copyFile } from "node:fs/promises";
@@ -223,7 +224,7 @@ export async function generateTemplateSample(template: Template) {
     firstName: "FirstName",
     lastName: "LastName",
     teamName: "TeamName",
-    uuid: "1234-5678-ABCD-EDGH-1234-5678",
+    uuid: randomUUID(),
     email: "mock-user@dpschool.io",
     updatedAt: new Date(),
     notifiedAt: null,
