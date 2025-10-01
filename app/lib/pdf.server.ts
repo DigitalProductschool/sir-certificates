@@ -176,7 +176,18 @@ export async function generateCertificate(
   });
 
   // Add QR Code
-  drawQRCode(page, `${domain}/view/${certificate.uuid}`, 451, 762, 40);
+  if (template.qrcode && template.qrcode.show === true) {
+    drawQRCode(
+      page,
+      `${domain}/view/${certificate.uuid}`,
+      template.qrcode.x,
+      template.qrcode.y,
+      template.qrcode.width,
+      template.qrcode.background,
+      template.qrcode.color,
+      template.qrcode.ec,
+    );
+  }
 
   // Wrap up and return as buffer
   const pdfBytes = await pdf.save();
@@ -274,6 +285,20 @@ export async function generateTemplateSample(template: Template) {
     }
   });
 
+  // Add QR Code
+  if (template.qrcode && template.qrcode.show === true) {
+    drawQRCode(
+      page,
+      `${domain}/org/program/${template.programId}/${template.id}`,
+      template.qrcode.x,
+      template.qrcode.y,
+      template.qrcode.width,
+      template.qrcode.background,
+      template.qrcode.color,
+      template.qrcode.ec,
+    );
+  }
+
   // Wrap up and return as buffer
   const pdfBytes = await pdf.save();
   const pdfBuffer = Buffer.from(pdfBytes);
@@ -366,8 +391,11 @@ export function drawQRCode(
   left: number,
   top: number,
   width: number,
+  background: [number, number, number],
+  color: [number, number, number],
+  errorCorrectionLevel: "L" | "M" | "Q" | "H",
 ) {
-  const qrMatrix = QRCode.create(url, { errorCorrectionLevel: "M" });
+  const qrMatrix = QRCode.create(url, { errorCorrectionLevel });
   const modules = qrMatrix.modules;
   const size = modules.size;
   //const moduleSize = 1; // Size of each QR code square in PDF units
@@ -385,7 +413,7 @@ export function drawQRCode(
     y: qrCodeY - moduleSize,
     width: qrCodeSize + moduleSize * 2,
     height: qrCodeSize + moduleSize * 2,
-    color: rgb(1, 1, 1), // White background
+    color: rgb(...background),
   });
 
   // Draw each module as a rectangle
@@ -397,7 +425,7 @@ export function drawQRCode(
           y: qrCodeY + (size - 1 - y) * moduleSize, // Flip Y coordinate
           width: moduleSize,
           height: moduleSize,
-          color: rgb(0, 0, 0), // Black squares
+          color: rgb(...color),
         });
       }
     }
@@ -534,6 +562,16 @@ export const sampleLayout: any = [
     lines: [],
   },
 ];
+
+export const sampleQR: PrismaJson.QRCode = {
+  show: true,
+  x: 452,
+  y: 752,
+  width: 40,
+  color: [0, 0, 0],
+  background: [1, 1, 1],
+  ec: "M",
+};
 
 export function downloadCertificates(certificates: Certificate[]) {
   // PassThrough stream for piping the archive directly to the response

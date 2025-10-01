@@ -10,6 +10,7 @@ import {
   Braces,
   PlusIcon,
   Trash2,
+  TextInitial,
 } from "lucide-react";
 import { FontSizeIcon, LineHeightIcon } from "@radix-ui/react-icons";
 
@@ -96,6 +97,12 @@ function Toolbar({ settings, onChange, onDelete }: any) {
   return (
     <div className="flex bg-muted pl-4 pr-2 py-2">
       <div className="flex grow flex-wrap items-center gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <TextInitial className="size-4 mr-3" />
+          </TooltipTrigger>
+          <TooltipContent side="top">Textblock</TooltipContent>
+        </Tooltip>
         <InputTiny
           label="X"
           tooltip="X position (in points)"

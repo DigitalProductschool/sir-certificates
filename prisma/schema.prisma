@@ -168,7 +168,11 @@ model Certificate {
 model Template {
   id            Int       @id @default(autoincrement())
   name          String
-  layout        Json      
+  layout        Json
+
+  /// [QRCode]
+  qrcode        Json?
+
   locale        String    @default("en-US")
   updatedAt     DateTime  @updatedAt    
   certificates  Certificate[]

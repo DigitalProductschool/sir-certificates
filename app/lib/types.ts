@@ -11,6 +11,16 @@ declare global {
 				withPhoto: { x: number; y: number; w: number; h: number };
 			};
 		};
+
+		type QRCode = {
+			show: boolean;
+			x: number;
+			y: number;
+			width: number;
+			color: [number, number, number];
+			background: [number, number, number];
+			ec: "L" | "M" | "Q" | "H";
+		};
 	}
 }
 

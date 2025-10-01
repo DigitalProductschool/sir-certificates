@@ -15,6 +15,7 @@ import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
   generateTemplateSample,
   generatePreviewOfTemplate,
+  sampleQR,
 } from "~/lib/pdf.server";
 
 import { EyeIcon, Brackets } from "lucide-react";
@@ -33,6 +34,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 
 import { LayoutEditor } from "~/components/layout-editor";
+import { LayoutQRCodeEditor } from "~/components/layout-qrcode-editor";
 
 export function meta({ data }: Route.MetaArgs) {
   return [{ title: `Template ${data?.template?.name}` }];
@@ -44,6 +46,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData) as { [k: string]: string };
   let layoutJSON;
+  let qrJSON;
 
   // @todo verify schema of incoming JSON
   try {
@@ -55,6 +58,17 @@ export async function action({ request, params }: Route.ActionArgs) {
     });
   }
 
+  // @todo verify schema of incoming JSON
+  try {
+    qrJSON = JSON.parse(inputs.qrcode);
+  } catch (error) {
+    throw new Response(null, {
+      status: 400,
+      statusText: "Invalid JSON layout",
+    });
+  }
+
+
   // If this email exists already for this batch, update instead of create
   const template = await prisma.template
     .update({
@@ -64,6 +78,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       },
       data: {
         layout: layoutJSON,
+        qrcode: qrJSON,
         name: inputs.name,
       },
     })
@@ -96,6 +111,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     });
   }
 
+  /* Temporarily needed until all templates have QR code settings
+     @todo ensure all templates have or get a qrcode settings declaration and then update the schema to make it non-optional
+  */
+  if (template && template.qrcode === null) {
+    template.qrcode = sampleQR;
+  }
+
   const typefaces = await prisma.typeface.findMany();
 
   return { template, typefaces };
@@ -107,6 +129,7 @@ export default function TemplateEditorPage({
   const { template, typefaces } = loaderData;
   const navigation = useNavigation();
   const [layout, setLayout] = useState(template.layout);
+  const [qrcode, setQrcode] = useState(template.qrcode);
   const [switchEditor, setSwitchEditor] = useState("visual");
 
   useEffect(() => {
@@ -143,18 +166,23 @@ export default function TemplateEditorPage({
           <Label className="grow">Layout Editor</Label>
           <Form key={template.id} method="POST">
             <input type="hidden" name="layout" value={JSON.stringify(layout)} />
+            <input type="hidden" name="qrcode" value={JSON.stringify(qrcode)} />
             <Button type="submit" disabled={navigation.state !== "idle"}>
               Save and Preview
             </Button>
           </Form>
         </div>
+
         {switchEditor === "visual" ? (
-          <LayoutEditor
-            layout={layout}
-            fonts={typefaces}
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            onChange={(updatedLayout: any) => setLayout(updatedLayout)}
-          />
+          <>
+            <LayoutEditor
+              layout={layout}
+              fonts={typefaces}
+              /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+              onChange={(updatedLayout: any) => setLayout(updatedLayout)}
+            />
+            <LayoutQRCodeEditor qrcode={qrcode} onChange={setQrcode} />
+          </>
         ) : (
           <Textarea
             className="font-mono min-h-96 h-full"
