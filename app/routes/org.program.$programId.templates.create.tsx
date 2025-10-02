@@ -30,6 +30,7 @@ import {
   generateTemplateSample,
   generatePreviewOfTemplate,
   sampleLayout,
+  sampleQR,
   saveTemplateUpload,
 } from "~/lib/pdf.server";
 import { locales, defaultLocale } from "~/lib/template-locales";
@@ -38,6 +39,9 @@ export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   let template: Template | void = undefined;
+
+  const qrcode = { ...sampleQR };
+  qrcode.show = true;
 
   const uploadHandler = async (fileUpload: FileUpload) => {
     if (
@@ -49,6 +53,7 @@ export async function action({ request, params }: Route.ActionArgs) {
           data: {
             name: "(Template Name)",
             layout: sampleLayout,
+            qrcode,
             locale: defaultLocale.code,
             program: {
               connect: { id: Number(params.programId) },
