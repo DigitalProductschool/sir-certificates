@@ -564,7 +564,7 @@ export const sampleLayout: any = [
 ];
 
 export const sampleQR: PrismaJson.QRCode = {
-  show: true,
+  show: false,
   x: 452,
   y: 752,
   width: 40,
