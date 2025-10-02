@@ -210,9 +210,14 @@ export default function TemplateEditorPage({
           </Form>
         </div>
 
-        <LayoutQRCodeEditor qrcode={qrcode} onChange={setQrcode} />
+        <LayoutQRCodeEditor
+          key={`qrcode${template.id}`}
+          qrcode={qrcode}
+          onChange={setQrcode}
+        />
 
         <LayoutEditor
+          key={`layout${template.id}`}
           layout={layout}
           fonts={typefaces}
           /* eslint-disable-next-line @typescript-eslint/no-explicit-any */

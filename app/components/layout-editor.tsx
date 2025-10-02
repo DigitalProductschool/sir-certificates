@@ -47,6 +47,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { useEffect, useState } from "react";
 
 function generateRandomId(length: number = 5) {
   return Array.from({ length }, () =>
@@ -93,6 +94,12 @@ function hexToRgbArray(hexString: string) {
 
 function Toolbar({ settings, onChange, onDelete }: any) {
   const color = rgbToHex(settings.color || [0, 0, 0]);
+  const [align, setAlign] = useState(settings.align || "left");
+
+  useEffect(() => {
+    if (settings.align) setAlign(settings.align);
+  }, [settings.align]);
+
   // @todo fix layout / overflow / wrapping on small screens
   return (
     <div className="flex bg-muted pl-4 pr-2 py-2">
@@ -202,10 +209,14 @@ function Toolbar({ settings, onChange, onDelete }: any) {
         &emsp;
         <ToggleGroup
           type="single"
-          value={settings.align}
+          value={align}
           onValueChange={(value) => {
-            const update = { ...settings, align: value };
-            onChange(update);
+            console.log("Toogle value", value);
+            if (value) {
+              const update = { ...settings, align: value };
+              onChange(update);
+              setAlign(value);
+            }
           }}
         >
           <ToggleGroupItem
@@ -226,7 +237,6 @@ function Toolbar({ settings, onChange, onDelete }: any) {
             value="right"
             aria-label="Toggle align right"
             className="data-[state=off]:text-muted-foreground"
-            disabled
           >
             <AlignRight />
           </ToggleGroupItem>
