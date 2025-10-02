@@ -18,7 +18,7 @@ import {
   sampleQR,
 } from "~/lib/pdf.server";
 
-import { EyeIcon, Brackets } from "lucide-react";
+import { EyeIcon, Brackets, ClipboardCopy, ClipboardPaste } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -32,9 +32,15 @@ import {
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 import { LayoutEditor } from "~/components/layout-editor";
 import { LayoutQRCodeEditor } from "~/components/layout-qrcode-editor";
+import { useToast } from "~/hooks/use-toast";
 
 export function meta({ data }: Route.MetaArgs) {
   return [{ title: `Template ${data?.template?.name}` }];
@@ -130,6 +136,44 @@ export default function TemplateEditorPage({
   const [layout, setLayout] = useState(template.layout);
   const [qrcode, setQrcode] = useState(template.qrcode);
   const [switchEditor, setSwitchEditor] = useState("visual");
+  const { toast } = useToast();
+
+  const encodeLayout = () => {
+    const fullLayout = {
+      mime: "x-certiffy/template-layout",
+      layout,
+      qrcode,
+    };
+    return JSON.stringify(fullLayout, null, 2);
+  };
+
+  const decodeLayout = (json: string, notify: boolean = false) => {
+    let decoded;
+    try {
+      decoded = JSON.parse(json);
+    } catch (error) {
+      if (notify)
+        toast({
+          title: "No layout detected",
+          description:
+            "No valid layout definition found while trying to paste the layout from the clipboard.",
+        });
+    }
+    if (decoded && decoded.mime === "x-certiffy/template-layout") {
+      setLayout(decoded.layout);
+      setQrcode(decoded.qrcode);
+    }
+  };
+
+  const clipboardCopy = async () => {
+    const clipText = encodeLayout();
+    await navigator.clipboard.writeText(clipText);
+  };
+
+  const clipboardPaste = async () => {
+    const clipText = await navigator.clipboard.readText();
+    decodeLayout(clipText, true);
+  };
 
   useEffect(() => {
     setLayout(template.layout);
@@ -166,6 +210,22 @@ export default function TemplateEditorPage({
               <Brackets />
             </ToggleGroupItem>
           </ToggleGroup>{" "}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" onClick={clipboardCopy}>
+                <ClipboardCopy />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Copy Layout</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" onClick={clipboardPaste}>
+                <ClipboardPaste />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Paste Layout</TooltipContent>
+          </Tooltip>
           <Label className="grow">Layout Editor</Label>
           <Form key={template.id} method="POST">
             <input type="hidden" name="layout" value={JSON.stringify(layout)} />
@@ -189,10 +249,9 @@ export default function TemplateEditorPage({
         ) : (
           <Textarea
             className="font-mono min-h-96 h-full"
-            value={JSON.stringify(layout, undefined, 2)}
+            value={encodeLayout()}
             onChange={(event) => {
-              const layoutJSON = JSON.parse(event.target.value);
-              setLayout(layoutJSON);
+              decodeLayout(event.target.value);
             }}
           />
         )}
