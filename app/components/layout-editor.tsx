@@ -211,7 +211,6 @@ function Toolbar({ settings, onChange, onDelete }: any) {
           type="single"
           value={align}
           onValueChange={(value) => {
-            console.log("Toogle value", value);
             if (value) {
               const update = { ...settings, align: value };
               onChange(update);
