@@ -40,7 +40,7 @@ type Line = {
   split?: string;
 };
 
-type LineWithFont = {
+type TextSegment = {
   text: string;
   font: PDFFont;
   split?: string;
@@ -53,6 +53,7 @@ type LineOptions = {
   lineHeight?: number;
   size?: number;
   color?: Color;
+  align?: "left" | "center" | "right";
 };
 
 type TextOptions = {
@@ -62,7 +63,7 @@ type TextOptions = {
   lines: Array<Line>;
   lineHeight?: number;
   maxWidth?: number;
-  align?: "left" | "center";
+  align?: "left" | "center" | "right";
   color?: [number, number, number];
 };
 
@@ -154,25 +155,15 @@ export async function generateCertificate(
       };
     });
 
-    if (text.align === "center") {
-      drawTextBoxCentered(page, lines, {
-        size: text.size,
-        lineHeight: text.lineHeight,
-        x: text.x,
-        y: text.y,
-        maxWidth: text.maxWidth,
-        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-      });
-    } else {
-      drawTextBox(page, lines, {
-        size: text.size,
-        lineHeight: text.lineHeight,
-        x: text.x,
-        y: text.y,
-        maxWidth: text.maxWidth,
-        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-      });
-    }
+    drawTextBlock(page, lines, {
+      size: text.size,
+      lineHeight: text.lineHeight,
+      x: text.x,
+      y: text.y,
+      maxWidth: text.maxWidth,
+      color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+      align: text.align,
+    });
   });
 
   // Add QR Code
@@ -264,25 +255,15 @@ export async function generateTemplateSample(template: Template) {
       };
     });
 
-    if (text.align === "center") {
-      drawTextBoxCentered(page, lines, {
-        size: text.size,
-        lineHeight: text.lineHeight,
-        x: text.x,
-        y: text.y,
-        maxWidth: text.maxWidth,
-        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-      });
-    } else {
-      drawTextBox(page, lines, {
-        size: text.size,
-        lineHeight: text.lineHeight,
-        x: text.x,
-        y: text.y,
-        maxWidth: text.maxWidth,
-        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-      });
-    }
+    drawTextBlock(page, lines, {
+      size: text.size,
+      lineHeight: text.lineHeight,
+      x: text.x,
+      y: text.y,
+      maxWidth: text.maxWidth,
+      color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+      align: text.align,
+    });
   });
 
   // Add QR Code
@@ -308,81 +289,107 @@ export async function generateTemplateSample(template: Template) {
   return pdfBuffer;
 }
 
-export function drawTextBox(
+export function drawTextBlock(
   page: PDFPage,
-  lines: Array<LineWithFont>,
+  segments: Array<TextSegment>,
   options: LineOptions = { x: 0, y: 0 },
 ) {
-  const lineOptions = {
-    size: options.size || 12,
-    color: options.color,
-    // opacity: options.opacity,
-  };
+  const size = options.size ?? 12;
+  const color = options.color;
+  const maxWidth = options.maxWidth ?? A4PageWidth;
+  const align = options.align ?? "left";
 
-  let x = options.x;
-  let y = options.y;
+  const measure = (font: PDFFont, t: string) => font.widthOfTextAtSize(t, size);
 
-  // @todo check if a maxWidth set too low can trigger an infite loop here?
+  // Token keeps exact text (including whitespace) + precomputed width
+  type Token = { text: string; font: PDFFont; width: number; isSpace: boolean };
+  type VisualLine = { tokens: Token[]; width: number };
 
-  lines.forEach((line) => {
-    let firstInLine = true;
-    line.text.split(line.split || " ").forEach((word: string) => {
-      if (
-        x + line.font.widthOfTextAtSize(word, lineOptions.size) >
-        options.x + (options.maxWidth || A4PageWidth)
-      ) {
-        x = options.x;
-        y -= options.lineHeight || lineOptions.size * 1.4;
-        firstInLine = true;
-      }
-
-      if (!firstInLine) {
-        word = " " + word;
-      }
-
-      page.drawText(word, {
-        ...lineOptions,
-        font: line.font,
-        x,
-        y,
+  // Split a segment into tokens that *preserve* internal whitespace.
+  // We capture runs of whitespace as separate tokens: "foo  bar" → ["foo", "  ", "bar"]
+  const segmentToTokens = (seg: TextSegment): Token[] => {
+    const parts = seg.text.split(/(\s+)/); // preserves delimiters
+    const toks: Token[] = [];
+    for (const p of parts) {
+      if (p === "") continue;
+      const isSpace = /^\s+$/.test(p);
+      toks.push({
+        text: p,
+        font: seg.font,
+        width: measure(seg.font, p),
+        isSpace,
       });
-
-      x += line.font.widthOfTextAtSize(word, lineOptions.size);
-      firstInLine = false;
-    });
-  });
-}
-
-// @caveat centered text doesn't auto-wrap lines at the moment
-// @todo improve centered text rendering with auto-wrapping lines
-export function drawTextBoxCentered(
-  page: PDFPage,
-  lines: Array<LineWithFont>,
-  options: LineOptions = { x: 0, y: 0 },
-) {
-  const lineOptions = {
-    size: options.size || 12,
-    color: options.color,
+    }
+    return toks;
   };
 
-  let x = options.x;
-  let y = options.y;
-  const maxWidth = options.maxWidth || A4PageWidth;
+  const lines: VisualLine[] = [];
+  let current: Token[] = [];
+  let currentWidth = 0;
 
-  lines.forEach((line) => {
-    const lineWidth = line.font.widthOfTextAtSize(line.text, lineOptions.size);
+  const trimTrailingSpaces = () => {
+    while (current.length && current[current.length - 1].isSpace) {
+      currentWidth -= current[current.length - 1].width;
+      current.pop();
+    }
+  };
 
-    x = options.x + (maxWidth - lineWidth) / 2;
+  const pushLine = () => {
+    trimTrailingSpaces();
+    if (!current.length) return;
+    lines.push({ tokens: current, width: currentWidth });
+    current = [];
+    currentWidth = 0;
+  };
 
-    page.drawText(line.text, {
-      ...lineOptions,
-      font: line.font,
-      x,
-      y,
-    });
+  // Build visual lines (no extra spaces between segments)
+  for (const seg of segments) {
+    const tokens = segmentToTokens(seg);
+    for (const tok of tokens) {
+      // Skip leading spaces at the start of a new visual line
+      if (!current.length && tok.isSpace) continue;
 
-    y -= options.lineHeight || lineOptions.size * 1.4;
-  });
+      const candidate = currentWidth + tok.width;
+
+      if (candidate <= maxWidth || !current.length) {
+        // Fits, or forced onto empty line (even if it overflows: long word)
+        current.push(tok);
+        currentWidth = candidate;
+      } else {
+        // Wrap: finalize current line, then place token on next line
+        pushLine();
+
+        // Skip leading spaces on the new line as well
+        if (!tok.isSpace) {
+          current.push(tok);
+          currentWidth = tok.width;
+
+          // If the single non-space token itself is wider than the box, flush it alone
+          if (tok.width > maxWidth) {
+            pushLine();
+          }
+        }
+        // If tok is space, we simply drop it at the new line start
+      }
+    }
+  }
+  pushLine();
+
+  // Draw with alignment
+  let y = options.y!;
+  const lineHeight = options.lineHeight ?? size * 1.4;
+
+  for (const line of lines) {
+    let x = options.x!;
+    if (align === "center") x = options.x! + (maxWidth - line.width) / 2;
+    if (align === "right") x = options.x! + (maxWidth - line.width);
+
+    for (const t of line.tokens) {
+      page.drawText(t.text, { font: t.font, size, color, x, y });
+      x += t.width;
+    }
+    y -= lineHeight;
+  }
 }
 
 export function drawQRCode(
