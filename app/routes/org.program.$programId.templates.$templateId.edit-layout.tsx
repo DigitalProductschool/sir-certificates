@@ -68,7 +68,6 @@ export async function action({ request, params }: Route.ActionArgs) {
     });
   }
 
-
   // If this email exists already for this batch, update instead of create
   const template = await prisma.template
     .update({
@@ -135,6 +134,10 @@ export default function TemplateEditorPage({
   useEffect(() => {
     setLayout(template.layout);
   }, [template.id, template.layout]);
+
+  useEffect(() => {
+    setQrcode(template.qrcode);
+  }, [template.id, template.qrcode]);
 
   // @todo – when editing the template in JSON code,
   // allow for a graceful handling of JSON syntax errors instead of preventing edits
