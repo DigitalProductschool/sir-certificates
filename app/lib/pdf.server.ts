@@ -54,6 +54,7 @@ type LineOptions = {
   size?: number;
   color?: Color;
   align?: "left" | "center" | "right";
+  opticalMargin?: boolean; // default: true for right-aligned, false otherwise
 };
 
 type TextOptions = {
@@ -298,29 +299,29 @@ export function drawTextBlock(
   const color = options.color;
   const maxWidth = options.maxWidth ?? A4PageWidth;
   const align = options.align ?? "left";
+  const opticalMargin =
+    options.opticalMargin ?? (align === "right" ? true : false);
 
   const measure = (font: PDFFont, t: string) => font.widthOfTextAtSize(t, size);
 
-  // Token keeps exact text (including whitespace) + precomputed width
   type Token = { text: string; font: PDFFont; width: number; isSpace: boolean };
   type VisualLine = { tokens: Token[]; width: number };
 
-  // Split a segment into tokens that *preserve* internal whitespace.
-  // We capture runs of whitespace as separate tokens: "foo  bar" → ["foo", "  ", "bar"]
-  const segmentToTokens = (seg: TextSegment): Token[] => {
-    const parts = seg.text.split(/(\s+)/); // preserves delimiters
-    const toks: Token[] = [];
+  // Split a segment into tokens while preserving internal whitespace
+  const segmentToTokens = (segment: TextSegment): Token[] => {
+    const parts = segment.text.split(/(\s+)/); // keep whitespace runs as tokens
+    const tokens: Token[] = [];
     for (const p of parts) {
       if (p === "") continue;
       const isSpace = /^\s+$/.test(p);
-      toks.push({
+      tokens.push({
         text: p,
-        font: seg.font,
-        width: measure(seg.font, p),
+        font: segment.font,
+        width: measure(segment.font, p),
         isSpace,
       });
     }
-    return toks;
+    return tokens;
   };
 
   const lines: VisualLine[] = [];
@@ -342,7 +343,7 @@ export function drawTextBlock(
     currentWidth = 0;
   };
 
-  // Build visual lines (no extra spaces between segments)
+  // Build visual lines with wrapping (no inter-segment spaces injected)
   for (const seg of segments) {
     const tokens = segmentToTokens(seg);
     for (const tok of tokens) {
@@ -352,37 +353,83 @@ export function drawTextBlock(
       const candidate = currentWidth + tok.width;
 
       if (candidate <= maxWidth || !current.length) {
-        // Fits, or forced onto empty line (even if it overflows: long word)
         current.push(tok);
         currentWidth = candidate;
-      } else {
-        // Wrap: finalize current line, then place token on next line
-        pushLine();
 
-        // Skip leading spaces on the new line as well
+        // If a single non-space token overflows on an empty line, allow it and flush (no hyphenation here)
+        if (!tok.isSpace && !current.length && tok.width > maxWidth) {
+          pushLine();
+        }
+      } else {
+        // Wrap, then place token on the next line (drop leading spaces)
+        pushLine();
         if (!tok.isSpace) {
           current.push(tok);
           currentWidth = tok.width;
-
-          // If the single non-space token itself is wider than the box, flush it alone
-          if (tok.width > maxWidth) {
-            pushLine();
-          }
+          if (tok.width > maxWidth) pushLine();
         }
-        // If tok is space, we simply drop it at the new line start
       }
     }
   }
   pushLine();
 
-  // Draw with alignment
-  let y = options.y!;
+  // --- Optical margin alignment (right) ---
+  // Map of trailing characters → fraction of their width to "hang" outside the box.
+  // Tweak to taste per font. Values are conservative to avoid overhang looking exaggerated.
+  const HANG_FACTORS: Record<string, number> = {
+    ".": 0.6,
+    ",": 0.6,
+    ";": 0.5,
+    ":": 0.5,
+    "!": 0.45,
+    "?": 0.45,
+    "…": 0.9,
+    "'": 0.35,
+    "’": 0.35,
+    '"': 0.35,
+    "”": 0.35,
+    ")": 0.25,
+    "]": 0.25,
+    "»": 0.35,
+  };
+
+  const computeRightHang = (line: VisualLine): number => {
+    // Find last non-space token
+    for (let i = line.tokens.length - 1; i >= 0; i--) {
+      const t = line.tokens[i];
+      if (t.isSpace || !t.text) continue;
+
+      // Examine trailing code points so sequences like '."' or '…"' hang cumulatively.
+      const chars = Array.from(t.text);
+      let hang = 0;
+      for (let j = chars.length - 1; j >= 0; j--) {
+        const ch = chars[j];
+        const factor = HANG_FACTORS[ch];
+        if (!factor) break; // stop at first non-hangable char
+        hang += measure(t.font, ch) * factor;
+      }
+      return hang;
+    }
+    return 0;
+  };
+
+  // Draw with alignment (+ optional optical margin for right)
+  let y = options.y;
   const lineHeight = options.lineHeight ?? size * 1.4;
 
   for (const line of lines) {
-    let x = options.x!;
-    if (align === "center") x = options.x! + (maxWidth - line.width) / 2;
-    if (align === "right") x = options.x! + (maxWidth - line.width);
+    let x = options.x;
+    if (align === "left") {
+      x = options.x;
+    } else if (align === "center") {
+      x = options.x + (maxWidth - line.width) / 2;
+    } else if (align === "right") {
+      let base = options.x + (maxWidth - line.width);
+      if (opticalMargin) {
+        base += computeRightHang(line); // shift right so punctuation hangs outside
+      }
+      x = base;
+    }
 
     for (const t of line.tokens) {
       page.drawText(t.text, { font: t.font, size, color, x, y });
