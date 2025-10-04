@@ -15,9 +15,10 @@ import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
   generateTemplateSample,
   generatePreviewOfTemplate,
+  sampleQR,
 } from "~/lib/pdf.server";
 
-import { EyeIcon, Brackets } from "lucide-react";
+import { ClipboardCopy, ClipboardPaste, ClipboardCheck } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -29,10 +30,15 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
-import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 import { LayoutEditor } from "~/components/layout-editor";
+import { LayoutQRCodeEditor } from "~/components/layout-qrcode-editor";
+import { useToast } from "~/hooks/use-toast";
 
 export function meta({ data }: Route.MetaArgs) {
   return [{ title: `Template ${data?.template?.name}` }];
@@ -44,10 +50,21 @@ export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData) as { [k: string]: string };
   let layoutJSON;
+  let qrJSON;
 
   // @todo verify schema of incoming JSON
   try {
     layoutJSON = JSON.parse(inputs.layout);
+  } catch (error) {
+    throw new Response(null, {
+      status: 400,
+      statusText: "Invalid JSON layout",
+    });
+  }
+
+  // @todo verify schema of incoming JSON
+  try {
+    qrJSON = JSON.parse(inputs.qrcode);
   } catch (error) {
     throw new Response(null, {
       status: 400,
@@ -64,6 +81,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       },
       data: {
         layout: layoutJSON,
+        qrcode: qrJSON,
         name: inputs.name,
       },
     })
@@ -96,6 +114,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     });
   }
 
+  /* Temporarily needed until all templates have QR code settings
+     @todo ensure all templates have or get a qrcode settings declaration and then update the schema to make it non-optional
+  */
+  if (template && template.qrcode === null) {
+    template.qrcode = sampleQR;
+  }
+
   const typefaces = await prisma.typeface.findMany();
 
   return { template, typefaces };
@@ -107,64 +132,97 @@ export default function TemplateEditorPage({
   const { template, typefaces } = loaderData;
   const navigation = useNavigation();
   const [layout, setLayout] = useState(template.layout);
-  const [switchEditor, setSwitchEditor] = useState("visual");
+  const [qrcode, setQrcode] = useState(template.qrcode);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [pasteSuccess, setPasteSuccess] = useState(false);
+  const { toast } = useToast();
+
+  const clipboardCopy = async () => {
+    const fullLayout = {
+      mime: "x-certiffy/template-layout",
+      layout,
+      qrcode,
+    };
+    const clipText = JSON.stringify(fullLayout, null, 2);
+    await navigator.clipboard.writeText(clipText);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 500);
+  };
+
+  const clipboardPaste = async () => {
+    let decoded;
+    const clipText = await navigator.clipboard.readText();
+    try {
+      decoded = JSON.parse(clipText);
+    } catch (error) {
+      /* do nothing */
+    }
+    if (decoded && decoded.mime === "x-certiffy/template-layout") {
+      setLayout(decoded.layout);
+      setQrcode(decoded.qrcode);
+      setPasteSuccess(true);
+      setTimeout(() => setPasteSuccess(false), 500);
+    } else {
+      toast({
+        title: "🔴 Paste layout failed",
+        description:
+          "No valid layout definition found while trying to paste the layout from the clipboard.",
+      });
+    }
+  };
 
   useEffect(() => {
     setLayout(template.layout);
   }, [template.id, template.layout]);
 
-  // @todo – when editing the template in JSON code,
-  // allow for a graceful handling of JSON syntax errors instead of preventing edits
+  useEffect(() => {
+    setQrcode(template.qrcode);
+  }, [template.id, template.qrcode]);
 
   return (
     <div className="pt-2 grid grid-cols-2 gap-4 items-start">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 pb-8">
         <div className="flex h-10 items-center gap-1.5">
-          <ToggleGroup
-            type="single"
-            value={switchEditor}
-            onValueChange={setSwitchEditor}
-          >
-            <ToggleGroupItem
-              value="visual"
-              aria-label="Toggle visual editor"
-              className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
-            >
-              <EyeIcon />
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="code"
-              aria-label="Toggle code editor"
-              className="data-[state=on]:text-primary data-[state=off]:text-muted-foreground"
-            >
-              <Brackets />
-            </ToggleGroupItem>
-          </ToggleGroup>{" "}
-          <Label className="grow">Layout Editor</Label>
+          <Label>Template Layout</Label>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" onClick={clipboardCopy}>
+                {copySuccess ? <ClipboardCheck /> : <ClipboardCopy />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Copy Layout</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" onClick={clipboardPaste}>
+                {pasteSuccess ? <ClipboardCheck /> : <ClipboardPaste />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Paste Layout</TooltipContent>
+          </Tooltip>
+          <div className="grow" />
           <Form key={template.id} method="POST">
             <input type="hidden" name="layout" value={JSON.stringify(layout)} />
+            <input type="hidden" name="qrcode" value={JSON.stringify(qrcode)} />
             <Button type="submit" disabled={navigation.state !== "idle"}>
               Save and Preview
             </Button>
           </Form>
         </div>
-        {switchEditor === "visual" ? (
-          <LayoutEditor
-            layout={layout}
-            fonts={typefaces}
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            onChange={(updatedLayout: any) => setLayout(updatedLayout)}
-          />
-        ) : (
-          <Textarea
-            className="font-mono min-h-96 h-full"
-            value={JSON.stringify(layout, undefined, 2)}
-            onChange={(event) => {
-              const layoutJSON = JSON.parse(event.target.value);
-              setLayout(layoutJSON);
-            }}
-          />
-        )}
+
+        <LayoutQRCodeEditor
+          key={`qrcode${template.id}`}
+          qrcode={qrcode}
+          onChange={setQrcode}
+        />
+
+        <LayoutEditor
+          key={`layout${template.id}`}
+          layout={layout}
+          fonts={typefaces}
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          onChange={(updatedLayout: any) => setLayout(updatedLayout)}
+        />
       </div>
       <div className="flex flex-col gap-2">
         <Label className="flex grow h-10 justify-center items-center">

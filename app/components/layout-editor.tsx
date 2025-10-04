@@ -10,6 +10,7 @@ import {
   Braces,
   PlusIcon,
   Trash2,
+  TextInitial,
 } from "lucide-react";
 import { FontSizeIcon, LineHeightIcon } from "@radix-ui/react-icons";
 
@@ -46,6 +47,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { useEffect, useState } from "react";
 
 function generateRandomId(length: number = 5) {
   return Array.from({ length }, () =>
@@ -92,10 +94,22 @@ function hexToRgbArray(hexString: string) {
 
 function Toolbar({ settings, onChange, onDelete }: any) {
   const color = rgbToHex(settings.color || [0, 0, 0]);
+  const [align, setAlign] = useState(settings.align || "left");
+
+  useEffect(() => {
+    if (settings.align) setAlign(settings.align);
+  }, [settings.align]);
+
   // @todo fix layout / overflow / wrapping on small screens
   return (
     <div className="flex bg-muted pl-4 pr-2 py-2">
       <div className="flex grow flex-wrap items-center gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <TextInitial className="size-4 mr-3" />
+          </TooltipTrigger>
+          <TooltipContent side="top">Textblock</TooltipContent>
+        </Tooltip>
         <InputTiny
           label="X"
           tooltip="X position (in points)"
@@ -195,10 +209,13 @@ function Toolbar({ settings, onChange, onDelete }: any) {
         &emsp;
         <ToggleGroup
           type="single"
-          value={settings.align}
+          value={align}
           onValueChange={(value) => {
-            const update = { ...settings, align: value };
-            onChange(update);
+            if (value) {
+              const update = { ...settings, align: value };
+              onChange(update);
+              setAlign(value);
+            }
           }}
         >
           <ToggleGroupItem
@@ -219,7 +236,6 @@ function Toolbar({ settings, onChange, onDelete }: any) {
             value="right"
             aria-label="Toggle align right"
             className="data-[state=off]:text-muted-foreground"
-            disabled
           >
             <AlignRight />
           </ToggleGroupItem>
@@ -327,6 +343,11 @@ function TextRow({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
                     onSelect={() => addVariable("{certificate.teamName}")}
                   >
                     Team Name
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addVariable("{certificate.id}")}
+                  >
+                    Unique ID
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

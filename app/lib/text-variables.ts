@@ -72,6 +72,10 @@ export function replaceVariables(
 		"{certificate.teamName}",
 		certificate.teamName || "",
 	);
+	replacements = replacements.replaceAll(
+		"{certificate.id}",
+		certificate.uuid || "",
+	);	
 
 	// Batch replacements
 	replacements = replacements.replaceAll("{batch.name}", batch.name || "");

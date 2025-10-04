@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Batch, Certificate, Template } from "@prisma/client";
 
+import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeFile, readFile, unlink, copyFile } from "node:fs/promises";
@@ -10,19 +11,21 @@ import archiver from "archiver";
 import { convert } from "pdf-img-convert";
 import { PDFDocument, PDFPage, PDFFont, type Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { FileUpload } from "@mjackson/form-data-parser";
 import slug from "slug";
+import QRCode from "qrcode";
 
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 import { replaceVariables } from "./text-variables";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
-import { FileUpload } from "@mjackson/form-data-parser";
 
 import {
   openFile as lazyOpenFile,
   writeFile as lazyWriteFile,
 } from "@mjackson/lazy-file/fs";
 import type { CertificatesWithBatch } from "./types";
+import { domain } from "./config.server";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -37,7 +40,7 @@ type Line = {
   split?: string;
 };
 
-type LineWithFont = {
+type TextSegment = {
   text: string;
   font: PDFFont;
   split?: string;
@@ -50,6 +53,8 @@ type LineOptions = {
   lineHeight?: number;
   size?: number;
   color?: Color;
+  align?: "left" | "center" | "right";
+  opticalMargin?: boolean; // default: true for right-aligned, false otherwise
 };
 
 type TextOptions = {
@@ -59,7 +64,7 @@ type TextOptions = {
   lines: Array<Line>;
   lineHeight?: number;
   maxWidth?: number;
-  align?: "left" | "center";
+  align?: "left" | "center" | "right";
   color?: [number, number, number];
 };
 
@@ -151,26 +156,30 @@ export async function generateCertificate(
       };
     });
 
-    if (text.align === "center") {
-      drawTextBoxCentered(page, lines, {
-        size: text.size,
-        lineHeight: text.lineHeight,
-        x: text.x,
-        y: text.y,
-        maxWidth: text.maxWidth,
-        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-      });
-    } else {
-      drawTextBox(page, lines, {
-        size: text.size,
-        lineHeight: text.lineHeight,
-        x: text.x,
-        y: text.y,
-        maxWidth: text.maxWidth,
-        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-      });
-    }
+    drawTextBlock(page, lines, {
+      size: text.size,
+      lineHeight: text.lineHeight,
+      x: text.x,
+      y: text.y,
+      maxWidth: text.maxWidth,
+      color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+      align: text.align,
+    });
   });
+
+  // Add QR Code
+  if (template.qrcode && template.qrcode.show === true) {
+    drawQRCode(
+      page,
+      `${domain}/view/${certificate.uuid}`,
+      template.qrcode.x,
+      template.qrcode.y,
+      template.qrcode.width,
+      template.qrcode.background,
+      template.qrcode.color,
+      template.qrcode.ec,
+    );
+  }
 
   // Wrap up and return as buffer
   const pdfBytes = await pdf.save();
@@ -223,7 +232,7 @@ export async function generateTemplateSample(template: Template) {
     firstName: "FirstName",
     lastName: "LastName",
     teamName: "TeamName",
-    uuid: "1234-5678-ABCD-EDGH-1234-5678",
+    uuid: randomUUID(),
     email: "mock-user@dpschool.io",
     updatedAt: new Date(),
     notifiedAt: null,
@@ -247,26 +256,30 @@ export async function generateTemplateSample(template: Template) {
       };
     });
 
-    if (text.align === "center") {
-      drawTextBoxCentered(page, lines, {
-        size: text.size,
-        lineHeight: text.lineHeight,
-        x: text.x,
-        y: text.y,
-        maxWidth: text.maxWidth,
-        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-      });
-    } else {
-      drawTextBox(page, lines, {
-        size: text.size,
-        lineHeight: text.lineHeight,
-        x: text.x,
-        y: text.y,
-        maxWidth: text.maxWidth,
-        color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-      });
-    }
+    drawTextBlock(page, lines, {
+      size: text.size,
+      lineHeight: text.lineHeight,
+      x: text.x,
+      y: text.y,
+      maxWidth: text.maxWidth,
+      color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+      align: text.align,
+    });
   });
+
+  // Add QR Code
+  if (template.qrcode && template.qrcode.show === true) {
+    drawQRCode(
+      page,
+      `${domain}/org/program/${template.programId}/${template.id}`,
+      template.qrcode.x,
+      template.qrcode.y,
+      template.qrcode.width,
+      template.qrcode.background,
+      template.qrcode.color,
+      template.qrcode.ec,
+    );
+  }
 
   // Wrap up and return as buffer
   const pdfBytes = await pdf.save();
@@ -277,81 +290,200 @@ export async function generateTemplateSample(template: Template) {
   return pdfBuffer;
 }
 
-export function drawTextBox(
+export function drawTextBlock(
   page: PDFPage,
-  lines: Array<LineWithFont>,
+  segments: Array<TextSegment>,
   options: LineOptions = { x: 0, y: 0 },
 ) {
-  const lineOptions = {
-    size: options.size || 12,
-    color: options.color,
-    // opacity: options.opacity,
+  const size = options.size ?? 12;
+  const color = options.color;
+  const maxWidth = options.maxWidth ?? A4PageWidth;
+  const align = options.align ?? "left";
+  const opticalMargin =
+    options.opticalMargin ?? (align === "right" ? true : false);
+
+  const measure = (font: PDFFont, t: string) => font.widthOfTextAtSize(t, size);
+
+  type Token = { text: string; font: PDFFont; width: number; isSpace: boolean };
+  type VisualLine = { tokens: Token[]; width: number };
+
+  // Split a segment into tokens while preserving internal whitespace
+  const segmentToTokens = (segment: TextSegment): Token[] => {
+    const parts = segment.text.split(/(\s+)/); // keep whitespace runs as tokens
+    const tokens: Token[] = [];
+    for (const p of parts) {
+      if (p === "") continue;
+      const isSpace = /^\s+$/.test(p);
+      tokens.push({
+        text: p,
+        font: segment.font,
+        width: measure(segment.font, p),
+        isSpace,
+      });
+    }
+    return tokens;
   };
 
-  let x = options.x;
+  const lines: VisualLine[] = [];
+  let current: Token[] = [];
+  let currentWidth = 0;
+
+  const trimTrailingSpaces = () => {
+    while (current.length && current[current.length - 1].isSpace) {
+      currentWidth -= current[current.length - 1].width;
+      current.pop();
+    }
+  };
+
+  const pushLine = () => {
+    trimTrailingSpaces();
+    if (!current.length) return;
+    lines.push({ tokens: current, width: currentWidth });
+    current = [];
+    currentWidth = 0;
+  };
+
+  // Build visual lines with wrapping (no inter-segment spaces injected)
+  for (const seg of segments) {
+    const tokens = segmentToTokens(seg);
+    for (const tok of tokens) {
+      // Skip leading spaces at the start of a new visual line
+      if (!current.length && tok.isSpace) continue;
+
+      const candidate = currentWidth + tok.width;
+
+      if (candidate <= maxWidth || !current.length) {
+        current.push(tok);
+        currentWidth = candidate;
+
+        // If a single non-space token overflows on an empty line, allow it and flush (no hyphenation here)
+        if (!tok.isSpace && !current.length && tok.width > maxWidth) {
+          pushLine();
+        }
+      } else {
+        // Wrap, then place token on the next line (drop leading spaces)
+        pushLine();
+        if (!tok.isSpace) {
+          current.push(tok);
+          currentWidth = tok.width;
+          if (tok.width > maxWidth) pushLine();
+        }
+      }
+    }
+  }
+  pushLine();
+
+  // --- Optical margin alignment (right) ---
+  // Map of trailing characters → fraction of their width to "hang" outside the box.
+  // Tweak to taste per font. Values are conservative to avoid overhang looking exaggerated.
+  const HANG_FACTORS: Record<string, number> = {
+    ".": 0.6,
+    ",": 0.6,
+    ";": 0.5,
+    ":": 0.5,
+    "!": 0.45,
+    "?": 0.45,
+    "…": 0.9,
+    "'": 0.35,
+    "’": 0.35,
+    '"': 0.35,
+    "”": 0.35,
+    ")": 0.25,
+    "]": 0.25,
+    "»": 0.35,
+  };
+
+  const computeRightHang = (line: VisualLine): number => {
+    // Find last non-space token
+    for (let i = line.tokens.length - 1; i >= 0; i--) {
+      const t = line.tokens[i];
+      if (t.isSpace || !t.text) continue;
+
+      // Examine trailing code points so sequences like '."' or '…"' hang cumulatively.
+      const chars = Array.from(t.text);
+      let hang = 0;
+      for (let j = chars.length - 1; j >= 0; j--) {
+        const ch = chars[j];
+        const factor = HANG_FACTORS[ch];
+        if (!factor) break; // stop at first non-hangable char
+        hang += measure(t.font, ch) * factor;
+      }
+      return hang;
+    }
+    return 0;
+  };
+
+  // Draw with alignment (+ optional optical margin for right)
   let y = options.y;
+  const lineHeight = options.lineHeight ?? size * 1.4;
 
-  // @todo check if a maxWidth set too low can trigger an infite loop here?
-
-  lines.forEach((line) => {
-    let firstInLine = true;
-    line.text.split(line.split || " ").forEach((word: string) => {
-      if (
-        x + line.font.widthOfTextAtSize(word, lineOptions.size) >
-        options.x + (options.maxWidth || A4PageWidth)
-      ) {
-        x = options.x;
-        y -= options.lineHeight || lineOptions.size * 1.4;
-        firstInLine = true;
+  for (const line of lines) {
+    let x = options.x;
+    if (align === "left") {
+      x = options.x;
+    } else if (align === "center") {
+      x = options.x + (maxWidth - line.width) / 2;
+    } else if (align === "right") {
+      let base = options.x + (maxWidth - line.width);
+      if (opticalMargin) {
+        base += computeRightHang(line); // shift right so punctuation hangs outside
       }
+      x = base;
+    }
 
-      if (!firstInLine) {
-        word = " " + word;
-      }
-
-      page.drawText(word, {
-        ...lineOptions,
-        font: line.font,
-        x,
-        y,
-      });
-
-      x += line.font.widthOfTextAtSize(word, lineOptions.size);
-      firstInLine = false;
-    });
-  });
+    for (const t of line.tokens) {
+      page.drawText(t.text, { font: t.font, size, color, x, y });
+      x += t.width;
+    }
+    y -= lineHeight;
+  }
 }
 
-// @caveat centered text doesn't auto-wrap lines at the moment
-// @todo improve centered text rendering with auto-wrapping lines
-export function drawTextBoxCentered(
+export function drawQRCode(
   page: PDFPage,
-  lines: Array<LineWithFont>,
-  options: LineOptions = { x: 0, y: 0 },
+  url: string,
+  left: number,
+  top: number,
+  width: number,
+  background: [number, number, number],
+  color: [number, number, number],
+  errorCorrectionLevel: "L" | "M" | "Q" | "H",
 ) {
-  const lineOptions = {
-    size: options.size || 12,
-    color: options.color,
-  };
+  const qrMatrix = QRCode.create(url, { errorCorrectionLevel });
+  const modules = qrMatrix.modules;
+  const size = modules.size;
+  //const moduleSize = 1; // Size of each QR code square in PDF units
 
-  let x = options.x;
-  let y = options.y;
-  const maxWidth = options.maxWidth || A4PageWidth;
+  //const qrCodeSize = size * moduleSize;
+  const qrCodeSize = width;
+  const qrCodeX = left;
+  const qrCodeY = top;
 
-  lines.forEach((line) => {
-    const lineWidth = line.font.widthOfTextAtSize(line.text, lineOptions.size);
+  const moduleSize = qrCodeSize / size;
 
-    x = options.x + (maxWidth - lineWidth) / 2;
-
-    page.drawText(line.text, {
-      ...lineOptions,
-      font: line.font,
-      x,
-      y,
-    });
-
-    y -= options.lineHeight || lineOptions.size * 1.4;
+  // Draw white background for QR code
+  page.drawRectangle({
+    x: qrCodeX - moduleSize,
+    y: qrCodeY - moduleSize,
+    width: qrCodeSize + moduleSize * 2,
+    height: qrCodeSize + moduleSize * 2,
+    color: rgb(...background),
   });
+
+  // Draw each module as a rectangle
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (modules.get(x, y)) {
+        page.drawRectangle({
+          x: qrCodeX + x * moduleSize,
+          y: qrCodeY + (size - 1 - y) * moduleSize, // Flip Y coordinate
+          width: moduleSize,
+          height: moduleSize,
+          color: rgb(...color),
+        });
+      }
+    }
+  }
 }
 
 export async function generatePreviewOfCertificate(
@@ -484,6 +616,16 @@ export const sampleLayout: any = [
     lines: [],
   },
 ];
+
+export const sampleQR: PrismaJson.QRCode = {
+  show: false,
+  x: 452,
+  y: 752,
+  width: 40,
+  color: [0, 0, 0],
+  background: [1, 1, 1],
+  ec: "M",
+};
 
 export function downloadCertificates(certificates: Certificate[]) {
   // PassThrough stream for piping the archive directly to the response
