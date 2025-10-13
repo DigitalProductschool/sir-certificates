@@ -210,11 +210,13 @@ export default function TemplateEditorPage({
           </Form>
         </div>
 
-        <LayoutQRCodeEditor
-          key={`qrcode${template.id}`}
-          qrcode={qrcode}
-          onChange={setQrcode}
-        />
+        {qrcode && (
+          <LayoutQRCodeEditor
+            key={`qrcode${template.id}`}
+            qrcode={qrcode}
+            onChange={setQrcode}
+          />
+        )}
 
         <LayoutEditor
           key={`layout${template.id}`}
