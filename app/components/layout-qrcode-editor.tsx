@@ -1,6 +1,7 @@
-/* eslint-disable react/prop-types, @typescript-eslint/no-explicit-any */
 // This layout editor is for the PDF template layouts
 // @todo rename component to clarify the function
+
+import type { Dispatch, SetStateAction } from "react";
 
 import { HexColorPicker } from "react-colorful";
 import { Eye, EyeOff, QrCode } from "lucide-react";
@@ -56,7 +57,13 @@ function hexToRgbArray(hexString: string) {
 
 // @todo improve typing (refactor 'any' to actual types)
 
-function Toolbar({ settings, onChange }: any) {
+function Toolbar({
+  settings,
+  onChange,
+}: {
+  settings: PrismaJson.QRCode;
+  onChange: Dispatch<SetStateAction<PrismaJson.QRCode | null>>;
+}) {
   const color = rgbToHex(settings.color || [0, 0, 0]);
   const background = rgbToHex(settings.background || [1, 1, 1]);
   // @todo fix layout / overflow / wrapping on small screens
@@ -97,7 +104,7 @@ function Toolbar({ settings, onChange }: any) {
           onChange={(event) => {
             const update = {
               ...settings,
-              width: Number(event.target.value) || undefined,
+              width: Number(event.target.value) || settings.width,
             };
             onChange(update);
           }}
@@ -119,21 +126,23 @@ function Toolbar({ settings, onChange }: any) {
             <HexColorPicker
               color={color}
               onChange={(newColor) => {
-                const update = {
+                const newRGB = hexToRgbArray(newColor);
+                onChange({
                   ...settings,
-                  color: hexToRgbArray(newColor),
-                };
-                onChange(update);
+                  color: [newRGB[0], newRGB[1], newRGB[2]],
+                });
               }}
             />
             <Input
               value={color}
               onChange={(event) => {
-                let newColor;
+                let newRGB;
                 try {
-                  newColor = hexToRgbArray(event.target.value);
-                  const update = { ...settings, color: newColor };
-                  onChange(update);
+                  newRGB = hexToRgbArray(event.target.value);
+                  onChange({
+                    ...settings,
+                    color: [newRGB[0], newRGB[1], newRGB[2]],
+                  });
                 } catch (error) {
                   // @todo fix typing out hex values (because invalid values are rejected, you can only change single characters or copy/paste)
                   console.log("Invalid color: ", event.target.value);
@@ -158,21 +167,23 @@ function Toolbar({ settings, onChange }: any) {
             <HexColorPicker
               color={background}
               onChange={(newColor) => {
-                const update = {
+                const newRGB = hexToRgbArray(newColor);
+                onChange({
                   ...settings,
-                  background: hexToRgbArray(newColor),
-                };
-                onChange(update);
+                  color: [newRGB[0], newRGB[1], newRGB[2]],
+                });
               }}
             />
             <Input
               value={background}
               onChange={(event) => {
-                let newColor;
+                let newRGB;
                 try {
-                  newColor = hexToRgbArray(event.target.value);
-                  const update = { ...settings, background: newColor };
-                  onChange(update);
+                  newRGB = hexToRgbArray(event.target.value);
+                  onChange({
+                    ...settings,
+                    color: [newRGB[0], newRGB[1], newRGB[2]],
+                  });
                 } catch (error) {
                   // @todo fix typing out hex values (because invalid values are rejected, you can only change single characters or copy/paste)
                   console.log("Invalid color: ", event.target.value);
@@ -221,7 +232,13 @@ function Toolbar({ settings, onChange }: any) {
   );
 }
 
-export function LayoutQRCodeEditor({ qrcode, onChange }: any) {
+export function LayoutQRCodeEditor({
+  qrcode,
+  onChange,
+}: {
+  qrcode: PrismaJson.QRCode;
+  onChange: Dispatch<SetStateAction<PrismaJson.QRCode | null>>;
+}) {
   return (
     <div className="flex flex-col gap-4 mb-4">
       <div className="flex flex-col gap-2 text-sm rounded-lg border bg-card text-card-foreground shadow-sm">
