@@ -4,14 +4,6 @@ import type { Prisma } from "@prisma/client";
 declare global {
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace PrismaJson {
-		type SocialPreviewLayout = {
-			photo: { x: number; y: number; size: number };
-			certificate: {
-				noPhoto: { x: number; y: number; w: number; h: number };
-				withPhoto: { x: number; y: number; w: number; h: number };
-			};
-		};
-
 		type QRCode = {
 			show: boolean;
 			x: number;
@@ -20,6 +12,32 @@ declare global {
 			color: [number, number, number];
 			background: [number, number, number];
 			ec: "L" | "M" | "Q" | "H";
+		};
+
+		type SocialPreviewLayout = {
+			photo: { x: number; y: number; size: number };
+			certificate: {
+				noPhoto: { x: number; y: number; w: number; h: number };
+				withPhoto: { x: number; y: number; w: number; h: number };
+			};
+		};
+
+		type TextBlock = {
+			x: number;
+			y: number;
+			id: string;
+			size: number;
+			maxWidth?: number;
+			lineHeight?: number;
+			align?: "left" | "center" | "right";
+			color?: [number, number, number];
+			lines: TextSegment[];
+		};
+
+		type TextSegment = {
+			id: string;
+			font: string;
+			text: string;
 		};
 	}
 }

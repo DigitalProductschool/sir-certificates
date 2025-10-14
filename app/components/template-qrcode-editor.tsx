@@ -20,42 +20,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-function rgbToHex(rgbArray: number[]) {
-  if (!Array.isArray(rgbArray) || rgbArray.length !== 3) {
-    throw new Error("Color input must be an array of three numbers");
-  }
-  const hexValues = rgbArray.map((value) => {
-    if (value < 0 || value > 1) {
-      throw new Error("All color values must be between 0 and 1");
-    }
-    const intVal = Math.floor(value * 255);
-    return intVal.toString(16).padStart(2, "0");
-  });
-  return hexValues.join("");
-}
-
-function hexToRgbArray(hexString: string) {
-  // Remove '#' prefix if present
-  hexString = hexString.replace(/^#/, "");
-  // Handle 3-digit hex codes
-  if (hexString.length === 3) {
-    hexString = hexString
-      .split("")
-      .map((c) => c + c)
-      .join("");
-  }
-  if (hexString.length !== 6) {
-    throw new Error("Invalid hex color string");
-  }
-  const rgbArray = [
-    parseInt(hexString.slice(0, 2), 16),
-    parseInt(hexString.slice(2, 4), 16),
-    parseInt(hexString.slice(4, 6), 16),
-  ];
-  return rgbArray.map((val) => val / 255);
-}
-
-// @todo improve typing (refactor 'any' to actual types)
+import { hexToRgbArray, rgbToHex } from "~/lib/utils";
 
 function Toolbar({
   settings,
@@ -82,8 +47,7 @@ function Toolbar({
           inputMode="numeric"
           value={settings.x}
           onChange={(event) => {
-            const update = { ...settings, x: Number(event.target.value) };
-            onChange(update);
+            onChange({ ...settings, x: Number(event.target.value) });
           }}
         />
         <InputTiny
@@ -92,8 +56,7 @@ function Toolbar({
           inputMode="numeric"
           value={settings.y}
           onChange={(event) => {
-            const update = { ...settings, y: Number(event.target.value) };
-            onChange(update);
+            onChange({ ...settings, y: Number(event.target.value) });
           }}
         />
         <InputTiny
@@ -102,11 +65,10 @@ function Toolbar({
           inputMode="numeric"
           value={settings.width}
           onChange={(event) => {
-            const update = {
+            onChange({
               ...settings,
               width: Number(event.target.value) || settings.width,
-            };
-            onChange(update);
+            });
           }}
         />
         &emsp;
@@ -126,22 +88,20 @@ function Toolbar({
             <HexColorPicker
               color={color}
               onChange={(newColor) => {
-                const newRGB = hexToRgbArray(newColor);
                 onChange({
                   ...settings,
-                  color: [newRGB[0], newRGB[1], newRGB[2]],
+                  color: hexToRgbArray(newColor),
                 });
               }}
             />
             <Input
               value={color}
               onChange={(event) => {
-                let newRGB;
+                // try ... catch because of possible invalid user input
                 try {
-                  newRGB = hexToRgbArray(event.target.value);
                   onChange({
                     ...settings,
-                    color: [newRGB[0], newRGB[1], newRGB[2]],
+                    color: hexToRgbArray(event.target.value),
                   });
                 } catch (error) {
                   // @todo fix typing out hex values (because invalid values are rejected, you can only change single characters or copy/paste)
@@ -167,22 +127,20 @@ function Toolbar({
             <HexColorPicker
               color={background}
               onChange={(newColor) => {
-                const newRGB = hexToRgbArray(newColor);
                 onChange({
                   ...settings,
-                  color: [newRGB[0], newRGB[1], newRGB[2]],
+                  color: hexToRgbArray(newColor),
                 });
               }}
             />
             <Input
               value={background}
               onChange={(event) => {
-                let newRGB;
+                // try ... catch because of possible invalid user input
                 try {
-                  newRGB = hexToRgbArray(event.target.value);
                   onChange({
                     ...settings,
-                    color: [newRGB[0], newRGB[1], newRGB[2]],
+                    color: hexToRgbArray(event.target.value),
                   });
                 } catch (error) {
                   // @todo fix typing out hex values (because invalid values are rejected, you can only change single characters or copy/paste)

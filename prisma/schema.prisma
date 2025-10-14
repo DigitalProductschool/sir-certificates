@@ -168,7 +168,9 @@ model Certificate {
 model Template {
   id            Int       @id @default(autoincrement())
   name          String
-  layout        Json
+
+  /// [TextBlock]
+  layout        Json[]
 
   /// [QRCode]
   qrcode        Json?

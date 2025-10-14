@@ -1,5 +1,4 @@
 import type { Route } from "./+types/org.program.$programId.templates.$templateId.duplicate";
-import type { Prisma } from "@prisma/client";
 import { useEffect, useState, useRef } from "react";
 import { Form, redirect, useNavigate } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
@@ -53,7 +52,8 @@ export async function action({ request, params }: Route.ActionArgs) {
     .create({
       data: {
         name: `${existing.name} Copy`,
-        layout: existing.layout as Prisma.InputJsonValue,
+        layout: existing.layout as PrismaJson.TextBlock[],
+        qrcode: existing.qrcode ?? undefined,
         locale: existing.locale,
         program: {
           connect: { id: Number(params.programId) },

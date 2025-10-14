@@ -34,19 +34,13 @@ const certDir = resolve(__dirname, "../../storage/certificates");
 const previewDir = resolve(__dirname, "../../storage/previews");
 const templateDir = resolve(__dirname, "../../storage/templates");
 
-type Line = {
-  text: string;
-  font: string;
-  split?: string;
-};
-
-type TextSegment = {
+type PDFTextSegment = {
   text: string;
   font: PDFFont;
   split?: string;
 };
 
-type LineOptions = {
+type SegmentOptions = {
   x: number;
   y: number;
   maxWidth?: number;
@@ -57,22 +51,11 @@ type LineOptions = {
   opticalMargin?: boolean; // default: true for right-aligned, false otherwise
 };
 
-type TextOptions = {
-  x: number;
-  y: number;
-  size: number;
-  lines: Array<Line>;
-  lineHeight?: number;
-  maxWidth?: number;
-  align?: "left" | "center" | "right";
-  color?: [number, number, number];
-};
-
 const A4PageWidth = 595;
 
 async function assembleTypefacesFromLayout(
   pdf: PDFDocument,
-  layout: TextOptions[],
+  layout: PrismaJson.TextBlock[],
 ) {
   const typefaces = await getAvailableTypefaces();
   const fontMap = new Map<string, PDFFont>();
@@ -133,15 +116,15 @@ export async function generateCertificate(
   pdf.registerFontkit(fontkit);
   const fontMap = await assembleTypefacesFromLayout(
     pdf,
-    template.layout as TextOptions[],
+    template.layout as PrismaJson.TextBlock[],
   );
 
   // Modify page
   const page = pdf.getPages()[0];
 
   const texts = template.layout as any;
-  texts.forEach((text: TextOptions) => {
-    const lines = text.lines.map((line: Line) => {
+  texts.forEach((text: PrismaJson.TextBlock) => {
+    const lines = text.lines.map((line: PrismaJson.TextSegment) => {
       const replacements = replaceVariables(
         line.text,
         template.locale,
@@ -152,7 +135,6 @@ export async function generateCertificate(
       return {
         text: replacements,
         font: fontMap.get(line.font)!,
-        split: line.split,
       };
     });
 
@@ -207,7 +189,7 @@ export async function generateTemplateSample(template: Template) {
   pdf.registerFontkit(fontkit);
   const fontMap = await assembleTypefacesFromLayout(
     pdf,
-    template.layout as TextOptions[],
+    template.layout as PrismaJson.TextBlock[],
   );
 
   // Modify page
@@ -240,8 +222,8 @@ export async function generateTemplateSample(template: Template) {
   };
 
   const texts = template.layout as any;
-  texts.forEach((text: TextOptions) => {
-    const lines = text.lines.map((line: Line) => {
+  texts.forEach((text: PrismaJson.TextBlock) => {
+    const lines = text.lines.map((line: PrismaJson.TextSegment) => {
       const replacements = replaceVariables(
         line.text,
         template.locale,
@@ -252,7 +234,6 @@ export async function generateTemplateSample(template: Template) {
       return {
         text: replacements,
         font: fontMap.get(line.font)!,
-        split: line.split,
       };
     });
 
@@ -292,8 +273,8 @@ export async function generateTemplateSample(template: Template) {
 
 export function drawTextBlock(
   page: PDFPage,
-  segments: Array<TextSegment>,
-  options: LineOptions = { x: 0, y: 0 },
+  segments: Array<PDFTextSegment>,
+  options: SegmentOptions = { x: 0, y: 0 },
 ) {
   const size = options.size ?? 12;
   const color = options.color;
@@ -308,7 +289,7 @@ export function drawTextBlock(
   type VisualLine = { tokens: Token[]; width: number };
 
   // Split a segment into tokens while preserving internal whitespace
-  const segmentToTokens = (segment: TextSegment): Token[] => {
+  const segmentToTokens = (segment: PDFTextSegment): Token[] => {
     const parts = segment.text.split(/(\s+)/); // keep whitespace runs as tokens
     const tokens: Token[] = [];
     for (const p of parts) {
