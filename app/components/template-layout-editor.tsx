@@ -48,13 +48,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { hexToRgbArray, rgbToHex } from "~/lib/utils";
-
-function generateRandomId(length: number = 5) {
-  return Array.from({ length }, () =>
-    Math.floor(Math.random() * 16).toString(16),
-  ).join("");
-}
+import { generateRandomId, hexToRgbArray, rgbToHex } from "~/lib/utils";
 
 function Toolbar({
   settings,
