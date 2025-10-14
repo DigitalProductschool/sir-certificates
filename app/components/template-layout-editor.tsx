@@ -1,6 +1,6 @@
-/* eslint-disable react/prop-types, @typescript-eslint/no-explicit-any */
 // This layout editor is for the PDF template layouts
 // @todo rename component to clarify the function
+import { useEffect, useState } from "react";
 import type { Typeface } from "@prisma/client";
 import { HexColorPicker } from "react-colorful";
 import {
@@ -47,7 +47,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { useEffect, useState } from "react";
+
+import { hexToRgbArray, rgbToHex } from "~/lib/utils";
 
 function generateRandomId(length: number = 5) {
   return Array.from({ length }, () =>
@@ -55,44 +56,15 @@ function generateRandomId(length: number = 5) {
   ).join("");
 }
 
-function rgbToHex(rgbArray: number[]) {
-  if (!Array.isArray(rgbArray) || rgbArray.length !== 3) {
-    throw new Error("Color input must be an array of three numbers");
-  }
-  const hexValues = rgbArray.map((value) => {
-    if (value < 0 || value > 1) {
-      throw new Error("All color values must be between 0 and 1");
-    }
-    const intVal = Math.floor(value * 255);
-    return intVal.toString(16).padStart(2, "0");
-  });
-  return hexValues.join("");
-}
-
-function hexToRgbArray(hexString: string) {
-  // Remove '#' prefix if present
-  hexString = hexString.replace(/^#/, "");
-  // Handle 3-digit hex codes
-  if (hexString.length === 3) {
-    hexString = hexString
-      .split("")
-      .map((c) => c + c)
-      .join("");
-  }
-  if (hexString.length !== 6) {
-    throw new Error("Invalid hex color string");
-  }
-  const rgbArray = [
-    parseInt(hexString.slice(0, 2), 16),
-    parseInt(hexString.slice(2, 4), 16),
-    parseInt(hexString.slice(4, 6), 16),
-  ];
-  return rgbArray.map((val) => val / 255);
-}
-
-// @todo improve typing (refactor 'any' to actual types)
-
-function Toolbar({ settings, onChange, onDelete }: any) {
+function Toolbar({
+  settings,
+  onChange,
+  onDelete,
+}: {
+  settings: PrismaJson.TextBlock;
+  onChange: (changedSettings: PrismaJson.TextBlock) => void;
+  onDelete: () => void;
+}) {
   const color = rgbToHex(settings.color || [0, 0, 0]);
   const [align, setAlign] = useState(settings.align || "left");
 
@@ -170,11 +142,12 @@ function Toolbar({ settings, onChange, onDelete }: any) {
             <Input
               value={color}
               onChange={(event) => {
-                let newColor;
+                // try ... catch because of possible invalid user input
                 try {
-                  newColor = hexToRgbArray(event.target.value);
-                  const update = { ...settings, color: newColor };
-                  onChange(update);
+                  onChange({
+                    ...settings,
+                    color: hexToRgbArray(event.target.value),
+                  });
                 } catch (error) {
                   // @todo fix typing out hex values (because invalid values are rejected, you can only change single characters or copy/paste)
                   console.log("Invalid color: ", event.target.value);
@@ -189,8 +162,7 @@ function Toolbar({ settings, onChange, onDelete }: any) {
           inputMode="numeric"
           value={settings.size}
           onChange={(event) => {
-            const update = { ...settings, size: Number(event.target.value) };
-            onChange(update);
+            onChange({ ...settings, size: Number(event.target.value) });
           }}
         />
         <InputTiny
@@ -199,11 +171,10 @@ function Toolbar({ settings, onChange, onDelete }: any) {
           inputMode="numeric"
           value={settings.lineHeight}
           onChange={(event) => {
-            const update = {
+            onChange({
               ...settings,
               lineHeight: Number(event.target.value) || undefined,
-            };
-            onChange(update);
+            });
           }}
         />
         &emsp;
@@ -211,9 +182,11 @@ function Toolbar({ settings, onChange, onDelete }: any) {
           type="single"
           value={align}
           onValueChange={(value) => {
-            if (value) {
-              const update = { ...settings, align: value };
-              onChange(update);
+            if (
+              value &&
+              (value === "left" || value === "center" || value === "right")
+            ) {
+              onChange({ ...settings, align: value });
               setAlign(value);
             }
           }}
@@ -253,10 +226,22 @@ function Toolbar({ settings, onChange, onDelete }: any) {
   );
 }
 
-function TextRow({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
+function TextRow({
+  segmentId,
+  settings,
+  fonts,
+  onChangeSegment,
+  onDelete,
+}: {
+  segmentId: string;
+  settings: PrismaJson.TextSegment;
+  fonts: Typeface[];
+  onChangeSegment: (changedSegment: PrismaJson.TextSegment) => void;
+  onDelete: () => void;
+}) {
   const addVariable = (variable: string) => {
-    onChangeLine({
-      id: lineId,
+    onChangeSegment({
+      id: segmentId,
       text: settings.text + variable,
       font: settings.font,
     });
@@ -266,13 +251,13 @@ function TextRow({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
     <tr>
       <td className="pl-4 pr-1 py-0.5">
         <Input
-          id={`${lineId}-text`}
-          key={`${lineId}-text`}
+          id={`${segmentId}-text`}
+          key={`${segmentId}-text`}
           value={settings.text}
           className="grow"
           onChange={(event) =>
-            onChangeLine({
-              id: lineId,
+            onChangeSegment({
+              id: segmentId,
               text: event.target.value,
               font: settings.font,
             })
@@ -390,11 +375,11 @@ function TextRow({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
       </td>
       <td className="px-1">
         <Select
-          key={`${lineId}-font`}
+          key={`${segmentId}-font`}
           value={settings.font}
           onValueChange={(fontName) => {
-            onChangeLine({
-              id: lineId,
+            onChangeSegment({
+              id: segmentId,
               text: settings.text,
               font: fontName,
             });
@@ -432,37 +417,55 @@ function TextRow({ lineId, settings, fonts, onChangeLine, onDelete }: any) {
   );
 }
 
-function TextBlock({ blockId, settings, fonts, onChangeBlock, onDelete }: any) {
-  const lines = settings.lines.map((line: any, index: number) => {
-    const lineId = line.id || generateRandomId();
-    return (
-      <TextRow
-        key={lineId}
-        lineId={lineId}
-        settings={line}
-        fonts={fonts}
-        onChangeLine={(changedLine: any) => {
-          const updateLines = [...settings.lines];
-          updateLines[index] = changedLine;
-
-          const updateBlock = { ...settings, id: blockId, lines: updateLines };
-          onChangeBlock(updateBlock);
-        }}
-        onDelete={() => {
-          const updateLines = settings.lines.toSpliced(index, 1);
-          const updateBlock = { ...settings, id: blockId, lines: updateLines };
-          onChangeBlock(updateBlock);
-        }}
-      />
-    );
-  });
+function TextBlock({
+  blockId,
+  settings,
+  fonts,
+  onChangeBlock,
+  onDelete,
+}: {
+  blockId: string;
+  settings: PrismaJson.TextBlock;
+  fonts: Typeface[];
+  onChangeBlock: (updatedBlock: PrismaJson.TextBlock) => void;
+  onDelete: () => void;
+}) {
+  const segments = settings.lines.map(
+    (segment: PrismaJson.TextSegment, index: number) => {
+      const segmentId = segment.id || generateRandomId();
+      return (
+        <TextRow
+          key={segmentId}
+          segmentId={segmentId}
+          settings={segment}
+          fonts={fonts}
+          onChangeSegment={(changedSegment: PrismaJson.TextSegment) => {
+            const updateSegments = [...settings.lines];
+            updateSegments[index] = changedSegment;
+            onChangeBlock({
+              ...settings,
+              id: blockId,
+              lines: updateSegments,
+            });
+          }}
+          onDelete={() => {
+            const updateSegments = settings.lines.toSpliced(index, 1);
+            onChangeBlock({
+              ...settings,
+              id: blockId,
+              lines: updateSegments,
+            });
+          }}
+        />
+      );
+    },
+  );
   return (
     <div className="flex flex-col gap-2 text-sm rounded-lg border bg-card text-card-foreground shadow-sm">
       <Toolbar
         settings={settings}
-        onChange={(changedSettings: any) => {
-          const updateBlock = { ...changedSettings, id: blockId };
-          onChangeBlock(updateBlock);
+        onChange={(changedSettings: PrismaJson.TextBlock) => {
+          onChangeBlock({ ...changedSettings, id: blockId });
         }}
         onDelete={onDelete}
       />
@@ -473,18 +476,20 @@ function TextBlock({ blockId, settings, fonts, onChangeBlock, onDelete }: any) {
           <col />
           <col width="40" />
         </colgroup>
-        <tbody>{lines}</tbody>
+        <tbody>{segments}</tbody>
       </table>
       <Button
         type="button"
         variant="ghost"
         className="text-sm mx-4 mb-2 h-8"
         onClick={() => {
-          const updateBlock = {
+          onChangeBlock({
             ...settings,
-            lines: [...settings.lines, { text: "", font: fonts[0].name }],
-          };
-          onChangeBlock(updateBlock);
+            lines: [
+              ...settings.lines,
+              { id: generateRandomId(), text: "", font: fonts[0].name },
+            ],
+          });
         }}
       >
         <PlusIcon className="mr-2" /> Add Segment
@@ -493,8 +498,16 @@ function TextBlock({ blockId, settings, fonts, onChangeBlock, onDelete }: any) {
   );
 }
 
-export function LayoutEditor({ layout, fonts, onChange }: any) {
-  const blocks = layout.map((block: any, index: number) => {
+export function LayoutEditor({
+  layout,
+  fonts,
+  onChange,
+}: {
+  layout: PrismaJson.TextBlock[];
+  fonts: Typeface[];
+  onChange: (updatedLayout: PrismaJson.TextBlock[]) => void;
+}) {
+  const blocks = layout.map((block: PrismaJson.TextBlock, index: number) => {
     const blockId = block.id || generateRandomId();
     return (
       <TextBlock
@@ -502,7 +515,7 @@ export function LayoutEditor({ layout, fonts, onChange }: any) {
         blockId={blockId}
         settings={block}
         fonts={fonts}
-        onChangeBlock={(updatedBlock: any) => {
+        onChangeBlock={(updatedBlock: PrismaJson.TextBlock) => {
           const updateLayout = [...layout];
           updateLayout[index] = updatedBlock;
           onChange(updateLayout);
@@ -523,10 +536,11 @@ export function LayoutEditor({ layout, fonts, onChange }: any) {
         onClick={() => {
           const updateLayout = [...layout];
           updateLayout.push({
+            id: generateRandomId(),
             x: 0,
             y: 0,
             size: 12,
-            lines: [{ text: "", font: fonts[0].name }],
+            lines: [{ id: generateRandomId(), text: "", font: fonts[0].name }],
           });
           onChange(updateLayout);
         }}

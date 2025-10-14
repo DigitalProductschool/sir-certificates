@@ -36,8 +36,8 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { LayoutEditor } from "~/components/layout-editor";
-import { LayoutQRCodeEditor } from "~/components/layout-qrcode-editor";
+import { LayoutEditor } from "~/components/template-layout-editor";
+import { LayoutQRCodeEditor } from "~/components/template-qrcode-editor";
 import { useToast } from "~/hooks/use-toast";
 
 export function meta({ data }: Route.MetaArgs) {
@@ -49,8 +49,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData) as { [k: string]: string };
-  let layoutJSON;
-  let qrJSON;
+  let layoutJSON: PrismaJson.TextBlock[];
+  let qrJSON: PrismaJson.QRCode;
 
   // @todo verify schema of incoming JSON
   try {
@@ -131,7 +131,7 @@ export default function TemplateEditorPage({
 }: Route.ComponentProps) {
   const { template, typefaces } = loaderData;
   const navigation = useNavigation();
-  const [layout, setLayout] = useState(template.layout);
+  const [layout, setLayout] = useState<PrismaJson.TextBlock[]>(template.layout);
   const [qrcode, setQrcode] = useState(template.qrcode);
   const [copySuccess, setCopySuccess] = useState(false);
   const [pasteSuccess, setPasteSuccess] = useState(false);
@@ -151,15 +151,25 @@ export default function TemplateEditorPage({
 
   const clipboardPaste = async () => {
     let decoded;
+    let updatedLayout;
+    let updatedQR;
     const clipText = await navigator.clipboard.readText();
     try {
       decoded = JSON.parse(clipText);
+      updatedLayout = decoded.layout as PrismaJson.TextBlock[];
+      updatedQR = decoded.qrcode as PrismaJson.QRCode;
     } catch (error) {
       /* do nothing */
+      console.log("Invalid layout:", clipText, error);
     }
-    if (decoded && decoded.mime === "x-certiffy/template-layout") {
-      setLayout(decoded.layout);
-      setQrcode(decoded.qrcode);
+    if (
+      decoded &&
+      decoded.mime === "x-certiffy/template-layout" &&
+      updatedLayout &&
+      updatedQR
+    ) {
+      setLayout(updatedLayout);
+      setQrcode(updatedQR);
       setPasteSuccess(true);
       setTimeout(() => setPasteSuccess(false), 500);
     } else {
@@ -222,8 +232,9 @@ export default function TemplateEditorPage({
           key={`layout${template.id}`}
           layout={layout}
           fonts={typefaces}
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          onChange={(updatedLayout: any) => setLayout(updatedLayout)}
+          onChange={(updatedLayout: PrismaJson.TextBlock[]) =>
+            setLayout(updatedLayout)
+          }
         />
       </div>
       <div className="flex flex-col gap-2">
