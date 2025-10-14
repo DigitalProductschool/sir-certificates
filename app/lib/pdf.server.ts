@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Batch, Certificate, Template } from "@prisma/client";
 
 import { randomUUID } from "node:crypto";
@@ -117,13 +116,13 @@ export async function generateCertificate(
   pdf.registerFontkit(fontkit);
   const fontMap = await assembleTypefacesFromLayout(
     pdf,
-    template.layout as PrismaJson.TextBlock[],
+    template.layout,
   );
 
   // Modify page
   const page = pdf.getPages()[0];
 
-  const texts = template.layout as any;
+  const texts = template.layout;
   texts.forEach((text: PrismaJson.TextBlock) => {
     const lines = text.lines.map((line: PrismaJson.TextSegment) => {
       const replacements = replaceVariables(
@@ -222,7 +221,7 @@ export async function generateTemplateSample(template: Template) {
     mjResponse: {},
   };
 
-  const texts = template.layout as any;
+  const texts = template.layout;
   texts.forEach((text: PrismaJson.TextBlock) => {
     const lines = text.lines.map((line: PrismaJson.TextSegment) => {
       const replacements = replaceVariables(
@@ -618,7 +617,7 @@ export function downloadCertificates(certificates: Certificate[]) {
   });
   const zipFilename = "certificates.zip";
 
-  archive.on("error", (err: any) => {
+  archive.on("error", (err: Error) => {
     console.error("Error creating archive:", err);
     stream.emit("error", err);
   });
