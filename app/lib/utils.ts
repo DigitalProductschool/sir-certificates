@@ -49,3 +49,9 @@ export function hexToRgbArray(hexString: string): [number, number, number] {
   ];
   return rgbArray;
 }
+
+export function generateRandomId(length: number = 5) {
+  return Array.from({ length }, () =>
+    Math.floor(Math.random() * 16).toString(16),
+  ).join("");
+}

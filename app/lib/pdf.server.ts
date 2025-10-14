@@ -26,6 +26,7 @@ import {
 } from "@mjackson/lazy-file/fs";
 import type { CertificatesWithBatch } from "./types";
 import { domain } from "./config.server";
+import { generateRandomId } from "./utils";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -587,8 +588,9 @@ export async function deleteCertificate(certificateId: number) {
     });
 }
 
-export const sampleLayout: any = [
+export const sampleLayout: PrismaJson.TextBlock[] = [
   {
+    id: generateRandomId(),
     x: 50,
     y: 550,
     size: 12,
