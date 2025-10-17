@@ -130,7 +130,7 @@ export default function ProgramTemplatesPage({
         )}
 
         <Button variant="outline" asChild>
-          <Link to="create">Add Template</Link>
+          <Link to="create">Add template</Link>
         </Button>
       </div>
 

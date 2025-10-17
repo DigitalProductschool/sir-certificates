@@ -11,6 +11,7 @@ import {
   PlusIcon,
   Trash2,
   TextInitial,
+  SquarePlus
 } from "lucide-react";
 import { FontSizeIcon, LineHeightIcon } from "@radix-ui/react-icons";
 
@@ -379,7 +380,7 @@ function TextRow({
             });
           }}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full" size="compact">
             <SelectValue placeholder="Select typeface" />
           </SelectTrigger>
           <SelectContent>
@@ -486,7 +487,7 @@ function TextBlock({
           });
         }}
       >
-        <PlusIcon className="mr-2" /> Add Segment
+        <PlusIcon className="mr-2" /> Add text segment
       </Button>
     </div>
   );
@@ -539,7 +540,7 @@ export function LayoutEditor({
           onChange(updateLayout);
         }}
       >
-        <PlusIcon className="mr-2" /> Add Block
+        <SquarePlus className="mr-2" /> Add text block
       </Button>
     </div>
   );
