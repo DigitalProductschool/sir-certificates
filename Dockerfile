@@ -1,17 +1,11 @@
 # Base Node.js image
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 
 # Set for base and all layer that inherit from it
 ENV NODE_ENV=production
 
 RUN apk add --no-cache \
 	bash \
-	build-base \
-	cairo-dev \
-	libpng-dev \
-	g++ \
-	pango-dev \
-	python3 \
 	openssl \
 	;
 
