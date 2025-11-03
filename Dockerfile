@@ -9,16 +9,12 @@ RUN apk add --no-cache \
 	openssl \
 	;
 
-# Install openssl
-#RUN apt-get update && apt-get install -y openssl
-
 # Install all node_modules, including dev dependencies
 FROM base AS deps
 
 WORKDIR /app-certificates
 
 ADD package.json ./
-# RUN npm install canvas --build-from-source
 RUN npm install --include=dev
 
 # Setup production node_modules
@@ -28,7 +24,7 @@ WORKDIR /app-certificates
 
 COPY --from=deps /app-certificates/node_modules /app-certificates/node_modules
 ADD package.json ./
-RUN npm prune --omit=dev
+#RUN npm prune --omit=dev
 
 # Build the app
 FROM base AS build
