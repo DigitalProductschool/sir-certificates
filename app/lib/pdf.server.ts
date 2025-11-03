@@ -7,7 +7,7 @@ import { writeFile, readFile, unlink, copyFile } from "node:fs/promises";
 import { PassThrough } from "stream";
 
 import archiver from "archiver";
-import { convert } from "pdf-img-convert";
+import { pdf as pdfPreview } from "pdf-to-img";
 import { PDFDocument, PDFPage, PDFFont, type Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { FileUpload } from "@mjackson/form-data-parser";
@@ -114,10 +114,7 @@ export async function generateCertificate(
 
   // Load custom fonts
   pdf.registerFontkit(fontkit);
-  const fontMap = await assembleTypefacesFromLayout(
-    pdf,
-    template.layout,
-  );
+  const fontMap = await assembleTypefacesFromLayout(pdf, template.layout);
 
   // Modify page
   const page = pdf.getPages()[0];
@@ -505,7 +502,7 @@ export async function generatePdfPreview(
   // @todo make sure that the PDF file exists
 
   // Generate PDF preview PNG
-  const document = await convert(pdfFilePath, {
+  const document = await pdfPreview(pdfFilePath, {
     scale: 2,
   });
 
