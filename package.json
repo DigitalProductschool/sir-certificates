@@ -78,7 +78,7 @@
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
-    "@react-router/dev": "^7.9.5",
+    "@react-router/dev": "^7.9.6",
     "@react-router/fs-routes": "^7.9.5",
     "@tailwindcss/vite": "^4.1.16",
     "@types/bcryptjs": "^2.4.6",
