@@ -8,6 +8,7 @@ Certiffy helps you create and deliver beautiful certificates (and other document
 
 Certiffy is open-source software and can be installed and run on your own infrastructure. If you prefer some help with hosting the tool or designing great certificate templates, reach out to marcus@dpschool.io 
 
+
 ## Development
 
 1. Create an empty postgreSQL database.
