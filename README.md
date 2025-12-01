@@ -18,7 +18,7 @@ Certiffy is open-source software and can be installed and run on your own infras
 Install dependencies:
 
 ```shellscript
-npm run install
+npm install
 ```
 
 > If npm install produces a node-gyp error while installing the canvas dependency, try the `--build-from-source` option and install the dependencies first

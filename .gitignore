@@ -4,6 +4,7 @@ node_modules
 /build
 .env
 
+
 /storage/*
 !/storage/.gitkeep
 !/storage/fonts/
@@ -11,3 +12,4 @@ node_modules
 .react-router/
 .DS_Store
 _project/
+.idea
