@@ -2,7 +2,7 @@ import type { Route } from "./+types/view.$certUuid";
 import { useEffect, useState } from "react";
 import { Link, useRouteLoaderData, useSearchParams } from "react-router";
 import { ArrowRight, Download, Share } from "lucide-react";
-import Markdown from "markdown-to-jsx";
+import Markdown from "markdown-to-jsx/react";
 import { Button } from "~/components/ui/button";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import {
