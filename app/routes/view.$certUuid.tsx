@@ -13,7 +13,7 @@ import {
 } from "~/components/ui/tooltip";
 import { getUser } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
-import { prisma } from "~/lib/prisma.server";
+import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/text-variables";
 
 // @todo replace domain config
@@ -64,39 +64,47 @@ export function meta({ data }: Route.MetaArgs) {
 export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await getUser(request);
 
-  const certificate = await prisma.certificate.findUnique({
-    where: {
-      uuid: params.certUuid,
-    },
-    select: {
-      uuid: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      teamName: true,
-      updatedAt: true,
-      batch: {
-        select: {
-          name: true,
-          startDate: true,
-          endDate: true,
-          program: {
-            select: {
-              name: true,
-              about: true,
-              achievement: true,
-              website: true,
+  const certificate = await prisma.certificate
+    .findUnique({
+      where: {
+        uuid: params.certUuid,
+      },
+      select: {
+        uuid: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        teamName: true,
+        updatedAt: true,
+        batch: {
+          select: {
+            name: true,
+            startDate: true,
+            endDate: true,
+            program: {
+              select: {
+                name: true,
+                about: true,
+                achievement: true,
+                website: true,
+              },
             },
           },
         },
-      },
-      template: {
-        select: {
-          locale: true,
+        template: {
+          select: {
+            locale: true,
+          },
         },
       },
-    },
-  });
+    })
+    .catch((error) => {
+      console.error(error);
+      throwErrorResponse(
+        error,
+        "Could not find the certificate you are looking for.",
+      );
+    });
 
   if (!certificate) {
     throw new Response(null, {
@@ -118,20 +126,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 export default function ViewCertificate({ loaderData }: Route.ComponentProps) {
   const { certificate, userIsOwner } = loaderData;
   const { org, user } = useRouteLoaderData("routes/view");
-  const [signUpMail, setSignUpMail] = useState<string | null>(null);
-  const [signInMail, setSignInMail] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const paramSignup = searchParams.get("signup");
+  const paramSignIn = searchParams.get("signin");
+
+  const [signUpMail] = useState<string | null>(paramSignup);
+  const [signInMail] = useState<string | null>(paramSignIn);
+
   useEffect(() => {
-    if (searchParams.get("signup")) {
-      setSignUpMail(searchParams.get("signup"));
+    if (paramSignup || paramSignIn) {
       setSearchParams({});
     }
-    if (searchParams.get("signin")) {
-      setSignInMail(searchParams.get("signin"));
-      setSearchParams({});
-    }
-  }, [searchParams, setSearchParams]);
+  }, [paramSignup, paramSignIn, setSearchParams]);
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 min-h-screen">
