@@ -24,7 +24,17 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 	const preview = await generatePreviewOfCertificate(certificate, true);
 
-	return new Response(preview, {
+	if(!preview) {
+		throw new Response(null, {
+			status: 404,
+			statusText: "Not Found",
+		});
+	}
+
+	// Conversion for Typescript
+	const previewBuffer = new Uint8Array(preview);
+
+	return new Response(previewBuffer, {
 		status: 200,
 		headers: {
 			"Content-Type": "image/png",
