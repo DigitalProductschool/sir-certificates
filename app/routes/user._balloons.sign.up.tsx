@@ -1,5 +1,5 @@
 import type { Route } from "./+types/user._balloons.sign.up";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Form,
   Link,
@@ -48,6 +48,7 @@ export async function action({ request }: Route.ActionArgs) {
       { status: 400 },
     );
   }
+  
 
   const errors = {
     email: validateEmail(email),
@@ -81,8 +82,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function UserSignUp({ actionData }: Route.ComponentProps) {
   const location = useLocation();
   const [searchParams /*, setSearchParams*/] = useSearchParams();
+  const paramEmail = searchParams.get("email");
+
   const [formData, setFormData] = useState({
-    email: actionData?.fields?.email || location.state?.email || "",
+    email: actionData?.fields?.email || location.state?.email || paramEmail || "",
     password: actionData?.fields?.password || "",
     firstName:
       actionData?.fields?.lastName || searchParams.get("firstName") || "",
@@ -99,17 +102,6 @@ export default function UserSignUp({ actionData }: Route.ComponentProps) {
   ) => {
     setFormData((form) => ({ ...form, [field]: event.target.value }));
   };
-
-  useEffect(() => {
-    if (searchParams.get("email")) {
-      setFormData((formData) => {
-        return {
-          ...formData,
-          email: searchParams.get("email"),
-        };
-      });
-    }
-  }, [searchParams]);
 
   // @todo – add password strength indicator to "sign up" pages
 

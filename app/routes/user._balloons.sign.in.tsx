@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/tabindex-no-positive */
 import type { Route } from "./+types/user._balloons.sign.in";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Form,
   Link,
@@ -76,30 +76,14 @@ export default function UserSignIn({
 }: Route.ComponentProps) {
   const location = useLocation();
   const [searchParams /*, setSearchParams*/] = useSearchParams();
-  const [formData, setFormData] = useState({
-    email: actionData?.fields?.email || location.state?.email || "",
-    password: actionData?.fields?.password || "",
-  });
+  const paramEmail = searchParams.get("email");
+
+  const [email, setEmail] = useState<string>(
+    actionData?.fields?.email || location.state?.email || paramEmail || "",
+  );
 
   const formError = actionData?.error;
   const formErrorCode = actionData?.errorCode;
-
-  // Updates the form data when an input changes
-  const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    field: string,
-  ) => {
-    setFormData((form) => ({ ...form, [field]: event.target.value }));
-  };
-
-  useEffect(() => {
-    if (searchParams.get("email")) {
-      setFormData({
-        ...formData,
-        email: searchParams.get("email"),
-      });
-    }
-  }, [searchParams, formData]);
 
   return (
     <Card className="mx-auto w-full max-w-sm shadow-none border-none bg-transparent">
@@ -117,7 +101,7 @@ export default function UserSignIn({
             {formError}
             {formErrorCode && formErrorCode === "verify-email" && (
               <Form action="/user/verification/resend" method="POST">
-                <input type="hidden" name="email" value={formData.email} />
+                <input type="hidden" name="email" value={email} />
                 <Button variant="outline" size="sm" type="submit">
                   Resend email
                 </Button>
@@ -129,8 +113,8 @@ export default function UserSignIn({
           <FormField
             htmlFor="email"
             label="Email"
-            value={formData.email}
-            onChange={(e) => handleInputChange(e, "email")}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             error={actionData?.errors?.email}
             tabindex={1}
           />
@@ -138,14 +122,12 @@ export default function UserSignIn({
             htmlFor="password"
             type="password"
             label="Password"
-            value={formData.password}
-            onChange={(e) => handleInputChange(e, "password")}
             error={actionData?.errors?.password}
             tabindex={2}
             hint={
               <Link
                 to={`/user/forgot-password${
-                  formData.email !== "" ? `?email=${formData.email}` : ""
+                  email !== "" ? `?email=${email}` : ""
                 }`}
                 className="ml-auto inline-block text-sm underline"
                 tabIndex={4}
@@ -170,9 +152,7 @@ export default function UserSignIn({
             >
               <Link
                 to={"/user/sign/up" /* @todo add supportfor redirectTo */}
-                state={
-                  formData.email !== "" ? { email: formData.email } : undefined
-                }
+                state={email !== "" ? { email: email } : undefined}
               >
                 Sign Up
               </Link>
