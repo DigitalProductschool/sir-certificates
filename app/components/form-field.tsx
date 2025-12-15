@@ -6,7 +6,8 @@ interface FormFieldProps {
 	htmlFor: string;
 	label: string;
 	type?: string;
-	value: string | number;
+	value?: string | number;
+	defaultValue?: string | number;
 	onChange?: React.ChangeEventHandler<HTMLInputElement>;
 	error?: string;
 	hint?: ReactNode;
@@ -18,6 +19,7 @@ export function FormField({
 	label,
 	type = "text",
 	value,
+	defaultValue,
 	onChange = () => {},
 	error = "",
 	hint,
@@ -45,6 +47,7 @@ export function FormField({
 				id={htmlFor}
 				name={htmlFor}
 				value={value}
+				defaultValue={defaultValue}
 				tabIndex={tabindex}
 			/>
 			<div className="text-xs font-semibold text-center tracking-wide text-red-500 w-full">
