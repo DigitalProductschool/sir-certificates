@@ -9,7 +9,7 @@ import bcrypt from "bcryptjs";
 import {
   openFile as lazyOpenFile,
   writeFile as lazyWriteFile,
-} from "@mjackson/lazy-file/fs";
+} from "@remix-run/fs";
 
 import { domain } from "./config.server";
 import { mailjetSend } from "./email.server";

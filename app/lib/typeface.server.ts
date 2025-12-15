@@ -10,7 +10,7 @@ import { prisma, throwErrorResponse } from "./prisma.server";
 import {
   openFile as lazyOpenFile,
   writeFile as lazyWriteFile,
-} from "@mjackson/lazy-file/fs";
+} from "@remix-run/fs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const typefaceDir = resolve(__dirname, "../../storage/typefaces");

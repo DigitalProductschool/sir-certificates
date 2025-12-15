@@ -1,7 +1,7 @@
 import type { Route } from "./+types/user.photo.remove-background";
 import { redirect } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
-import { type LazyContent, LazyFile } from "@mjackson/lazy-file";
+import { type LazyContent, LazyFile } from "@remix-run/lazy-file";
 
 import { requireUserId } from "~/lib/auth.server";
 
@@ -101,7 +101,6 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 }
 
-export async function loader() {  
+export async function loader() {
 	return redirect(`/user/photo`);
 }
-

@@ -22,7 +22,7 @@ import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 import {
   openFile as lazyOpenFile,
   writeFile as lazyWriteFile,
-} from "@mjackson/lazy-file/fs";
+} from "@remix-run/fs";
 import type { CertificatesWithBatch } from "./types";
 import { domain } from "./config.server";
 import { generateRandomId } from "./utils";
