@@ -3,7 +3,7 @@ import type { Organisation, Program, User } from "@prisma/client";
 import type { CertificatesWithBatchAndProgram } from "~/lib/types";
 
 import { Link, redirect } from "react-router";
-import Markdown from "markdown-to-jsx";
+import Markdown from "markdown-to-jsx/react";
 import { SidebarParticipant } from "~/components/sidebar-participant";
 import {
   Card,

@@ -1,7 +1,7 @@
 import type { Route } from "./+types/view.$certUuid_.share";
 import { useState } from "react";
 import { Link, useLocation, useRouteLoaderData } from "react-router";
-import Markdown from "markdown-to-jsx";
+import Markdown from "markdown-to-jsx/react";
 import { ClipboardCopy, ClipboardCheck, SquareUserRound } from "lucide-react";
 import {
   Card,
