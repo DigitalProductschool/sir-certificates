@@ -6,7 +6,7 @@ import { unlink } from "node:fs/promises";
 import {
   openFile as lazyOpenFile,
   writeFile as lazyWriteFile,
-} from "@mjackson/lazy-file/fs";
+} from "@remix-run/fs";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma } from "./prisma.server";
 

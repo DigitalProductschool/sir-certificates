@@ -11,7 +11,7 @@ import { writeFile, unlink } from "node:fs/promises";
 import {
   openFile as lazyOpenFile,
   writeFile as lazyWriteFile,
-} from "@mjackson/lazy-file/fs";
+} from "@remix-run/fs";
 
 import sharp from "sharp";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
