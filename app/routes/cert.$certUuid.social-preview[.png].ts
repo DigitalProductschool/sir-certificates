@@ -67,7 +67,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   );
 
   if (imageBuffer) {
-    return new Response(imageBuffer, {
+    // Conversion for Typescript
+    const imageBufferArray = new Uint8Array(imageBuffer);
+
+    return new Response(imageBufferArray, {
       status: 200,
       headers: {
         "Content-Type": "image/png",
