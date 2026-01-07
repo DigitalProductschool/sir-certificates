@@ -6,7 +6,6 @@ import Markdown from "markdown-to-jsx/react";
 import { Button } from "~/components/ui/button";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import {
-  TooltipProvider,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -142,99 +141,97 @@ export default function ViewCertificate({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 min-h-screen">
-      <TooltipProvider delayDuration={0}>
-        <div className="col-start-1 row-start-1 flex flex-col px-2 sm:px-4 py-3">
-          <header className="flex items-center h-14 gap-4 border-b pb-2.5 sm:pb-0 sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
-            {user ? (
-              <SidebarTrigger className="-ml-1" />
-            ) : (
-              <span className="w-5"></span>
-            )}
-            <div className="text-sm grow flex flex-col sm:flex-row">
-              <b>{certificate.batch.program.name}</b>
-              <div className="hidden sm:block px-2">&mdash;</div>
-              {certificate.batch.name}
-            </div>
-            {!user && (
-              <Button variant={signUpMail ? "default" : "outline"} asChild>
-                {signUpMail ? (
-                  <Link to={`/user/sign/up?email=${signUpMail}`}>Sign up</Link>
-                ) : (
-                  <Link
-                    to={`/user/sign/in${
-                      signInMail ? "?email=".concat(signInMail) : ""
-                    }`}
-                  >
-                    Sign in
-                  </Link>
-                )}
-              </Button>
-            )}
-          </header>
-
-          <section className="flex flex-col p-8 gap-4 max-w-[80ch]">
-            <h1 className="text-5xl font-bold mb-4">
-              {certificate.firstName} {certificate.lastName}
-            </h1>
-
-            {certificate.batch.program.achievement && (
-              <Markdown>
-                {replaceVariables(
-                  certificate.batch.program.achievement,
-                  certificate.template.locale,
-                  certificate,
-                  certificate.batch,
-                )}
-              </Markdown>
-            )}
-
-            <div className="flex flex-col sm:flex-row mt-4 gap-4">
-              <Button asChild>
+      <div className="col-start-1 row-start-1 flex flex-col px-2 sm:px-4 py-3">
+        <header className="flex items-center h-14 gap-4 border-b pb-2.5 sm:pb-0 sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
+          {user ? (
+            <SidebarTrigger className="-ml-1" />
+          ) : (
+            <span className="w-5"></span>
+          )}
+          <div className="text-sm grow flex flex-col sm:flex-row">
+            <b>{certificate.batch.program.name}</b>
+            <div className="hidden sm:block px-2">&mdash;</div>
+            {certificate.batch.name}
+          </div>
+          {!user && (
+            <Button variant={signUpMail ? "default" : "outline"} asChild>
+              {signUpMail ? (
+                <Link to={`/user/sign/up?email=${signUpMail}`}>Sign up</Link>
+              ) : (
                 <Link
-                  to={`/cert/${certificate.uuid}/download.pdf`}
-                  className="grow sm:grow-0"
-                  reloadDocument
+                  to={`/user/sign/in${
+                    signInMail ? "?email=".concat(signInMail) : ""
+                  }`}
                 >
-                  <Download />
-                  Download Certificate
+                  Sign in
+                </Link>
+              )}
+            </Button>
+          )}
+        </header>
+
+        <section className="flex flex-col p-8 gap-4 max-w-[80ch]">
+          <h1 className="text-5xl font-bold mb-4">
+            {certificate.firstName} {certificate.lastName}
+          </h1>
+
+          {certificate.batch.program.achievement && (
+            <Markdown>
+              {replaceVariables(
+                certificate.batch.program.achievement,
+                certificate.template.locale,
+                certificate,
+                certificate.batch,
+              )}
+            </Markdown>
+          )}
+
+          <div className="flex flex-col sm:flex-row mt-4 gap-4">
+            <Button asChild>
+              <Link
+                to={`/cert/${certificate.uuid}/download.pdf`}
+                className="grow sm:grow-0"
+                reloadDocument
+              >
+                <Download />
+                Download Certificate
+              </Link>
+            </Button>
+            {userIsOwner && (
+              <Button asChild>
+                <Link to={`/view/${certificate.uuid}/share`}>
+                  <Share />
+                  Share on Social Media
                 </Link>
               </Button>
-              {userIsOwner && (
-                <Button asChild>
-                  <Link to={`/view/${certificate.uuid}/share`}>
-                    <Share />
-                    Share on Social Media
-                  </Link>
-                </Button>
-              )}
-              {!user && (signUpMail || signInMail) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button asChild>
-                      <Link
-                        to={
-                          signUpMail
-                            ? `/user/sign/up?email=${signUpMail}`
-                            : `/user/sign/in${
-                                signInMail ? "?email=".concat(signInMail) : ""
-                              }`
-                        }
-                      >
-                        <Share />
-                        Share on Social Media
-                      </Link>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    Sign {signInMail ? "in" : "up"} to share a personalized
-                    preview with your photo
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-          </section>
-        </div>
-      </TooltipProvider>
+            )}
+            {!user && (signUpMail || signInMail) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button asChild>
+                    <Link
+                      to={
+                        signUpMail
+                          ? `/user/sign/up?email=${signUpMail}`
+                          : `/user/sign/in${
+                              signInMail ? "?email=".concat(signInMail) : ""
+                            }`
+                      }
+                    >
+                      <Share />
+                      Share on Social Media
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  Sign {signInMail ? "in" : "up"} to share a personalized
+                  preview with your photo
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </section>
+      </div>
       <div className="col-start-1 row-start-3 xl:row-start-2 flex flex-col p-12 gap-4 justify-end max-w-[80ch]">
         {certificate.batch.program.about && (
           <>

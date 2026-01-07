@@ -15,6 +15,7 @@ import { Toaster } from "~/components/ui/toaster";
 import { getPublicOrg } from "./lib/organisation.server";
 
 import styles from "./tailwind.css?url";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -48,6 +49,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="bg-muted/40">
         {children}
+
         <ScrollRestoration />
         <Toaster />
         <Scripts />
@@ -57,7 +59,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Outlet />
+    </TooltipProvider>
+  );
 }
 
 export function ErrorBoundary() {
