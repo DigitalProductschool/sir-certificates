@@ -1,27 +1,18 @@
 import type { Route as RootRoute } from "../+types/root";
-import { useEffect, useState } from "react";
 import { useSearchParams, Outlet, useRouteLoaderData } from "react-router";
 import { CheckIcon } from "lucide-react";
-import { Balloons } from "~/components/balloons.client";
 import { useIsMobile } from "~/hooks/use-mobile";
 
 export default function UserBalloons() {
   const { org } =
     useRouteLoaderData<RootRoute.ComponentProps["loaderData"]>("root") ?? {};
   const [searchParams /*, setSearchParams*/] = useSearchParams();
-  const [isClient, setIsClient] = useState(false);
-
   const isMobile = useIsMobile();
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   return (
     <div className="h-screen grid grid-cols-2">
       {!isMobile && (
         <div className="relative h-screen bg-zinc-900">
-          {isClient && <Balloons />}
           <div className="absolute top-8 inset-x-8 flex text-white items-center">
             <img
               src={`/logo/org.svg`}
@@ -33,17 +24,6 @@ export default function UserBalloons() {
             <span className="text-3xl font-bold tracking-wide">
               Certificates
             </span>
-          </div>
-          <div className="absolute bottom-4 inset-x-8 text-xs text-muted-foreground/50 italic">
-            &ldquo;Balloons&rdquo; adapted from{" "}
-            <a
-              href="https://codesandbox.io/p/sandbox/5w35n6"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              Poimandres
-            </a>
           </div>
         </div>
       )}
