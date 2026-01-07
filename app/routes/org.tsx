@@ -1,6 +1,6 @@
 import type { Route } from "./+types/org";
 import type { Batch } from "~/generated/prisma/client";
-import { Outlet } from "react-router";
+import { Form, Outlet } from "react-router";
 import { Layout } from "~/components/layout";
 import { SidebarAdmin } from "~/components/sidebar-admin";
 import { Search } from "lucide-react";
@@ -60,13 +60,15 @@ export default function OrgDashboard({ loaderData }: Route.ComponentProps) {
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <div className="relative ml-auto flex-1 md:grow-0">
-              <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
-                disabled
-              />
+              <Form action="/org/search" method="GET">
+                <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  name="term"
+                  placeholder="Search..."
+                  className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+                />
+              </Form>
             </div>
           </header>
           {/* @todo push the layout container further down into the Outlet and render the Outlet directly. Layout control should stay with the routes */}
