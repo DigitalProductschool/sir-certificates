@@ -1,7 +1,6 @@
 import type { Route } from "./+types/org.search";
 import type { Route as RootRoute } from "../+types/root";
-import type { Certificate } from "@prisma/client";
-import { useRouteLoaderData } from "react-router";
+import { Link, useRouteLoaderData } from "react-router";
 
 import { requireAdmin } from "~/lib/auth.server";
 import { getProgramsByAdmin } from "~/lib/program.server";
@@ -19,40 +18,55 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const term = new URL(request.url).searchParams.get("term");
 
-  let certificates: Certificate[] = [];
-
-  if (term) {
-    certificates = await prisma.certificate.findMany({
-      where: {
-        OR: [
-          {
-            firstName: {
-              contains: term,
-              mode: "insensitive",
-            },
+  const certificates = await prisma.certificate.findMany({
+    where: {
+      OR: [
+        {
+          firstName: {
+            contains: term ?? undefined,
+            mode: "insensitive",
           },
-          {
-            lastName: {
-              contains: term,
-              mode: "insensitive",
-            },
+        },
+        {
+          lastName: {
+            contains: term ?? undefined,
+            mode: "insensitive",
           },
-        ],
-        AND: [
-          {
-            batch: {
-              is: {
-                programId: {
-                  in: accessiblePrograms,
-                },
+        },
+      ],
+      AND: [
+        {
+          batch: {
+            is: {
+              programId: {
+                in: accessiblePrograms,
               },
             },
           },
-        ],
+        },
+      ],
+    },
+    select: {
+      id: true,
+      uuid: true,
+      firstName: true,
+      lastName: true,
+      teamName: true,
+      batch: {
+        select: {
+          id: true,
+          name: true,
+          program: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
       },
-      orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
-    });
-  }
+    },
+    orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+  });
 
   return {
     term,
@@ -77,7 +91,12 @@ export default function OrgSearchResults({ loaderData }: Route.ComponentProps) {
       <ul>
         {loaderData.results.certificates.map((cert) => (
           <li key={cert.uuid}>
-            {cert.firstName} {cert.lastName}
+            <Link
+              to={`/org/program/${cert.batch.program.id}/batch/${cert.batch.id}/certificates/${cert.id}/preview`}
+            >
+              {cert.firstName} {cert.lastName} – Team: {cert.teamName} – Batch:{" "}
+              {cert.batch.name} – Program: {cert.batch.program.name}
+            </Link>
           </li>
         ))}
       </ul>
