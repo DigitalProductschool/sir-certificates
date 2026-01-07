@@ -1,4 +1,4 @@
-import type { Route } from "./+types/user._balloons.sign.up";
+import type { Route } from "./+types/user._auth.sign.up";
 import { useState } from "react";
 import {
   Form,

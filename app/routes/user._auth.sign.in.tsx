@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/tabindex-no-positive */
-import type { Route } from "./+types/user._balloons.sign.in";
+import type { Route } from "./+types/user._auth.sign.in";
 import { useState } from "react";
 import {
   Form,
