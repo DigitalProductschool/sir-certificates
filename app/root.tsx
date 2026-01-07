@@ -87,18 +87,8 @@ export function ErrorBoundary() {
   }
 
   return (
-    <html lang="en">
-      <head>
-        <title>Oh no!</title>
-        <Meta />
-        <Links />
-      </head>
-      <body>
-        <div className="h-screen w-full flex flex-col items-center justify-center px-4">
-          {errorInfo}
-        </div>
-        <Scripts />
-      </body>
-    </html>
+    <div className="h-screen w-full flex flex-col items-center justify-center px-4">
+      {errorInfo}
+    </div>
   );
 }
