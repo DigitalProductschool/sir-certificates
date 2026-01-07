@@ -1,0 +1,86 @@
+import type { Route } from "./+types/org.search";
+import type { Route as RootRoute } from "../+types/root";
+import type { Certificate } from "@prisma/client";
+import { useRouteLoaderData } from "react-router";
+
+import { requireAdmin } from "~/lib/auth.server";
+import { getProgramsByAdmin } from "~/lib/program.server";
+import { prisma } from "~/lib/prisma.server";
+
+export function meta() {
+  return [{ title: "Search Organisation" }];
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const adminId = await requireAdmin(request);
+  const accessiblePrograms = (await getProgramsByAdmin(adminId)).map(
+    (program) => program.id,
+  );
+
+  const term = new URL(request.url).searchParams.get("term");
+
+  let certificates: Certificate[] = [];
+
+  if (term) {
+    certificates = await prisma.certificate.findMany({
+      where: {
+        OR: [
+          {
+            firstName: {
+              contains: term,
+              mode: "insensitive",
+            },
+          },
+          {
+            lastName: {
+              contains: term,
+              mode: "insensitive",
+            },
+          },
+        ],
+        AND: [
+          {
+            batch: {
+              is: {
+                programId: {
+                  in: accessiblePrograms,
+                },
+              },
+            },
+          },
+        ],
+      },
+      orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+    });
+  }
+
+  return {
+    term,
+    /* search results */
+    results: {
+      certificates,
+    },
+  };
+}
+
+export default function OrgSearchResults({ loaderData }: Route.ComponentProps) {
+  const org =
+    useRouteLoaderData<RootRoute.ComponentProps["loaderData"]>("root")?.org;
+  const term = loaderData.term ?? "";
+
+  return (
+    <div className="grid gap-8 py-4 max-w-[625px]">
+      <p>
+        Search results for ›{term}‹ in {org?.name}.
+      </p>
+      Certificates
+      <ul>
+        {loaderData.results.certificates.map((cert) => (
+          <li key={cert.uuid}>
+            {cert.firstName} {cert.lastName}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
