@@ -2,7 +2,6 @@ import zxcvbn, { type ZXCVBNResult } from "zxcvbn";
 import {
 	Tooltip,
 	TooltipContent,
-	TooltipProvider,
 	TooltipTrigger,
 } from "~/components/ui/tooltip";
 
@@ -60,35 +59,32 @@ export function PasswordIndicator({
 			passwordStrength?.feedback?.suggestions.length > 0);
 
 	return (
-		<TooltipProvider delayDuration={0}>
-			<div className="flex items-center h-8 gap-1">
-				{segments}
-				<div className="flex-1 flex justify-end">
-					{hasTips ? (
-						<Tooltip>
-							<TooltipTrigger disabled={!hasTips}>
-								<SquareAsterisk />
-							</TooltipTrigger>
-							<TooltipContent side="right" className="max-w-64">
-								<b>Tips to improve your password:</b>
-								<br />
-								<p>
-									{passwordStrength?.feedback?.warning &&
-										passwordStrength?.feedback?.warning +
-											"."}
-								</p>
-								<p>
-									{passwordStrength?.feedback?.suggestions.join(
-										" ",
-									)}
-								</p>
-							</TooltipContent>
-						</Tooltip>
-					) : (
-						<SquareAsterisk className="text-slate-300" />
-					)}
-				</div>
+		<div className="flex items-center h-8 gap-1">
+			{segments}
+			<div className="flex-1 flex justify-end">
+				{hasTips ? (
+					<Tooltip>
+						<TooltipTrigger disabled={!hasTips}>
+							<SquareAsterisk />
+						</TooltipTrigger>
+						<TooltipContent side="right" className="max-w-64">
+							<b>Tips to improve your password:</b>
+							<br />
+							<p>
+								{passwordStrength?.feedback?.warning &&
+									passwordStrength?.feedback?.warning + "."}
+							</p>
+							<p>
+								{passwordStrength?.feedback?.suggestions.join(
+									" ",
+								)}
+							</p>
+						</TooltipContent>
+					</Tooltip>
+				) : (
+					<SquareAsterisk className="text-slate-300" />
+				)}
 			</div>
-		</TooltipProvider>
+		</div>
 	);
 }
