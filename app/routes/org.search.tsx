@@ -23,13 +23,13 @@ export async function loader({ request }: Route.LoaderArgs) {
       OR: [
         {
           firstName: {
-            contains: term ?? undefined,
+            startsWith: term ?? undefined,
             mode: "insensitive",
           },
         },
         {
           lastName: {
-            contains: term ?? undefined,
+            startsWith: term ?? undefined,
             mode: "insensitive",
           },
         },
@@ -81,18 +81,20 @@ export default function OrgSearchResults({ loaderData }: Route.ComponentProps) {
   const org =
     useRouteLoaderData<RootRoute.ComponentProps["loaderData"]>("root")?.org;
   const term = loaderData.term ?? "";
+  const certificates = loaderData.results.certificates;
 
   return (
     <div className="grid gap-8 py-4 max-w-[625px]">
       <p>
         Search results for ›{term}‹ in {org?.name}.
       </p>
-      Certificates
+      Found {certificates.length} certificate(s).
       <ul>
-        {loaderData.results.certificates.map((cert) => (
+        {certificates.map((cert) => (
           <li key={cert.uuid}>
             <Link
               to={`/org/program/${cert.batch.program.id}/batch/${cert.batch.id}/certificates/${cert.id}/preview`}
+              className="hover:underline"
             >
               {cert.firstName} {cert.lastName} – Team: {cert.teamName} – Batch:{" "}
               {cert.batch.name} – Program: {cert.batch.program.name}
