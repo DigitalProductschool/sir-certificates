@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.program.$programId.user.$userId.remove";
-import type { Program } from "@prisma/client";
+import type { Program } from "~/generated/prisma/client";
 import { redirect } from "react-router";
 
 import { requireAdmin } from "~/lib/auth.server";

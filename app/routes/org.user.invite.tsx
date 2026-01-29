@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.user.invite";
-import type { Program } from "@prisma/client";
+import type { Program } from "~/generated/prisma/client";
 import { useEffect, useState } from "react";
 import { Form, redirect, useNavigate } from "react-router";
 

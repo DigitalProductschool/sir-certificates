@@ -1,6 +1,6 @@
 import type { Route } from "./+types/user.reset-password.$userId.$resetCode";
 import type { ErrorResponse } from "react-router";
-import type { UserPasswordReset } from "@prisma/client";
+import type { UserPasswordReset } from "~/generated/prisma/client";
 import type { PasswordAssessment } from "~/components/password-indicator";
 
 import { useState } from "react";

@@ -11,3 +11,6 @@ node_modules
 .react-router/
 .DS_Store
 _project/
+
+/app/generated
+/prisma/generated

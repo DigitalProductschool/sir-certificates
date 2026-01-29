@@ -1,4 +1,4 @@
-import type { OrganisationLogo, Prisma } from "@prisma/client";
+import type { OrganisationLogo, Prisma } from "~/generated/prisma/client";
 import type { FileUpload } from "@mjackson/form-data-parser";
 import { unlink } from "node:fs/promises";
 import {

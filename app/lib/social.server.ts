@@ -4,7 +4,7 @@ import type {
   SocialPreview,
   Template,
   UserPhoto,
-} from "@prisma/client";
+} from "~/generated/prisma/client";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeFile, unlink } from "node:fs/promises";

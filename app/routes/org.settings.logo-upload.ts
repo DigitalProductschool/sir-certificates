@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.settings.logo-upload";
-import type { OrganisationLogo } from "@prisma/client";
+import type { OrganisationLogo } from "~/generated/prisma/client";
 import { randomUUID } from "node:crypto";
 import { redirect } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";

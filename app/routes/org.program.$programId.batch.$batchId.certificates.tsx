@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates";
-import type { Certificate, Template } from "@prisma/client";
+import type { Certificate, Template } from "~/generated/prisma/client";
 import { Link, Outlet, useParams } from "react-router";
 
 import { ChevronDown, Eye, MailCheck, Settings } from "lucide-react";

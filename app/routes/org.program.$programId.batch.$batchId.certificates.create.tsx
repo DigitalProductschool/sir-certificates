@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.create";
-import type { Template } from "@prisma/client";
+import type { Template } from "~/generated/prisma/client";
 import { randomUUID } from "node:crypto";
 import { useEffect, useState, useRef } from "react";
 import { data, Form, redirect, useNavigate } from "react-router";
