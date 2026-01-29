@@ -16,7 +16,7 @@ export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData();
 	const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
-	if (!inputs.email || inputs.email === "") {
+	if (!inputs.email || inputs.email === "" || inputs.email === "undefined") {
 		throw new Response(null, {
 			status: 400,
 			statusText: "Missing email",

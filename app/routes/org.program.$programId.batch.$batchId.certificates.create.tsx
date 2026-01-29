@@ -2,7 +2,8 @@ import type { Route } from "./+types/org.program.$programId.batch.$batchId.certi
 import type { Template } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { useEffect, useState, useRef } from "react";
-import { Form, redirect, useNavigate } from "react-router";
+import { data, Form, redirect, useNavigate } from "react-router";
+import { FormField } from "~/components/form-field";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -29,6 +30,7 @@ import {
   generatePreviewOfCertificate,
 } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
+import { validateEmail } from "~/lib/validators.server";
 
 export function meta() {
   return [{ title: "Add Certificate" }];
@@ -39,8 +41,25 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData) as { [k: string]: string };
+  const errorEmail = validateEmail(inputs.email);
 
-  // @todo @security ensure that only certificates are created in programs where the admin has access
+  if (!inputs.email || inputs.email === "" || errorEmail) {
+    return data(
+      {
+        error: `Invalid Form Data`,
+        errors: { email: errorEmail },
+        errorCode: undefined,
+        fields: {
+          firstName: inputs.firstName,
+          lastName: inputs.lastName,
+          email: inputs.email,
+          teamName: inputs.teamName,
+          templateId: inputs.templateId,
+        },
+      },
+      { status: 400 },
+    );
+  }
 
   const certificate = await prisma.certificate.create({
     data: {
@@ -96,6 +115,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 export default function CreateCertificateDialog({
   loaderData,
+  actionData,
 }: Route.ComponentProps) {
   const { templates } = loaderData;
   const navigate = useNavigate();
@@ -135,6 +155,12 @@ export default function CreateCertificateDialog({
             <Input id="firstName" name="firstName" />
             <Input id="lastName" name="lastName" />
           </div>
+          <FormField
+            htmlFor="email"
+            label="Email"
+            defaultValue={actionData?.fields.email ?? ""}
+            error={actionData?.errors?.email}
+          />
           <Label htmlFor="email">Email</Label>
           <Input id="email" name="email" className="mb-2" />
           <Label htmlFor="teamName">Team</Label>
