@@ -9,16 +9,17 @@ generator client {
   output   = "../app/generated/prisma"
 }
 
+generator zod {
+  provider = "prisma-zod-generator"
+  output   = "../app/generated/zod"
+}
+
 generator json {
   provider  = "prisma-json-types-generator"
   namespace = "PrismaJson"
   allowAny  = false
 }
 
-// generator zod {
-//   provider = "prisma-zod-generator"
-//   output   = "../app/generated/prisma"
-// }
 
 datasource db {
   provider = "postgresql"
@@ -145,7 +146,7 @@ model Certificate {
   id            Int       @id @default(autoincrement())
   uuid          String    @unique @db.Uuid
   firstName     String  
-  lastName      String
+  lastName      String?
   email         String
   batch         Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
   batchId       Int
