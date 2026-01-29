@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.program.$programId.social.upload";
-import type { SocialPreview } from "@prisma/client";
+import type { SocialPreview } from "~/generated/prisma/client";
 import { redirect } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireAdminWithProgram } from "~/lib/auth.server";

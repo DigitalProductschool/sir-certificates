@@ -1,4 +1,4 @@
-import type { Organisation, Batch } from "@prisma/client";
+import type { Organisation, Batch } from "~/generated/prisma/client";
 import type { ProgramWithLogo, UserAuthenticated } from "~/lib/types";
 import { useEffect } from "react";
 import { Link, NavLink, useLocation, useParams } from "react-router";

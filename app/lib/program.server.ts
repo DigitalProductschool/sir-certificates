@@ -1,5 +1,5 @@
 import type { FileUpload } from "@mjackson/form-data-parser";
-import type { Program, ProgramLogo } from "@prisma/client";
+import type { Program, ProgramLogo } from "~/generated/prisma/client";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { unlink } from "node:fs/promises";

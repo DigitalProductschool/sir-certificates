@@ -1,8 +1,8 @@
 import type { Route } from "./+types/org.program.$programId.templates.create";
-import type { Template } from "@prisma/client";
+import type { Template } from "~/generated/prisma/client";
 import { useEffect, useState } from "react";
 
-import { Form, redirect, useNavigate, useRouteError } from "react-router";
+import { Form, isRouteErrorResponse, redirect, useNavigate, useRouteError, type ErrorResponse } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 
 import { Button } from "~/components/ui/button";
@@ -92,8 +92,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   template = await prisma.template
     .update({
       where: {
-        // @ts-expect-error Typescript control flow doesn't recognize the assigment above and believes that `template` is a 'never'
-        id: template.id,
+        id: template!.id, // if the upload handler and prisma.template.create did not run, this will throw an error that we can catch
       },
       data: {
         name: templateName,
@@ -200,9 +199,13 @@ export default function CreateTemplateDialog() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
+  let routeError : ErrorResponse | null = null;
   console.error(error);
 
-  // @todo improve user-facing error display
+  if (isRouteErrorResponse(error)) {
+    routeError = error as ErrorResponse;
+  }
 
-  return <div>Error</div>;
+  // @todo improve user-facing error display
+  return <div>Error {routeError?.statusText}</div>;
 }

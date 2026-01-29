@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.typeface.create";
-import type { Typeface } from "@prisma/client";
+import type { Typeface } from "~/generated/prisma/client";
 import { useEffect, useState } from "react";
 import { Form, redirect, useNavigate, useRouteError } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";

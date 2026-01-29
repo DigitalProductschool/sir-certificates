@@ -1,4 +1,4 @@
-import type { User, UserInvitation, UserPhoto } from "@prisma/client";
+import type { User, UserInvitation, UserPhoto } from "~/generated/prisma/client";
 import type { FileUpload } from "@mjackson/form-data-parser";
 import type { RegisterForm, InviteForm, UserAuthenticated } from "./types";
 import { randomUUID } from "node:crypto";

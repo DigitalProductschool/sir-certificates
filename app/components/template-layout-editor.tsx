@@ -1,7 +1,7 @@
 // This layout editor is for the PDF template layouts
 // @todo rename component to clarify the function
-import { useEffect, useState } from "react";
-import type { Typeface } from "@prisma/client";
+import { useState } from "react";
+import type { Typeface } from "~/generated/prisma/client";
 import { HexColorPicker } from "react-colorful";
 import {
   AlignLeft,
@@ -62,10 +62,6 @@ function Toolbar({
 }) {
   const color = rgbToHex(settings.color || [0, 0, 0]);
   const [align, setAlign] = useState(settings.align || "left");
-
-  useEffect(() => {
-    if (settings.align) setAlign(settings.align);
-  }, [settings.align]);
 
   // @todo fix layout / overflow / wrapping on small screens
   return (
@@ -145,7 +141,7 @@ function Toolbar({
                   });
                 } catch (error) {
                   // @todo fix typing out hex values (because invalid values are rejected, you can only change single characters or copy/paste)
-                  console.log("Invalid color: ", event.target.value);
+                  console.log("Invalid color: ", event.target.value, error);
                 }
               }}
             />

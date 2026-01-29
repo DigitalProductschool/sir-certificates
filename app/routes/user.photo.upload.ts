@@ -1,5 +1,5 @@
 import type { Route } from "./+types/user.photo.upload";
-import type { UserPhoto } from "@prisma/client";
+import type { UserPhoto } from "~/generated/prisma/client";
 import { redirect } from "react-router";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { requireUserId } from "~/lib/auth.server";

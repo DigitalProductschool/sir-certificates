@@ -1,4 +1,6 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient, Prisma } from "../generated/prisma/client";
+
 const PrismaClientKnownRequestError = Prisma.PrismaClientKnownRequestError;
 const PrismaClientUnknownRequestError = Prisma.PrismaClientUnknownRequestError;
 const PrismaClientInitializationError = Prisma.PrismaClientInitializationError;
@@ -6,22 +8,27 @@ const PrismaClientValidationError = Prisma.PrismaClientValidationError;
 const PrismaClientRustPanicError = Prisma.PrismaClientRustPanicError;
 
 // Create and export global PrismaClient
+const connectionString = `${process.env.DATABASE_URL}`;
 let prisma: PrismaClient;
+let adapter: PrismaPg;
+
 declare global {
-	// eslint-disable-next-line no-var
 	var __db: PrismaClient | undefined;
+	var __adapter: PrismaPg | undefined;
 }
 
 if (process.env.NODE_ENV === "production") {
-	prisma = new PrismaClient();
-	prisma.$connect();
+	adapter = new PrismaPg({ connectionString });
+	prisma = new PrismaClient({ adapter });
 } else {
 	// prevent live-reloads from saturating the database with connections while developing
-	if (!global.__db) {
-		global.__db = new PrismaClient();
-		global.__db.$connect();
+	if (!global.__adapter) {
+		adapter = global.__adapter = new PrismaPg({ connectionString });
+
+		if (!global.__db) {
+			prisma = global.__db = new PrismaClient({ adapter });
+		}
 	}
-	prisma = global.__db;
 }
 
 const throwErrorResponse = (

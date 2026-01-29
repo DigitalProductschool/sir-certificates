@@ -1,4 +1,4 @@
-import type { Certificate } from "@prisma/client";
+import type { Certificate } from "~/generated/prisma/client";
 import { useFetcher } from "react-router";
 import { SendIcon, LoaderCircle } from "lucide-react";
 import { Button } from "~/components/ui/button";

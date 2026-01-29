@@ -1,4 +1,4 @@
-import type { Batch, Certificate, Template } from "@prisma/client";
+import type { Batch, Certificate, Template } from "~/generated/prisma/client";
 
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";

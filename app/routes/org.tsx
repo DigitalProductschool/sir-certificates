@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org";
-import type { Batch } from "@prisma/client";
+import type { Batch } from "~/generated/prisma/client";
 import { Outlet } from "react-router";
 import { Layout } from "~/components/layout";
 import { SidebarAdmin } from "~/components/sidebar-admin";

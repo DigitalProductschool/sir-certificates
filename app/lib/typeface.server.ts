@@ -1,4 +1,4 @@
-import type { Typeface } from "@prisma/client";
+import type { Typeface } from "~/generated/prisma/client";
 import type { FileUpload } from "@mjackson/form-data-parser";
 
 import { resolve } from "node:path";

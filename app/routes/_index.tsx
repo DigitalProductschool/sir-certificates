@@ -1,5 +1,5 @@
 import type { Route } from "./+types/_index";
-import type { Organisation, Program, User } from "@prisma/client";
+import type { Organisation, Program, User } from "~/generated/prisma/client";
 import type { CertificatesWithBatchAndProgram } from "~/lib/types";
 
 import { Link, redirect } from "react-router";

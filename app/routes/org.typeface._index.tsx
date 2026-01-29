@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.typeface._index";
-import type { Typeface } from "@prisma/client";
+import type { Typeface } from "~/generated/prisma/client";
 import { Form, Link } from "react-router";
 
 import { Trash2Icon } from "lucide-react";
