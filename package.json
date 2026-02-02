@@ -17,9 +17,6 @@
       "bash -c tsc --noEmit"
     ]
   },
-  "prisma": {
-    "seed": "node prisma/seed.js"
-  },
   "dependencies": {
     "@mjackson/form-data-parser": "^0.9.0",
     "@pdf-lib/fontkit": "^1.1.1",
