@@ -627,9 +627,9 @@ export function downloadCertificates(certificates: Certificate[]) {
     archive.file(`${certDir}/${cert.id}.pdf`, {
       name: cert.teamName
         ? `${slug(cert.teamName)}/${slug(cert.firstName)} ${slug(
-            cert.lastName,
+            cert.lastName || "",
           )}.certificate.pdf`
-        : `${slug(cert.firstName)} ${slug(cert.lastName)}.certificate.pdf`,
+        : `${slug(cert.firstName)} ${slug(cert.lastName || "")}.certificate.pdf`,
     });
   });
 

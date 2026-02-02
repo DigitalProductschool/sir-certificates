@@ -49,7 +49,7 @@ export function replaceVariables(
 	replacements = replacements.replaceAll(
 		"{certificate.fullNameCaps}",
 		`${certificate.firstName.toUpperCase() || ""} ${
-			certificate.lastName.toUpperCase() || ""
+			certificate.lastName?.toUpperCase() || ""
 		}`,
 	);
 	replacements = replacements.replaceAll(
@@ -66,7 +66,7 @@ export function replaceVariables(
 	);
 	replacements = replacements.replaceAll(
 		"{certificate.lastNameCaps}",
-		certificate.lastName.toUpperCase() || "",
+		certificate.lastName?.toUpperCase() || "",
 	);
 	replacements = replacements.replaceAll(
 		"{certificate.teamName}",
