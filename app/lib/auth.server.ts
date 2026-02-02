@@ -1,9 +1,11 @@
 import type { User } from "~/generated/prisma/client";
-import type { RegisterForm, LoginForm, UserAuthenticated } from "./types";
+import type { UserAuthenticated } from "./types";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
-import { redirect, data, createCookieSessionStorage } from "react-router";
+import { redirect, createCookieSessionStorage } from "react-router";
 import { Authenticator } from "remix-auth";
+import { parseWithZod } from "@conform-to/zod/v4";
+
 import { GoogleStrategy } from "./auth.google.server";
 import { domain } from "./config.server";
 import { mailjetSend } from "./email.server";
@@ -11,6 +13,7 @@ import { prisma, throwErrorResponse } from "./prisma.server";
 import { requireAccessToProgram } from "./program.server";
 import { createUser, createUserOAuth } from "./user.server";
 import { getOrg } from "./organisation.server";
+import { LoginSchema, RegisterSchema } from "./schemas";
 
 const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
@@ -75,48 +78,44 @@ async function getUserId(request: Request) {
 	return userId;
 }
 
-export async function register(user: RegisterForm) {
-	const emailLowerCase = user.email.toLowerCase();
+export async function register(formData: FormData) {
+	const submission = parseWithZod(formData, { schema: RegisterSchema });
 
-	const exists = await prisma.user.count({
-		where: { email: emailLowerCase },
-	});
-
-	// @todo improve type signature of action errors
-	if (exists) {
-		return data(
-			{
-				error: `User already exists with that email`,
-				errors: undefined,
-				errorCode: undefined,
-				fields: undefined,
-			},
-			{ status: 400 },
-		);
+	if (submission.status !== "success") {
+		return submission.reply();
 	}
 
-	const newUser = await createUser(user);
+	// const emailLowerCase = user.email.toLowerCase();
+
+	const exists = await prisma.user.count({
+		where: { email: submission.value.email },
+	});
+
+	if (exists) {
+		return submission.reply({
+			formErrors: ["This email is already registered as a user."],
+		});
+	}
+
+	const newUser = await createUser(submission.value);
 	if (!newUser) {
-		return data(
-			{
-				error: `Something went wrong trying to create a new user.`,
-				errors: undefined,
-				errorCode: undefined,
-				fields: {
-					email: user.email,
-					password: user.password,
-					firstName: user.firstName,
-					lastName: user.lastName,
-				},
-			},
-			{ status: 400 },
-		);
+		return submission.reply({
+			formErrors: ["Something went wrong trying to create a new user."],
+		});
 	}
 
 	return redirect("/user/verification-info");
 }
 
-export async function login({ email, password }: LoginForm) {
+export async function login(formData: FormData) {
+	const submission = parseWithZod(formData, { schema: LoginSchema });
+
+	if (submission.status !== "success") {
+		return submission.reply();
+	}
+
+	const { email, password } = submission.value;
+
 	const user = await prisma.user.findUnique({
 		where: { email: email.toLowerCase() },
 		include: {
@@ -125,33 +124,24 @@ export async function login({ email, password }: LoginForm) {
 		},
 	});
 
-	if (!user || !(await bcrypt.compare(password, user.password)))
-		return data(
-			{
-				error: `Incorrect login`,
-				errors: undefined,
-				fields: undefined,
-				errorCode: undefined,
-			},
-			{ status: 400 },
-		);
+	if (!user || !(await bcrypt.compare(password, user.password))) {
+		return submission.reply({
+			formErrors: ["Incorrect login."],
+		});
+	}
 
-	// @todo unify response types and usage with user.forgot-password route action/loader
 	if (!user.isVerified) {
-		return data(
-			{
-				error: `You still need to verify your email address.`,
-				errorCode: "verify-email",
-				errors: undefined,
-				fields: undefined,
+		return submission.reply({
+			fieldErrors: {
+				"verify-email": [
+					"You still need to confirm your email address.",
+				],
 			},
-			{ status: 400 },
-		);
+		});
 	}
 
 	// @todo support redirectTo parameter from login form
 	const redirectTo = user.isAdmin ? "/org/program" : "/";
-
 	return createUserSessionAndRedirect(user, redirectTo);
 }
 

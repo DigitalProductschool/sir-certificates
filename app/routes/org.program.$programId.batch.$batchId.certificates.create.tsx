@@ -1,10 +1,20 @@
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.create";
 import type { Template } from "~/generated/prisma/client";
 import { randomUUID } from "node:crypto";
-import { useEffect, useState, useRef } from "react";
-import { data, Form, redirect, useNavigate } from "react-router";
-import { FormField } from "~/components/form-field";
+import { useEffect, useState } from "react";
+import { Form, redirect, useNavigate, useNavigation } from "react-router";
+import {
+  getFormProps,
+  getInputProps,
+  getSelectProps,
+  useForm,
+} from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { z } from "zod";
 
+import { LoaderCircle } from "lucide-react";
+
+import { FormField } from "~/components/form-field";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -14,7 +24,6 @@ import {
   DialogFooter,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
   Select,
@@ -30,36 +39,37 @@ import {
   generatePreviewOfCertificate,
 } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
-import { validateEmail } from "~/lib/validators.server";
 
 export function meta() {
   return [{ title: "Add Certificate" }];
 }
 
+const schema = z.object({
+  firstName: z
+    .string("Please provide at least a first name")
+    .min(1, { message: "Please provide at least a first name" }),
+  lastName: z.string().optional().nullable(),
+  email: z
+    .string("Please enter an email address")
+    .min(1, { message: "Please enter an email address" })
+    .email("This email looks incomplete")
+    .toLowerCase(),
+  teamName: z.string().optional().nullable(),
+  templateId: z.int(),
+});
+
 export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData) as { [k: string]: string };
-  const errorEmail = validateEmail(inputs.email);
+  const submission = parseWithZod(formData, { schema });
 
-  if (!inputs.email || inputs.email === "" || errorEmail) {
-    return data(
-      {
-        error: `Invalid Form Data`,
-        errors: { email: errorEmail },
-        errorCode: undefined,
-        fields: {
-          firstName: inputs.firstName,
-          lastName: inputs.lastName,
-          email: inputs.email,
-          teamName: inputs.teamName,
-          templateId: inputs.templateId,
-        },
-      },
-      { status: 400 },
-    );
+  // Send the submission back to the client if the status is not successful
+  if (submission.status !== "success") {
+    return submission.reply();
   }
+
+  const inputs = submission.value;
 
   const certificate = await prisma.certificate.create({
     data: {
@@ -119,8 +129,22 @@ export default function CreateCertificateDialog({
 }: Route.ComponentProps) {
   const { templates } = loaderData;
   const navigate = useNavigate();
+  const navigation = useNavigation();
   const [open, setOpen] = useState(true);
-  const formRef = useRef<HTMLFormElement | null>(null);
+
+  const isSubmitting =
+    navigation.formAction === "/org/program/2/batch/2/certificates/create";
+
+  const [form, fields] = useForm({
+    lastResult: actionData,
+    constraint: getZodConstraint(schema),
+    shouldRevalidate: "onInput",
+    onValidate({ formData }) {
+      return parseWithZod(formData, {
+        schema,
+      });
+    },
+  });
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -148,26 +172,40 @@ export default function CreateCertificateDialog({
             Please add the required information
           </DialogDescription>
         </DialogHeader>
-        <Form method="POST" ref={formRef} className="grid gap-2 py-4">
+        <Form method="POST" className="grid gap-2 py-4" {...getFormProps(form)}>
           <div className="grid grid-cols-2 gap-2 mb-2">
-            <Label htmlFor="firstName">First name</Label>
-            <Label htmlFor="lastName">Last name</Label>
-            <Input id="firstName" name="firstName" />
-            <Input id="lastName" name="lastName" />
+            <FormField
+              {...getInputProps(fields.firstName, { type: "text" })}
+              label="First name"
+              error={""}
+            />
+            <FormField
+              {...getInputProps(fields.lastName, { type: "text" })}
+              label="Last name"
+              error={fields.lastName.errors?.join(", ")}
+            />
+          </div>
+          <div
+            id={fields.firstName.errorId}
+            className="-mt-3 mb-2 text-xs font-semibold text-red-500"
+          >
+            {fields.firstName.errors}
           </div>
           <FormField
-            htmlFor="email"
+            {...getInputProps(fields.email, { type: "email" })}
             label="Email"
-            defaultValue={actionData?.fields.email ?? ""}
-            error={actionData?.errors?.email}
+            error={fields.email.errors?.join(", ")}
           />
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" className="mb-2" />
-          <Label htmlFor="teamName">Team</Label>
-          <Input id="teamName" name="teamName" className="mb-2" />
+
+          <FormField
+            {...getInputProps(fields.teamName, { type: "text" })}
+            label="Team"
+            error={fields.teamName.errors?.join(", ")}
+          />
+
           <Label htmlFor="templateId">Template</Label>
           <Select
-            name="templateId"
+            {...getSelectProps(fields.templateId)}
             defaultValue={
               templates.length === 1 ? templates[0].id.toString() : undefined
             }
@@ -183,9 +221,11 @@ export default function CreateCertificateDialog({
               ))}
             </SelectContent>
           </Select>
+          <div id={form.errorId}>{form.errors}</div>
         </Form>
         <DialogFooter>
-          <Button onClick={() => formRef.current?.submit()}>
+          <Button type="submit" form={form.id} disabled={isSubmitting}>
+            {isSubmitting && <LoaderCircle className="mr-2 animate-spin" />}
             Create certificate
           </Button>
         </DialogFooter>

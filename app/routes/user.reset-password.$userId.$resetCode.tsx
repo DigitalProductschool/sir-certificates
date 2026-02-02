@@ -86,7 +86,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 		// @todo this could be improved by redirecting to /user/forgot-password and showing the error message there
 		throw new Response(null, {
 			status: 403,
-			statusText: "This reset link has expired. Please request a new link.",
+			statusText:
+				"This reset link has expired. Please request a new link.",
 		});
 	}
 
@@ -134,7 +135,8 @@ export async function loader({ params }: Route.LoaderArgs) {
 		// @todo this could be improved by redirecting to /user/forgot-password and showing the error message there
 		throw new Response(null, {
 			status: 403,
-			statusText: "This reset link has expired. Please request a new link.",
+			statusText:
+				"This reset link has expired. Please request a new link.",
 		});
 	}
 
@@ -186,7 +188,8 @@ export default function ResetPassword({
 						Reset your password
 					</CardTitle>
 					<CardDescription className="text-center text-balance">
-						Please enter a new password you want to use to access your account.
+						Please enter a new password you want to use to access
+						your account.
 					</CardDescription>
 				</CardHeader>
 
@@ -198,7 +201,8 @@ export default function ResetPassword({
 					)}
 					<Form method="POST" className="flex flex-col gap-4">
 						<FormField
-							htmlFor="password"
+							id="password"
+							name="password"
 							label="New password"
 							type="password"
 							value={formData.password}
@@ -208,7 +212,9 @@ export default function ResetPassword({
 
 						<Label>
 							Password strength
-							<PasswordIndicator passwordStrength={passwordStrength?.result} />
+							<PasswordIndicator
+								passwordStrength={passwordStrength?.result}
+							/>
 						</Label>
 
 						<Button
@@ -223,12 +229,20 @@ export default function ResetPassword({
 			</Card>
 			<div className="grow flex flex-row justify-center items-end gap-4 pb-5 text-xs">
 				{org?.imprintUrl && (
-					<a href={org.imprintUrl} target="_blank" rel="noopener noreferrer">
+					<a
+						href={org.imprintUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
 						Imprint
 					</a>
 				)}
 				{org?.privacyUrl && (
-					<a href={org.privacyUrl} target="_blank" rel="noopener noreferrer">
+					<a
+						href={org.privacyUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
 						Privacy
 					</a>
 				)}

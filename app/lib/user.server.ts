@@ -1,6 +1,10 @@
-import type { User, UserInvitation, UserPhoto } from "~/generated/prisma/client";
+import type {
+  User,
+  UserInvitation,
+  UserPhoto,
+} from "~/generated/prisma/client";
 import type { FileUpload } from "@mjackson/form-data-parser";
-import type { RegisterForm, InviteForm, UserAuthenticated } from "./types";
+import type { InviteForm, UserAuthenticated } from "./types";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,7 +29,12 @@ export const backgroundRemovalIsConfigured: boolean = process.env
   ? true
   : false;
 
-export const createUser = async (user: RegisterForm) => {
+export const createUser = async (user: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}) => {
   const emailLowerCase = user.email.toLowerCase();
   const passwordHash = await bcrypt.hash(user.password, 10);
   const verifyCode = randomUUID();

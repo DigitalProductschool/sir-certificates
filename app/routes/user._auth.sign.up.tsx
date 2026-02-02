@@ -1,13 +1,16 @@
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import type { Route } from "./+types/user._auth.sign.up";
-import { useState } from "react";
 import {
   Form,
   Link,
-  data,
   redirect,
   useSearchParams,
   useLocation,
+  useNavigation,
 } from "react-router";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { LoaderCircle } from "lucide-react";
+
 import { FormField } from "~/components/form-field";
 import { Button } from "~/components/ui/button";
 import {
@@ -18,58 +21,12 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { register, getUser } from "~/lib/auth.server";
-import {
-  validateEmail,
-  validateName,
-  validatePassword,
-} from "~/lib/validators.server";
+
+import { RegisterSchema as schema } from "~/lib/schemas";
 
 export async function action({ request }: Route.ActionArgs) {
-  const form = await request.formData();
-  const email = form.get("email");
-  const password = form.get("password");
-  const firstName = form.get("firstName");
-  const lastName = form.get("lastName");
-
-  if (
-    typeof email !== "string" ||
-    typeof password !== "string" ||
-    typeof firstName !== "string" ||
-    typeof lastName !== "string"
-  ) {
-    // @todo improve type signature of action errors
-    return data(
-      {
-        error: `Invalid Form Data`,
-        errors: undefined,
-        errorCode: undefined,
-        fields: undefined,
-      },
-      { status: 400 },
-    );
-  }
-  
-
-  const errors = {
-    email: validateEmail(email),
-    password: validatePassword(password),
-    firstName: validateName((firstName as string) || ""),
-    lastName: validateName((lastName as string) || ""),
-  };
-
-  if (Object.values(errors).some(Boolean))
-    // @todo improve type signature of action errors
-    return data(
-      {
-        error: undefined,
-        errors,
-        errorCode: undefined,
-        fields: { email, password, firstName, lastName },
-      },
-      { status: 400 },
-    );
-
-  return await register({ email, password, firstName, lastName });
+  const formData = await request.formData();
+  return await register(formData); // also handles validation and errors
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -81,27 +38,35 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function UserSignUp({ actionData }: Route.ComponentProps) {
   const location = useLocation();
+  const navigation = useNavigation();
   const [searchParams /*, setSearchParams*/] = useSearchParams();
   const paramEmail = searchParams.get("email");
+  const paramFirstName = searchParams.get("firstName");
+  const paramLastName = searchParams.get("lastName");
 
-  const [formData, setFormData] = useState({
-    email: actionData?.fields?.email || location.state?.email || paramEmail || "",
-    password: actionData?.fields?.password || "",
-    firstName:
-      actionData?.fields?.lastName || searchParams.get("firstName") || "",
-    lastName:
-      actionData?.fields?.firstName || searchParams.get("lastName") || "",
+  const email =
+    actionData?.initialValue?.email.toString() ||
+    location.state?.email ||
+    paramEmail ||
+    "";
+  const firstName =
+    actionData?.initialValue?.firstName.toString() || paramFirstName || "";
+  const lastName =
+    actionData?.initialValue?.lastName.toString() || paramLastName || "";
+
+  const [form, fields] = useForm({
+    lastResult: actionData,
+    constraint: getZodConstraint(schema),
+    defaultValue: { email, firstName, lastName },
+    shouldRevalidate: "onInput",
+    onValidate({ formData }) {
+      return parseWithZod(formData, {
+        schema,
+      });
+    },
   });
 
-  const formError = actionData?.error;
-
-  // Updates the form data when an input changes
-  const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    field: string,
-  ) => {
-    setFormData((form) => ({ ...form, [field]: event.target.value }));
-  };
+  const isSubmitting = navigation.formAction === "/user/sign/up";
 
   // @todo – add password strength indicator to "sign up" pages
 
@@ -116,43 +81,38 @@ export default function UserSignUp({ actionData }: Route.ComponentProps) {
       </CardHeader>
 
       <CardContent className="grid gap-4">
-        {formError && (
-          <div className="w-full font-semibold text-sm tracking-wide text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2">
-            {formError}
-          </div>
-        )}
-        <Form method="POST">
+        <Form method="POST" {...getFormProps(form)} className="grid gap-4">
+          {form.errors && (
+            <div
+              id={form.errorId}
+              className="w-full font-semibold text-sm tracking-wide text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2"
+            >
+              {form.errors}
+            </div>
+          )}
           <FormField
-            htmlFor="email"
+            {...getInputProps(fields.email, { type: "email" })}
             label="Email"
-            value={formData.email}
-            onChange={(e) => handleInputChange(e, "email")}
-            error={actionData?.errors?.email}
+            error={fields.email.errors?.join(", ")}
           />
           <FormField
-            htmlFor="password"
-            type="password"
+            {...getInputProps(fields.password, { type: "password" })}
             label="Password"
-            value={formData.password}
-            onChange={(e) => handleInputChange(e, "password")}
-            error={actionData?.errors?.password}
+            error={fields.password.errors?.join(", ")}
           />
           <FormField
-            htmlFor="firstName"
-            label="First Name"
-            onChange={(e) => handleInputChange(e, "firstName")}
-            value={formData.firstName}
-            error={actionData?.errors?.firstName}
+            {...getInputProps(fields.firstName, { type: "text" })}
+            label="First name"
+            error={fields.firstName.errors?.join(", ")}
           />
           <FormField
-            htmlFor="lastName"
-            label="Last Name"
-            onChange={(e) => handleInputChange(e, "lastName")}
-            value={formData.lastName}
-            error={actionData?.errors?.lastName}
+            {...getInputProps(fields.lastName, { type: "text" })}
+            label="Last name"
+            error={fields.lastName.errors?.join(", ")}
           />
 
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting && <LoaderCircle className="mr-2 animate-spin" />}
             Sign Up
           </Button>
 
@@ -162,7 +122,9 @@ export default function UserSignUp({ actionData }: Route.ComponentProps) {
               <Link
                 to={"/user/sign/in" /* @todo add supportfor redirectTo */}
                 state={
-                  formData.email !== "" ? { email: formData.email } : undefined
+                  fields.email.value !== ""
+                    ? { email: fields.email.value }
+                    : undefined
                 }
               >
                 Sign In

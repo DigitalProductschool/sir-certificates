@@ -1,14 +1,17 @@
 /* eslint-disable jsx-a11y/tabindex-no-positive */
 import type { Route } from "./+types/user._auth.sign.in";
-import { useState } from "react";
 import {
   Form,
   Link,
-  data,
   redirect,
   useSearchParams,
   useLocation,
+  useNavigation,
 } from "react-router";
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { LoaderCircle } from "lucide-react";
+
 import { FormField } from "~/components/form-field";
 import GoogleIcon from "~/components/icons/google-login";
 import { Button } from "~/components/ui/button";
@@ -20,43 +23,12 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { login, getUser, googleLoginIsConfigured } from "~/lib/auth.server";
-import { validateEmail, validatePassword } from "~/lib/validators.server";
+
+import { LoginSchema as schema } from "~/lib/schemas";
 
 export async function action({ request }: Route.ActionArgs) {
-  const form = await request.formData();
-  const email = form.get("email");
-  const password = form.get("password");
-
-  // @todo improve type signature of action errors
-  if (typeof email !== "string" || typeof password !== "string") {
-    return data(
-      {
-        error: `Invalid Form Data`,
-        errors: undefined,
-        errorCode: undefined,
-        fields: undefined,
-      },
-      { status: 400 },
-    );
-  }
-
-  const errors = {
-    email: validateEmail(email),
-    password: validatePassword(password),
-  };
-
-  if (Object.values(errors).some(Boolean))
-    return data(
-      {
-        error: undefined,
-        errors,
-        errorCode: undefined,
-        fields: { email, password },
-      },
-      { status: 400 },
-    );
-
-  return await login({ email, password });
+  const formData = await request.formData();
+  return await login(formData); // also handles validation and error responses
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -75,15 +47,29 @@ export default function UserSignIn({
   loaderData,
 }: Route.ComponentProps) {
   const location = useLocation();
+  const navigation = useNavigation();
   const [searchParams /*, setSearchParams*/] = useSearchParams();
   const paramEmail = searchParams.get("email");
 
-  const [email, setEmail] = useState<string>(
-    actionData?.fields?.email || location.state?.email || paramEmail || "",
-  );
+  const email =
+    actionData?.initialValue?.email ||
+    location.state?.email ||
+    paramEmail ||
+    "";
 
-  const formError = actionData?.error;
-  const formErrorCode = actionData?.errorCode;
+  const [form, fields] = useForm({
+    lastResult: actionData,
+    constraint: getZodConstraint(schema),
+    defaultValue: { email },
+    shouldRevalidate: "onInput",
+    onValidate({ formData }) {
+      return parseWithZod(formData, {
+        schema,
+      });
+    },
+  });
+
+  const isSubmitting = navigation.formAction === "/user/sign/in";
 
   return (
     <Card className="mx-auto w-full max-w-sm shadow-none border-none bg-transparent">
@@ -96,34 +82,26 @@ export default function UserSignIn({
       </CardHeader>
 
       <CardContent className="grid gap-4">
-        {formError && (
-          <div className="w-full font-semibold text-sm tracking-wide text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2">
-            {formError}
-            {formErrorCode && formErrorCode === "verify-email" && (
-              <Form action="/user/verification/resend" method="POST">
-                <input type="hidden" name="email" value={email} />
-                <Button variant="outline" size="sm" type="submit">
-                  Resend email
-                </Button>
-              </Form>
-            )}
-          </div>
-        )}
-        <Form method="POST">
+        <Form method="POST" {...getFormProps(form)} className="grid gap-4">
+          {form.errors && (
+            <div
+              id={form.errorId}
+              className="w-full font-semibold text-sm tracking-wide text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2"
+            >
+              {form.errors}
+            </div>
+          )}
           <FormField
-            htmlFor="email"
+            {...getInputProps(fields.email, { type: "email" })}
             label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            error={actionData?.errors?.email}
-            tabindex={1}
+            error={fields.email.errors?.join(", ")}
+            tabIndex={1}
           />
           <FormField
-            htmlFor="password"
-            type="password"
+            {...getInputProps(fields.password, { type: "password" })}
             label="Password"
-            error={actionData?.errors?.password}
-            tabindex={2}
+            error={fields.password.errors?.join(", ")}
+            tabIndex={2}
             hint={
               <Link
                 to={`/user/forgot-password${
@@ -137,9 +115,35 @@ export default function UserSignIn({
             }
           />
 
-          <Button type="submit" className="w-full" tabIndex={3}>
+          <Button
+            type="submit"
+            className="w-full"
+            tabIndex={3}
+            disabled={isSubmitting}
+          >
+            {isSubmitting && <LoaderCircle className="mr-2 animate-spin" />}
             Sign In
           </Button>
+
+          {actionData?.error?.["verify-email"] && (
+            <div className="w-full font-semibold text-sm bg-red-500/10 text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2">
+              {actionData?.error?.["verify-email"]}
+              <Form
+                action="/user/verification/resend"
+                method="POST"
+                className="text-foreground"
+              >
+                <input
+                  type="hidden"
+                  name="email"
+                  value={actionData.initialValue?.email.toString()}
+                />
+                <Button variant="outline" size="sm" type="submit">
+                  Resend email
+                </Button>
+              </Form>
+            </div>
+          )}
 
           <div className="mt-4 text-center text-sm">
             Don&rsquo;t have an account?
