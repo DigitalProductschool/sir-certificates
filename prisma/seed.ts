@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../app/generated/prisma/client";
 import bcrypt from "bcryptjs";
-const prisma = new PrismaClient();
+
+const connectionString = `${process.env.DATABASE_URL}`;
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   // Sample data for Certiffy
@@ -12,12 +16,17 @@ async function main() {
       name: "Your Certiffy Organisation",
       imprintUrl: "https://www.certiffy.eu/imprint",
       privacyUrl: "https://www.certiffy.eu/privacy",
+      senderEmail: "notifications@certiffy.eu",
+      senderName: "Certiffy"
     },
   });
   console.log("Organisation:", org);
 
   // Sample user
-  const passwordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 10);
+  const passwordHash = await bcrypt.hash(
+    process.env.SEED_ADMIN_PASSWORD || "defaultPW",
+    10,
+  );
   const admin = await prisma.user.upsert({
     where: {
       id: 1,
@@ -32,10 +41,10 @@ async function main() {
       isVerified: true,
     },
     create: {
-      email: process.env.SEED_ADMIN_EMAIL,
+      email: process.env.SEED_ADMIN_EMAIL || "admin@example.com",
       password: passwordHash,
-      firstName: process.env.SEED_ADMIN_FIRSTNAME,
-      lastName: process.env.SEED_ADMIN_LASTNAME,
+      firstName: process.env.SEED_ADMIN_FIRSTNAME || "Alpha",
+      lastName: process.env.SEED_ADMIN_LASTNAME || "Omega",
       verifyCode: randomUUID(),
       isAdmin: true,
       isSuperAdmin: true,
