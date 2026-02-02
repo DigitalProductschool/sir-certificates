@@ -51,7 +51,7 @@ COPY --from=build /app-certificates/build /app-certificates/build
 COPY --from=build /app-certificates/public /app-certificates/public
 COPY --from=build /app-certificates/prisma /app-certificates/prisma
 COPY --from=build /app-certificates/package.json /app-certificates/package.json
-COPY --from=build /app-vdps/prisma.config.ts /app-vdps/prisma.config.ts
+COPY --from=build /app-certificates/prisma.config.ts /app-certificates/prisma.config.ts
 
 RUN npx prisma generate
 CMD [ "npm", "run", "start" ]
