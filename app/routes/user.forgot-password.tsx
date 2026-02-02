@@ -15,6 +15,8 @@ import { getPublicOrg } from "~/lib/organisation.server";
 import { prisma } from "~/lib/prisma.server";
 import { validateEmail } from "~/lib/validators.server";
 
+// @todo Refactor to EmailSchema validation
+
 export async function action({ request }: Route.ActionArgs) {
 	const form = await request.formData();
 	const email = form.get("email");
@@ -95,12 +97,12 @@ export default function ForgotPassword({
 	return (
 		<div className="h-screen flex flex-col items-center justify-center px-4">
 			<div className="grow"></div>
-            <img
-              src={`/logo/org.svg`}
-              alt=""
-              className="size-20 dark:invert"
-              role="presentation"
-            />
+			<img
+				src={`/logo/org.svg`}
+				alt=""
+				className="size-20 dark:invert"
+				role="presentation"
+			/>
 
 			<Card className="mx-auto w-full max-w-sm shadow-none border-none bg-transparent">
 				<CardHeader>
@@ -116,31 +118,20 @@ export default function ForgotPassword({
 					{formError && (
 						<div className="w-full font-semibold text-sm tracking-wide text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center text-center gap-2">
 							{formError}
-							{formErrorCode &&
-								formErrorCode === "verify-email" && (
-									<Form
-										action="/user/verification/resend"
-										method="POST"
-									>
-										<input
-											type="hidden"
-											name="email"
-											value={formData.email}
-										/>
-										<Button
-											variant="outline"
-											size="sm"
-											type="submit"
-										>
-											Resend email
-										</Button>
-									</Form>
-								)}
+							{formErrorCode && formErrorCode === "verify-email" && (
+								<Form action="/user/verification/resend" method="POST">
+									<input type="hidden" name="email" value={formData.email} />
+									<Button variant="outline" size="sm" type="submit">
+										Resend email
+									</Button>
+								</Form>
+							)}
 						</div>
 					)}
 					<Form method="POST">
 						<FormField
-							htmlFor="email"
+							id="email"
+							name="email"
 							label="Email"
 							value={formData.email}
 							onChange={(e) => handleInputChange(e, "email")}
@@ -155,20 +146,12 @@ export default function ForgotPassword({
 			</Card>
 			<div className="grow flex flex-row justify-center items-end gap-4 pb-5 text-xs">
 				{org?.imprintUrl && (
-					<a
-						href={org.imprintUrl}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					<a href={org.imprintUrl} target="_blank" rel="noopener noreferrer">
 						Imprint
 					</a>
 				)}
 				{org?.privacyUrl && (
-					<a
-						href={org.privacyUrl}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					<a href={org.privacyUrl} target="_blank" rel="noopener noreferrer">
 						Privacy
 					</a>
 				)}
