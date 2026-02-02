@@ -168,7 +168,7 @@ export default function EditCertificateDialog({
             <Input
               id="lastName"
               name="lastName"
-              defaultValue={certificate.lastName}
+              defaultValue={certificate.lastName ?? undefined}
             />
           </div>
           <Label htmlFor="email">Email</Label>
