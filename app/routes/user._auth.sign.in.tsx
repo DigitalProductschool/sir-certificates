@@ -104,11 +104,10 @@ export default function UserSignIn({
             tabIndex={2}
             hint={
               <Link
-                to={`/user/forgot-password${
-                  email !== "" ? `?email=${email}` : ""
-                }`}
+                to="/user/forgot-password"
                 className="ml-auto inline-block text-sm underline"
                 tabIndex={4}
+                state={fields.email.value !== "" ? { email: fields.email.value } : undefined}
               >
                 Forgot your password?
               </Link>
@@ -156,7 +155,7 @@ export default function UserSignIn({
             >
               <Link
                 to={"/user/sign/up" /* @todo add supportfor redirectTo */}
-                state={email !== "" ? { email: email } : undefined}
+                state={fields.email.value !== "" ? { email: fields.email.value } : undefined}
               >
                 Sign Up
               </Link>
