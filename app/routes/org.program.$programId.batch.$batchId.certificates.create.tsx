@@ -10,7 +10,6 @@ import {
   useForm,
 } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
-import { z } from "zod";
 
 import { LoaderCircle } from "lucide-react";
 
@@ -44,19 +43,7 @@ export function meta() {
   return [{ title: "Add Certificate" }];
 }
 
-const schema = z.object({
-  firstName: z
-    .string("Please provide at least a first name")
-    .min(1, { message: "Please provide at least a first name" }),
-  lastName: z.string().optional().nullable(),
-  email: z
-    .string("Please enter an email address")
-    .min(1, { message: "Please enter an email address" })
-    .email("This email looks incomplete")
-    .toLowerCase(),
-  teamName: z.string().optional().nullable(),
-  templateId: z.int(),
-});
+import { CertificateCreateSchema as schema } from "~/lib/schemas";
 
 export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
