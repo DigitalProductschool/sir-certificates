@@ -1,16 +1,21 @@
 import type { Route } from "./+types/user.reset-password.$userId.$resetCode";
+import type { Route as RootRoute } from "../+types/root";
 import type { ErrorResponse } from "react-router";
 import type { UserPasswordReset } from "~/generated/prisma/client";
 import type { PasswordAssessment } from "~/components/password-indicator";
 
-import { useState } from "react";
 import {
 	Form,
-	data,
 	redirect,
 	useRouteError,
 	isRouteErrorResponse,
+	useNavigation,
+	useRouteLoaderData,
 } from "react-router";
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+
+import { LoaderCircle } from "lucide-react";
 import { FormField } from "~/components/form-field";
 import {
 	PasswordIndicator,
@@ -25,9 +30,10 @@ import {
 	CardTitle,
 } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
-import { prisma } from "~/lib/prisma.server";
+
+import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { changePassword } from "~/lib/user.server";
-import { getPublicOrg } from "~/lib/organisation.server";
+import { PasswordSchema as schema } from "~/lib/schemas";
 
 const oneHour = 60 * 60 * 1000;
 
@@ -37,34 +43,25 @@ function isTooOld(reset: UserPasswordReset) {
 	return reset.createdAt < oneHourAgo;
 }
 
-// @todo refactor to Conform validation and Zod Schema
-
 export async function action({ request, params }: Route.ActionArgs) {
-	const form = await request.formData();
-	const password = form.get("password");
-
-	if (typeof password !== "string") {
-		return data(
-			{ error: `Invalid Form Data`, errors: { password: undefined } },
-			{ status: 400 },
-		);
+	const formData = await request.formData();
+	const submission = parseWithZod(formData, { schema });
+	if (submission.status !== "success") {
+		return submission.reply();
 	}
+
+	const password = submission.value.password;
 
 	const strength = assessPassword(password);
 	if (!strength.enough) {
-		return data(
-			{
-				error: "Please choose a stronger password.",
-				errors: { password: undefined },
-			},
-			{ status: 400 },
-		);
+		return submission.reply({
+			formErrors: ["Please choose a stronger password."],
+		});
 	}
 
 	if (!params.resetCode) {
-		throw new Response(null, {
-			status: 400,
-			statusText: "Missing reset code.",
+		return submission.reply({
+			formErrors: ["Missing reset code."],
 		});
 	}
 
@@ -78,22 +75,24 @@ export async function action({ request, params }: Route.ActionArgs) {
 	});
 
 	if (!reset) {
-		throw new Response(null, {
-			status: 404,
-			statusText: "Password reset request not found.",
+		return submission.reply({
+			formErrors: ["Password reset request not found."],
 		});
 	}
 
 	if (isTooOld(reset)) {
 		// @todo this could be improved by redirecting to /user/forgot-password and showing the error message there
-		throw new Response(null, {
-			status: 403,
-			statusText:
+		return submission.reply({
+			formErrors: [
 				"This reset link has expired. Please request a new link.",
+			],
 		});
 	}
 
-	await changePassword(reset.user, password);
+	await changePassword(reset.user, password).catch((error) => {
+		console.error(error);
+		throwErrorResponse(error, "Could not save the new password.");
+	});
 
 	await prisma.userPasswordReset.delete({
 		where: {
@@ -124,6 +123,9 @@ export async function loader({ params }: Route.LoaderArgs) {
 			userId: Number(params.userId),
 			resetCode: params.resetCode,
 		},
+	}).catch((error) => {
+		console.error(error);
+		throwErrorResponse(error, "Could not find this password reset request");
 	});
 
 	if (!reset) {
@@ -142,37 +144,40 @@ export async function loader({ params }: Route.LoaderArgs) {
 		});
 	}
 
-	// @todo refactor to useRouteLoaderData
-	const org = await getPublicOrg();
-	return { org };
+	return null;
 }
 
 export default function ResetPassword({
-	loaderData,
 	actionData,
+	params,
 }: Route.ComponentProps) {
-	const { org } = loaderData;
-	const [formData, setFormData] = useState({
-		password: "",
+	const navigation = useNavigation();
+	const { org } =
+		useRouteLoaderData<RootRoute.ComponentProps["loaderData"]>("root") ??
+		{};
+
+	const [form, fields] = useForm({
+		lastResult: actionData,
+		constraint: getZodConstraint(schema),
+		shouldRevalidate: "onInput",
+		onValidate({ formData }) {
+			return parseWithZod(formData, {
+				schema,
+			});
+		},
 	});
-
-	const formError = actionData?.error;
-
-	// Updates the form data when an input changes
-	const handleInputChange = (
-		event: React.ChangeEvent<HTMLInputElement>,
-		field: string,
-	) => {
-		setFormData((form) => ({ ...form, [field]: event.target.value }));
-	};
 
 	let passwordStrength: PasswordAssessment | undefined = undefined;
 	let passwordStrengthEnough = false;
 
-	if (formData.password !== "") {
-		passwordStrength = assessPassword(formData.password);
+	if (fields.password.value && fields.password.value !== "") {
+		passwordStrength = assessPassword(fields.password.value);
 		passwordStrengthEnough = passwordStrength.enough;
 	}
+
+	const isSubmitting =
+		navigation.formAction ===
+		`/user/reset-password/${params.userId}/${params.resetCode}`;
 
 	return (
 		<div className="h-screen flex flex-col items-center justify-center px-4 dark:bg-black">
@@ -197,34 +202,41 @@ export default function ResetPassword({
 				</CardHeader>
 
 				<CardContent className="grid gap-4">
-					{formError && (
-						<div className="w-full font-semibold text-sm tracking-wide text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center text-center gap-2">
-							{formError}
-						</div>
-					)}
-					<Form method="POST" className="flex flex-col gap-4">
+					<Form
+						method="POST"
+						{...getFormProps(form)}
+						className="grid gap-4"
+					>
+						{form.errors && (
+							<div
+								id={form.errorId}
+								className="w-full font-semibold text-sm text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2"
+							>
+								{form.errors}
+							</div>
+						)}
+
 						<FormField
-							id="password"
-							name="password"
+							{...getInputProps(fields.password, {
+								type: "password",
+							})}
 							label="New password"
-							type="password"
-							value={formData.password}
-							onChange={(e) => handleInputChange(e, "password")}
-							error={actionData?.errors?.password}
+							error={fields.password.errors?.join(", ")}
 						/>
 
-						<Label>
-							Password strength
-							<PasswordIndicator
-								passwordStrength={passwordStrength?.result}
-							/>
-						</Label>
+						<Label>Password strength</Label>
+						<PasswordIndicator
+							passwordStrength={passwordStrength?.result}
+						/>
 
 						<Button
 							type="submit"
 							className="w-full"
-							disabled={!passwordStrengthEnough}
+							disabled={!passwordStrengthEnough || isSubmitting}
 						>
+							{isSubmitting && (
+								<LoaderCircle className="mr-2 animate-spin" />
+							)}
 							Reset password
 						</Button>
 					</Form>
