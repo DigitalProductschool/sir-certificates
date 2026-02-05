@@ -28,7 +28,6 @@ import { EmailSchema as schema } from "~/lib/schemas";
 
 export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData();
-
 	const submission = parseWithZod(formData, { schema });
 
 	if (submission.status !== "success") {
@@ -119,7 +118,7 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
 						{form.errors && (
 							<div
 								id={form.errorId}
-								className="w-full font-semibold text-sm tracking-wide text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2"
+								className="w-full font-semibold text-sm text-red-500 border border-red-500 rounded p-2 flex flex-col justify-center items-center gap-2"
 							>
 								{form.errors}
 							</div>

@@ -32,7 +32,7 @@ export default function ForgotPasswordNextSteps({
 
 			<Card className="mx-auto w-full max-w-sm shadow-none border-none bg-transparent">
 				<CardHeader>
-					<CardTitle className="text-2xl text-center">
+					<CardTitle className="text-2xl text-center text-balance">
 						Please check your email inbox.
 					</CardTitle>
 				</CardHeader>

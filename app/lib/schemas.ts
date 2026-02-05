@@ -43,6 +43,13 @@ export const EmailSchema = z.object({
 		.toLowerCase(),
 });
 
+export const PasswordSchema = z.object({
+	password: z
+		.string("Please enter a password")
+		.trim()
+		.min(8, "Should be at least 8 characters"),
+});
+
 export const CertificateInputSchema = z.object({
 	firstName: z
 		.string("Please provide at least a first name")
