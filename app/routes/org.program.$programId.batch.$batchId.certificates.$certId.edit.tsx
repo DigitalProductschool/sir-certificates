@@ -1,9 +1,17 @@
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.$certId.edit";
 import type { Template } from "~/generated/prisma/client";
-import { useEffect, useState, useRef } from "react";
-import { Form, redirect, useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { Form, redirect, useNavigate, useNavigation } from "react-router";
+import {
+  getFormProps,
+  getInputProps,
+  getSelectProps,
+  useForm,
+} from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 
-import { Trash2Icon } from "lucide-react";
+import { LoaderCircle, Trash2Icon } from "lucide-react";
+import { FormField } from "~/components/form-field";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -13,7 +21,6 @@ import {
   DialogFooter,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
   Select,
@@ -33,7 +40,8 @@ import {
   generateCertificate,
   generatePreviewOfCertificate,
 } from "~/lib/pdf.server";
-import { prisma } from "~/lib/prisma.server";
+import { prisma, throwErrorResponse } from "~/lib/prisma.server";
+import { CertificateInputSchema as schema } from "~/lib/schemas";
 
 export function meta() {
   return [{ title: "Edit Certificate" }];
@@ -43,31 +51,43 @@ export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
-  const inputs = Object.fromEntries(formData) as { [k: string]: string };
+  const submission = parseWithZod(formData, { schema });
 
-  const certificate = await prisma.certificate.update({
-    where: {
-      id: Number(params.certId),
-      batch: {
-        is: {
-          programId: Number(params.programId),
+  // Send the submission back to the client if the status is not successful
+  if (submission.status !== "success") {
+    return submission.reply();
+  }
+
+  const inputs = submission.value;
+
+  const certificate = await prisma.certificate
+    .update({
+      where: {
+        id: Number(params.certId),
+        batch: {
+          is: {
+            programId: Number(params.programId),
+          },
         },
       },
-    },
-    data: {
-      firstName: inputs.firstName,
-      lastName: inputs.lastName,
-      email: inputs.email,
-      teamName: inputs.teamName,
-      template: {
-        connect: { id: Number(inputs.templateId) },
+      data: {
+        firstName: inputs.firstName,
+        lastName: inputs.lastName,
+        email: inputs.email,
+        teamName: inputs.teamName,
+        template: {
+          connect: { id: Number(inputs.templateId) },
+        },
       },
-    },
-    include: {
-      batch: true,
-      template: true,
-    },
-  });
+      include: {
+        batch: true,
+        template: true,
+      },
+    })
+    .catch((error) => {
+      console.error(error);
+      throwErrorResponse(error, "Could not update certificate");
+    });
 
   if (certificate) {
     const skipIfExists = false;
@@ -123,12 +143,31 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export default function EditCertificateDialog({
+  actionData,
   loaderData,
+  params,
 }: Route.ComponentProps) {
   const { certificate, templates } = loaderData;
   const navigate = useNavigate();
+  const navigation = useNavigation();
   const [open, setOpen] = useState(true);
-  const formRef = useRef<HTMLFormElement | null>(null);
+
+  const isSubmitting =
+    navigation.formAction ===
+    `/org/program/${params.programId}/batch/${params.batchId}/certificates/${params.certId}/edit`;
+
+  const [form, fields] = useForm({
+    lastResult: actionData,
+    constraint: getZodConstraint(schema),
+    defaultValue: certificate,
+    shouldValidate: "onBlur",
+    shouldRevalidate: "onInput",
+    onValidate({ formData }) {
+      return parseWithZod(formData, {
+        schema,
+      });
+    },
+  });
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -156,38 +195,39 @@ export default function EditCertificateDialog({
             Change the certificate information as needed.
           </DialogDescription>
         </DialogHeader>
-        <Form method="POST" ref={formRef} className="grid gap-2 py-4">
+        <Form method="POST" className="grid gap-2 py-4" {...getFormProps(form)}>
           <div className="grid grid-cols-2 gap-2 mb-2">
-            <Label htmlFor="firstName">First name</Label>
-            <Label htmlFor="lastName">Last name</Label>
-            <Input
-              id="firstName"
-              name="firstName"
-              defaultValue={certificate.firstName}
+            <FormField
+              {...getInputProps(fields.firstName, { type: "text" })}
+              label="First name"
+              error={""}
             />
-            <Input
-              id="lastName"
-              name="lastName"
-              defaultValue={certificate.lastName ?? undefined}
+            <FormField
+              {...getInputProps(fields.lastName, { type: "text" })}
+              label="Last name"
+              error={fields.lastName.errors?.join(", ")}
             />
           </div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            defaultValue={certificate.email}
-            className="mb-2"
+          <div
+            id={fields.firstName.errorId}
+            className="-mt-3 mb-2 text-xs font-semibold text-red-500"
+          >
+            {fields.firstName.errors}
+          </div>
+
+          <FormField
+            {...getInputProps(fields.email, { type: "email" })}
+            label="Email"
+            error={fields.email.errors?.join(", ")}
           />
-          <Label htmlFor="teamName">Team</Label>
-          <Input
-            id="teamName"
-            name="teamName"
-            defaultValue={certificate.teamName ?? ""}
-            className="mb-2"
+          <FormField
+            {...getInputProps(fields.teamName, { type: "text" })}
+            label="Team"
+            error={fields.teamName.errors?.join(", ")}
           />
           <Label htmlFor="templateId">Template</Label>
           <Select
-            name="templateId"
+            {...getSelectProps(fields.templateId)}
             defaultValue={certificate.templateId.toString()}
           >
             <SelectTrigger>
@@ -219,7 +259,8 @@ export default function EditCertificateDialog({
               </TooltipContent>
             </Tooltip>
           </Form>
-          <Button onClick={() => formRef.current?.submit()}>
+          <Button type="submit" form={form.id} disabled={isSubmitting}>
+            {isSubmitting && <LoaderCircle className="mr-2 animate-spin" />}
             Save changes
           </Button>
         </DialogFooter>

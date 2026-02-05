@@ -37,6 +37,8 @@ function isTooOld(reset: UserPasswordReset) {
 	return reset.createdAt < oneHourAgo;
 }
 
+// @todo refactor to Conform validation and Zod Schema
+
 export async function action({ request, params }: Route.ActionArgs) {
 	const form = await request.formData();
 	const password = form.get("password");
@@ -140,6 +142,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 		});
 	}
 
+	// @todo refactor to useRouteLoaderData
 	const org = await getPublicOrg();
 	return { org };
 }

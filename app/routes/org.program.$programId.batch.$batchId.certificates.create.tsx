@@ -37,13 +37,13 @@ import {
   generateCertificate,
   generatePreviewOfCertificate,
 } from "~/lib/pdf.server";
-import { prisma } from "~/lib/prisma.server";
+import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 
 export function meta() {
   return [{ title: "Add Certificate" }];
 }
 
-import { CertificateCreateSchema as schema } from "~/lib/schemas";
+import { CertificateInputSchema as schema } from "~/lib/schemas";
 
 export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
@@ -58,25 +58,30 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   const inputs = submission.value;
 
-  const certificate = await prisma.certificate.create({
-    data: {
-      uuid: randomUUID(),
-      firstName: inputs.firstName,
-      lastName: inputs.lastName,
-      email: inputs.email,
-      teamName: inputs.teamName,
-      batch: {
-        connect: { id: Number(params.batchId) },
+  const certificate = await prisma.certificate
+    .create({
+      data: {
+        uuid: randomUUID(),
+        firstName: inputs.firstName,
+        lastName: inputs.lastName,
+        email: inputs.email,
+        teamName: inputs.teamName,
+        batch: {
+          connect: { id: Number(params.batchId) },
+        },
+        template: {
+          connect: { id: Number(inputs.templateId) },
+        },
       },
-      template: {
-        connect: { id: Number(inputs.templateId) },
+      include: {
+        batch: true,
+        template: true,
       },
-    },
-    include: {
-      batch: true,
-      template: true,
-    },
-  });
+    })
+    .catch((error) => {
+      console.error(error);
+      throwErrorResponse(error, "Could not create certificate");
+    });
 
   if (certificate) {
     const skipIfExists = false;
@@ -111,8 +116,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export default function CreateCertificateDialog({
-  loaderData,
   actionData,
+  loaderData,
+  params,
 }: Route.ComponentProps) {
   const { templates } = loaderData;
   const navigate = useNavigate();
@@ -120,7 +126,8 @@ export default function CreateCertificateDialog({
   const [open, setOpen] = useState(true);
 
   const isSubmitting =
-    navigation.formAction === "/org/program/2/batch/2/certificates/create";
+    navigation.formAction ===
+    `/org/program/${params.programId}/batch/${params.batchId}/certificates/create`;
 
   const [form, fields] = useForm({
     lastResult: actionData,
