@@ -9,6 +9,8 @@ import { prisma } from "~/lib/prisma.server";
 import { sendVerificationEmail } from "~/lib/user.server";
 import { validateEmail } from "~/lib/validators.server";
 
+// @todo refactor to Conform and Zod schemas
+
 export async function action({ request }: Route.ActionArgs) {
 	const form = await request.formData();
 	const email = form.get("email") as string;

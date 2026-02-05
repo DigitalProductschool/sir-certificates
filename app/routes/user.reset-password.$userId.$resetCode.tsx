@@ -50,15 +50,6 @@ export async function action({ request, params }: Route.ActionArgs) {
 		return submission.reply();
 	}
 
-	const password = submission.value.password;
-
-	const strength = assessPassword(password);
-	if (!strength.enough) {
-		return submission.reply({
-			formErrors: ["Please choose a stronger password."],
-		});
-	}
-
 	if (!params.resetCode) {
 		return submission.reply({
 			formErrors: ["Missing reset code."],
@@ -89,10 +80,12 @@ export async function action({ request, params }: Route.ActionArgs) {
 		});
 	}
 
-	await changePassword(reset.user, password).catch((error) => {
-		console.error(error);
-		throwErrorResponse(error, "Could not save the new password.");
-	});
+	await changePassword(reset.user, submission.value.password).catch(
+		(error) => {
+			console.error(error);
+			throwErrorResponse(error, "Could not save the new password.");
+		},
+	);
 
 	await prisma.userPasswordReset.delete({
 		where: {
@@ -118,15 +111,20 @@ export async function loader({ params }: Route.LoaderArgs) {
 		});
 	}
 
-	const reset = await prisma.userPasswordReset.findUnique({
-		where: {
-			userId: Number(params.userId),
-			resetCode: params.resetCode,
-		},
-	}).catch((error) => {
-		console.error(error);
-		throwErrorResponse(error, "Could not find this password reset request");
-	});
+	const reset = await prisma.userPasswordReset
+		.findUnique({
+			where: {
+				userId: Number(params.userId),
+				resetCode: params.resetCode,
+			},
+		})
+		.catch((error) => {
+			console.error(error);
+			throwErrorResponse(
+				error,
+				"Could not find this password reset request",
+			);
+		});
 
 	if (!reset) {
 		throw new Response(null, {
@@ -168,11 +166,8 @@ export default function ResetPassword({
 	});
 
 	let passwordStrength: PasswordAssessment | undefined = undefined;
-	let passwordStrengthEnough = false;
-
 	if (fields.password.value && fields.password.value !== "") {
 		passwordStrength = assessPassword(fields.password.value);
-		passwordStrengthEnough = passwordStrength.enough;
 	}
 
 	const isSubmitting =
@@ -232,7 +227,7 @@ export default function ResetPassword({
 						<Button
 							type="submit"
 							className="w-full"
-							disabled={!passwordStrengthEnough || isSubmitting}
+							disabled={isSubmitting}
 						>
 							{isSubmitting && (
 								<LoaderCircle className="mr-2 animate-spin" />

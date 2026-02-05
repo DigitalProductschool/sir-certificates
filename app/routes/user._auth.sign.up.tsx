@@ -12,6 +12,12 @@ import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { LoaderCircle } from "lucide-react";
 
 import { FormField } from "~/components/form-field";
+import {
+  assessPassword,
+  PasswordIndicator,
+  type PasswordAssessment,
+} from "~/components/password-indicator";
+
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -20,8 +26,9 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { register, getUser } from "~/lib/auth.server";
+import { Label } from "~/components/ui/label";
 
+import { register, getUser } from "~/lib/auth.server";
 import { RegisterSchema as schema } from "~/lib/schemas";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -58,6 +65,7 @@ export default function UserSignUp({ actionData }: Route.ComponentProps) {
     lastResult: actionData,
     constraint: getZodConstraint(schema),
     defaultValue: { email, firstName, lastName },
+    shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
     onValidate({ formData }) {
       return parseWithZod(formData, {
@@ -66,9 +74,12 @@ export default function UserSignUp({ actionData }: Route.ComponentProps) {
     },
   });
 
-  const isSubmitting = navigation.formAction === "/user/sign/up";
+  let passwordStrength: PasswordAssessment | undefined = undefined;
+  if (fields.password.value && fields.password.value !== "") {
+    passwordStrength = assessPassword(fields.password.value);
+  }
 
-  // @todo – add password strength indicator to "sign up" pages
+  const isSubmitting = navigation.formAction === "/user/sign/up";
 
   return (
     <Card className="mx-auto w-full max-w-sm shadow-none border-none bg-transparent">
@@ -100,6 +111,9 @@ export default function UserSignUp({ actionData }: Route.ComponentProps) {
             label="Password"
             error={fields.password.errors?.join(", ")}
           />
+          <Label>Password strength</Label>
+          <PasswordIndicator passwordStrength={passwordStrength?.result} />
+
           <FormField
             {...getInputProps(fields.firstName, { type: "text" })}
             label="First name"
