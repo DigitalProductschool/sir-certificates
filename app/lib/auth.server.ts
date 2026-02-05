@@ -85,8 +85,6 @@ export async function register(formData: FormData) {
 		return submission.reply();
 	}
 
-	// const emailLowerCase = user.email.toLowerCase();
-
 	const exists = await prisma.user.count({
 		where: { email: submission.value.email },
 	});
@@ -98,6 +96,7 @@ export async function register(formData: FormData) {
 	}
 
 	const newUser = await createUser(submission.value);
+
 	if (!newUser) {
 		return submission.reply({
 			formErrors: ["Something went wrong trying to create a new user."],

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assessPassword } from "~/components/password-indicator";
 
 // Note on email validation: the default RegEx from Zod is relatively strict and doesn't allow for international/UTF-8 characters in email addresses, that's why we're opting for the looser Unicode pattern
 // See more here: https://zod.dev/api?id=emails
@@ -17,7 +18,9 @@ export const RegisterSchema = z.object({
 	password: z
 		.string("Please enter a password")
 		.trim()
-		.min(8, "Should be at least 8 characters"),
+		.refine((val) => assessPassword(val).enough, {
+			error: "Please use a stronger password",
+		}),
 	firstName: z.string("Please enter your first name (given name)").trim(),
 	lastName: z.string("Please enter your last name (family name)").trim(),
 });
@@ -51,7 +54,9 @@ export const PasswordSchema = z.object({
 	password: z
 		.string("Please enter a password")
 		.trim()
-		.min(8, "Should be at least 8 characters"),
+		.refine((val) => assessPassword(val).enough, {
+			error: "Please use a stronger password",
+		}),
 });
 
 export const CertificateInputSchema = z.object({
