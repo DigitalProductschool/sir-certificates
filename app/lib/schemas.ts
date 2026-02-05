@@ -3,6 +3,8 @@ import { z } from "zod";
 // Note on email validation: the default RegEx from Zod is relatively strict and doesn't allow for international/UTF-8 characters in email addresses, that's why we're opting for the looser Unicode pattern
 // See more here: https://zod.dev/api?id=emails
 
+// To generate types for the schemas, we can use z.infer(typeof schema), for more see: https://www.allthingstypescript.dev/p/using-zod-schemas-as-source-of-truth
+
 export const RegisterSchema = z.object({
 	email: z
 		.string("Please enter an email address")
@@ -19,6 +21,8 @@ export const RegisterSchema = z.object({
 	firstName: z.string("Please enter your first name (given name)").trim(),
 	lastName: z.string("Please enter your last name (family name)").trim(),
 });
+
+export type RegisterSchemaType = z.infer<typeof RegisterSchema>;
 
 export const LoginSchema = z.object({
 	email: z
