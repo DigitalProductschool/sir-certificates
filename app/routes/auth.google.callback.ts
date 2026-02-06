@@ -6,6 +6,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   const user = await authenticator.authenticate("google", request);
   return createUserSessionAndRedirect(
     user,
-    user.isAdmin || user.isSuperAdmin ? "/org/program" : "/",
+    user.isAdmin ? "/org/program" : "/",
   );
 }

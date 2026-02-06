@@ -57,6 +57,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
   const { user, invitations } = loaderData;
+
+  // @todo prevent sorting from triggering a new data fetch (probably by implementing a clientLoader)
   const [searchParams, setSearchParams] = useSearchParams();
 
   let sortedUser = user;
@@ -104,6 +106,14 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
     }
   }
 
+  const onSetSort = (propName: string) => {
+    const params = new URLSearchParams();
+    params.set("sort", propName);
+    setSearchParams(params, {
+      preventScrollReset: true,
+    });
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -124,13 +134,7 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
               <Button
                 variant="ghost"
                 className="pl-0"
-                onClick={() => {
-                  const params = new URLSearchParams();
-                  params.set("sort", "name");
-                  setSearchParams(params, {
-                    preventScrollReset: true,
-                  });
-                }}
+                onClick={() => onSetSort("name")}
               >
                 Name {searchParams.get("sort") === "name" && <ArrowDown />}
               </Button>
@@ -139,13 +143,7 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
               <Button
                 variant="ghost"
                 className="pl-0"
-                onClick={() => {
-                  const params = new URLSearchParams();
-                  params.set("sort", "email");
-                  setSearchParams(params, {
-                    preventScrollReset: true,
-                  });
-                }}
+                onClick={() => onSetSort("email")}
               >
                 Email {searchParams.get("sort") === "email" && <ArrowDown />}
               </Button>
@@ -154,13 +152,7 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
               <Button
                 variant="ghost"
                 className="pl-0"
-                onClick={() => {
-                  const params = new URLSearchParams();
-                  params.set("sort", "permission");
-                  setSearchParams(params, {
-                    preventScrollReset: true,
-                  });
-                }}
+                onClick={() => onSetSort("permission")}
               >
                 Permissions{" "}
                 {searchParams.get("sort") === "permission" && <ArrowDown />}

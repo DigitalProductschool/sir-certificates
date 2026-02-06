@@ -90,6 +90,19 @@ export function SidebarParticipant({
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          {user.isAdmin && (
+            <SidebarMenuItem>
+              <SidebarMenuButton tooltip="Administration" asChild>
+                <NavLink
+                  to="/org/program"
+                  className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
+                >
+                  <TowerControl />
+                  <span>Administration</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -142,14 +155,6 @@ export function SidebarParticipant({
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  {user.isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/org/program">
-                        <TowerControl className="ml-0.5 mr-3.5 w-5 h-5" />
-                        Administration
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem asChild>
                     <Link to="/user/photo" state={{ fromPath: pathname }}>
                       <SquareUser className="ml-0.5 mr-3.5 w-5 h-5" />
