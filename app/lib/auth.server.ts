@@ -140,7 +140,7 @@ export async function login(formData: FormData) {
 	}
 
 	// @todo support redirectTo parameter from login form
-	const redirectTo = user.isAdmin ? "/org/program" : "/";
+	const redirectTo = user.isAdmin || user.isSuperAdmin ? "/org/program" : "/";
 	return createUserSessionAndRedirect(user, redirectTo);
 }
 
