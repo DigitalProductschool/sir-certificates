@@ -204,7 +204,9 @@ export default function CreateCertificateDialog({
               templates.length === 1 ? templates[0].id.toString() : undefined
             }
           >
-            <SelectTrigger>
+            <SelectTrigger
+              aria-invalid={getSelectProps(fields.templateId)["aria-invalid"]}
+            >
               <SelectValue placeholder="Select a template" />
             </SelectTrigger>
             <SelectContent>
@@ -215,6 +217,11 @@ export default function CreateCertificateDialog({
               ))}
             </SelectContent>
           </Select>
+          {fields.templateId.errors && (
+            <div className="text-xs font-semibold text-red-500 w-full">
+              {fields.templateId.errors.join(", ")}
+            </div>
+          )}
           <div id={form.errorId}>{form.errors}</div>
         </Form>
         <DialogFooter>
