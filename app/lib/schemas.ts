@@ -73,5 +73,5 @@ export const CertificateInputSchema = z.object({
 		})
 		.toLowerCase(),
 	teamName: z.string().optional().nullable(),
-	templateId: z.int(),
+	templateId: z.int("Please select a template"),
 });

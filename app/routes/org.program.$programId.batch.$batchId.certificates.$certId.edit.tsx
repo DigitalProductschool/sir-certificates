@@ -230,7 +230,9 @@ export default function EditCertificateDialog({
             {...getSelectProps(fields.templateId)}
             defaultValue={certificate.templateId.toString()}
           >
-            <SelectTrigger>
+            <SelectTrigger
+              aria-invalid={getSelectProps(fields.templateId)["aria-invalid"]}
+            >
               <SelectValue placeholder="Select a template" />
             </SelectTrigger>
             <SelectContent>
@@ -241,6 +243,12 @@ export default function EditCertificateDialog({
               ))}
             </SelectContent>
           </Select>
+          {fields.templateId.errors && (
+            <div className="text-xs font-semibold text-red-500 w-full">
+              {fields.templateId.errors.join(", ")}
+            </div>
+          )}
+          <div id={form.errorId}>{form.errors}</div>
         </Form>
         <DialogFooter>
           <Form
