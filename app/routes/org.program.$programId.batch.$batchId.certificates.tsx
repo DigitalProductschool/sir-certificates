@@ -2,7 +2,7 @@ import type { Route } from "./+types/org.program.$programId.batch.$batchId.certi
 import type { Certificate, Template } from "~/generated/prisma/client";
 import { Link, Outlet, useLocation } from "react-router";
 
-import { ChevronDown, Eye, MailCheck, Settings } from "lucide-react";
+import { ArrowDown, ChevronDown, Eye, MailCheck, Settings } from "lucide-react";
 
 import { CertificateRefresh } from "~/components/certificate-refresh";
 import { CertificateSendNotification } from "~/components/certificate-send-notification";
@@ -79,6 +79,7 @@ export default function BatchCertificatesPage({
   const { certificates, templates } = loaderData;
 
   const view = location.state?.view ?? "table";
+  const sort = location.state?.sort ?? "firstName";
 
   const templatesMap = new Map<number, Template>();
   for (const template of templates) {
@@ -95,18 +96,80 @@ export default function BatchCertificatesPage({
     }
   }
 
+  let sortedCerts = certificates;
+  switch (sort) {
+    case "firstName": // already sorted
+      break;
+    case "email":
+      sortedCerts = certificates.toSorted((a, b) => {
+        if (a.email < b.email) {
+          return -1;
+        }
+        if (a.email > b.email) {
+          return 1;
+        }
+        return 0;
+      });
+      break;
+    case "teamName":
+      sortedCerts = certificates.toSorted((a, b) => {
+        if ((a.teamName ?? "") < (b.teamName ?? "")) {
+          return -1;
+        }
+        if ((a.teamName ?? "") > (b.teamName ?? "")) {
+          return 1;
+        }
+        return 0;
+      });
+      break;
+    case "templateId":
+      sortedCerts = certificates.toSorted((a, b) => {
+        if (a.templateId < b.templateId) {
+          return -1;
+        }
+        if (a.templateId > b.templateId) {
+          return 1;
+        }
+        return 0;
+      });
+      break;
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {view === "table" && (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="font-medium">Email</TableHead>
-              <TableHead>Team</TableHead>
+              <TableHead>
+                <Button variant="ghost" className="pl-0" asChild>
+                  <Link to="." state={{ sort: "firstName" }}>
+                    Name {sort === "firstName" && <ArrowDown />}
+                  </Link>
+                </Button>
+              </TableHead>
+              <TableHead className="font-medium">
+                <Button variant="ghost" className="pl-0" asChild>
+                  <Link to="." state={{ sort: "email" }}>
+                    Email {sort === "email" && <ArrowDown />}
+                  </Link>
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button variant="ghost" className="pl-0" asChild>
+                  <Link to="." state={{ sort: "teamName" }}>
+                    Team {sort === "teamName" && <ArrowDown />}
+                  </Link>
+                </Button>
+              </TableHead>
               <TableHead>
                 <div className="flex items-center">
-                  Template&emsp;
+                  <Button variant="ghost" className="pl-0" asChild>
+                    <Link to="." state={{ sort: "templateId" }}>
+                      Template {sort === "templateId" && <ArrowDown />}
+                    </Link>
+                  </Button>
+                  &emsp;
                   {certificatesNeedsRefresh > 0 && (
                     <Tooltip>
                       <TooltipTrigger>
@@ -127,7 +190,7 @@ export default function BatchCertificatesPage({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {certificates.map((cert: Certificate) => {
+            {sortedCerts.map((cert: Certificate) => {
               const template = templatesMap.get(cert.templateId);
               return (
                 <TableRow key={cert.email}>
