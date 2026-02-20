@@ -2,9 +2,8 @@ import type { Route } from "./+types/org.program.$programId.batch";
 import type { Batch } from "~/generated/prisma/client";
 
 import { useEffect } from "react";
-import { Link, Outlet, useNavigate } from "react-router";
-
-import { Settings } from "lucide-react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router";
+import { LayoutGrid, TableIcon, Settings } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -60,6 +59,9 @@ export default function BatchPage({
 }: Route.ComponentProps) {
   const { program } = loaderData;
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const view = location.state?.view ?? "table";
 
   const latestBatch =
     program.batches.length > 0 ? program.batches[0] : undefined;
@@ -164,6 +166,32 @@ export default function BatchPage({
                 Download Certificates
               </Link>
             </Button>
+            <div className="flex-grow" />
+
+            <div className="flex">
+              <Button variant="ghost" size="icon" asChild>
+                <Link
+                  to={`${currentBatch.id}/certificates`}
+                  aria-label="Table View"
+                  state={{ view: "table" }}
+                  aria-current={view === "table"}
+                  className={`aria-[current=false]:text-muted-foreground`}
+                >
+                  <TableIcon />
+                </Link>
+              </Button>
+              <Button variant="ghost" size="icon" asChild>
+                <Link
+                  to={`${currentBatch.id}/certificates`}
+                  aria-label="Table View"
+                  state={{ view: "grid" }}
+                  aria-current={view === "grid"}
+                  className={`aria-[current=false]:text-muted-foreground`}
+                >
+                  <LayoutGrid />
+                </Link>
+              </Button>
+            </div>
           </>
         )}
 
