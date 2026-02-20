@@ -152,9 +152,9 @@ export default function EditCertificateDialog({
   const navigation = useNavigation();
   const [open, setOpen] = useState(true);
 
-  const isSubmitting =
-    navigation.formAction ===
-    `/org/program/${params.programId}/batch/${params.batchId}/certificates/${params.certId}/edit`;
+  const [templateId, setTemplateId] = useState(
+    certificate.templateId.toString(),
+  );
 
   const [form, fields] = useForm({
     lastResult: actionData,
@@ -168,6 +168,10 @@ export default function EditCertificateDialog({
       });
     },
   });
+
+  const isSubmitting =
+    navigation.formAction ===
+    `/org/program/${params.programId}/batch/${params.batchId}/certificates/${params.certId}/edit`;
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -188,91 +192,120 @@ export default function EditCertificateDialog({
         if (!open) navigate(-1);
       }}
     >
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Certificate settings</DialogTitle>
-          <DialogDescription>
-            Change the certificate information as needed.
-          </DialogDescription>
-        </DialogHeader>
-        <Form method="POST" className="grid gap-2 py-4" {...getFormProps(form)}>
-          <Label htmlFor="templateId">Template</Label>
-          <Select
-            {...getSelectProps(fields.templateId)}
-            defaultValue={certificate.templateId.toString()}
-          >
-            <SelectTrigger
-              aria-invalid={getSelectProps(fields.templateId)["aria-invalid"]}
-            >
-              <SelectValue placeholder="Select a template" />
-            </SelectTrigger>
-            <SelectContent>
-              {templates.map((template: Template) => (
-                <SelectItem key={template.id} value={template.id.toString()}>
-                  {template.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {fields.templateId.errors && (
-            <div className="text-xs font-semibold text-red-500 w-full">
-              {fields.templateId.errors.join(", ")}
-            </div>
-          )}
-          
-          <div className="grid grid-cols-2 gap-2 mb-2">            
-            <FormField
-              {...getInputProps(fields.firstName, { type: "text" })}
-              label="First name"
-              error={""}
-            />
-            <FormField
-              {...getInputProps(fields.lastName, { type: "text" })}
-              label="Last name"
-              error={fields.lastName.errors?.join(", ")}
-            />
+      <DialogContent className="sm:max-w-[800px] grid grid-cols-1 sm:grid-cols-2 gap-12">
+        <div className="bg-muted -m-6 rounded-l-lg hidden sm:block">
+          <div className="w-full p-6 aspect-[1/1.38]">
+            {templateId && (
+              <img
+                className="drop-shadow-xl self-center"
+                src={`/org/program/${params.programId}/templates/${templateId}/preview.png?t=${new Date()}`} // &${preview}
+                alt="Preview of the template"
+              />
+            )}
           </div>
-          <div
-            id={fields.firstName.errorId}
-            className="-mt-3 mb-2 text-xs font-semibold text-red-500"
-          >
-            {fields.firstName.errors}
-          </div>
-
-          <FormField
-            {...getInputProps(fields.email, { type: "email" })}
-            label="Email"
-            error={fields.email.errors?.join(", ")}
-          />
-          <FormField
-            {...getInputProps(fields.teamName, { type: "text" })}
-            label="Team"
-            error={fields.teamName.errors?.join(", ")}
-          />
-          <div id={form.errorId}>{form.errors}</div>
-        </Form>
-        <DialogFooter>
+        </div>
+        <div className="flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Certificate settings</DialogTitle>
+            <DialogDescription>
+              Change the certificate information as needed.
+            </DialogDescription>
+          </DialogHeader>
           <Form
-            action={`../${certificate.id}/delete`}
             method="POST"
-            className="flex grow"
+            className="grid gap-2 py-4"
+            {...getFormProps(form)}
           >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button type="submit" variant="destructive" size="icon">
-                  <Trash2Icon />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                Delete this certificate
-              </TooltipContent>
-            </Tooltip>
+            <div className="flex flex-col gap-1 mb-8">
+              <Label htmlFor="templateId">Template</Label>
+              <Select
+                {...getSelectProps(fields.templateId)}
+                defaultValue={certificate.templateId.toString()}
+                onValueChange={setTemplateId}
+              >
+                <SelectTrigger
+                  aria-invalid={
+                    getSelectProps(fields.templateId)["aria-invalid"]
+                  }
+                >
+                  <SelectValue placeholder="Select a template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((template: Template) => (
+                    <SelectItem
+                      key={template.id}
+                      value={template.id.toString()}
+                    >
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {fields.templateId.errors && (
+                <div className="text-xs font-semibold text-red-500 w-full">
+                  {fields.templateId.errors.join(", ")}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-4">
+              <FormField
+                {...getInputProps(fields.firstName, { type: "text" })}
+                label="First name"
+                error={""}
+              />
+              <FormField
+                {...getInputProps(fields.lastName, { type: "text" })}
+                label="Last name"
+                error={fields.lastName.errors?.join(", ")}
+              />
+            </div>
+            <div
+              id={fields.firstName.errorId}
+              className="-mt-3 mb-2 text-xs font-semibold text-red-500"
+            >
+              {fields.firstName.errors}
+            </div>
+
+            <FormField
+              {...getInputProps(fields.email, { type: "email" })}
+              label="Email"
+              error={fields.email.errors?.join(", ")}
+            />
+            <FormField
+              {...getInputProps(fields.teamName, { type: "text" })}
+              label="Team"
+              error={fields.teamName.errors?.join(", ")}
+            />
+            <div id={form.errorId}>{form.errors}</div>
           </Form>
-          <Button type="submit" form={form.id} disabled={isSubmitting}>
-            {isSubmitting && <LoaderCircle className="mr-2 animate-spin" />}
-            Save changes
-          </Button>
-        </DialogFooter>
+          <div className="flex-grow" />
+          <DialogFooter>
+            <Form
+              action={`../${certificate.id}/delete`}
+              method="POST"
+              className="flex grow"
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button type="submit" variant="destructive" size="icon">
+                    <Trash2Icon />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  Delete this certificate
+                </TooltipContent>
+              </Tooltip>
+            </Form>
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              Cancel
+            </Button>
+            <Button type="submit" form={form.id} disabled={isSubmitting}>
+              {isSubmitting && <LoaderCircle className="mr-2 animate-spin" />}
+              Save changes
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
