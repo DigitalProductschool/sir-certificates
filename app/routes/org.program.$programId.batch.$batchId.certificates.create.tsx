@@ -202,7 +202,7 @@ export default function CreateCertificateDialog({
           <DialogHeader>
             <DialogTitle>Add certificate</DialogTitle>
             <DialogDescription>
-              Please enter the required information
+              Please enter the required information.
             </DialogDescription>
           </DialogHeader>
           <Form
