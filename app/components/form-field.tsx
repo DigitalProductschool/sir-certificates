@@ -16,12 +16,11 @@ export function FormField({
 	...props
 }: FormFieldProps) {
 	return (
-		<div className="grid gap-2">
+		<div className="grid gap-1">
 			<div className="flex items-center">
 				<Label htmlFor={id}>{label}</Label>
 				{hint}
 			</div>
-
 			<div className="grid gap-1">
 				<Input id={id} {...props} />
 				{error !== "" && (
