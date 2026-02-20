@@ -110,6 +110,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         },
       },
     },
+    orderBy: {
+      name: "asc",
+    },
   });
 
   return { templates };
@@ -124,14 +127,14 @@ export default function CreateCertificateDialog({
   const navigate = useNavigate();
   const navigation = useNavigation();
   const [open, setOpen] = useState(true);
-
-  const isSubmitting =
-    navigation.formAction ===
-    `/org/program/${params.programId}/batch/${params.batchId}/certificates/create`;
+  const [templateId, setTemplateId] = useState(
+    templates.length === 1 ? templates[0].id.toString() : undefined,
+  );
 
   const [form, fields] = useForm({
     lastResult: actionData,
     constraint: getZodConstraint(schema),
+    //shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
     onValidate({ formData }) {
       return parseWithZod(formData, {
@@ -139,6 +142,30 @@ export default function CreateCertificateDialog({
       });
     },
   });
+
+  const isSubmitting =
+    navigation.formAction ===
+    `/org/program/${params.programId}/batch/${params.batchId}/certificates/create`;
+
+  /* @todo: implement server-side in-memory rendering of a preview */
+  /* 
+  const [preview, setPreview] = useState(
+    new URLSearchParams({
+      firstName: fields.firstName.value ?? "",
+      lastName: fields.lastName.value ?? "",
+      teamName: fields.teamName.value ?? "",
+    }).toString(),
+  );
+
+  const handleUpdatePreview = () => {
+    setPreview(
+      new URLSearchParams({
+        firstName: fields.firstName.value ?? "",
+        lastName: fields.lastName.value ?? "",
+        teamName: fields.teamName.value ?? "",
+      }).toString(),
+    );
+  }; */
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -159,78 +186,116 @@ export default function CreateCertificateDialog({
         if (!open) navigate(-1);
       }}
     >
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add certificate</DialogTitle>
-          <DialogDescription>
-            Please add the required information
-          </DialogDescription>
-        </DialogHeader>
-        <Form method="POST" className="grid gap-2 py-4" {...getFormProps(form)}>
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            <FormField
-              {...getInputProps(fields.firstName, { type: "text" })}
-              label="First name"
-              error={""}
-            />
-            <FormField
-              {...getInputProps(fields.lastName, { type: "text" })}
-              label="Last name"
-              error={fields.lastName.errors?.join(", ")}
-            />
+      <DialogContent className="sm:max-w-[800px] grid grid-cols-1 sm:grid-cols-2 gap-12">
+        <div className="bg-muted -m-6 rounded-l-lg hidden sm:block">
+          <div className="w-full p-6 aspect-[1/1.38]">
+            {templateId && (
+              <img
+                className="drop-shadow-xl self-center"
+                src={`/org/program/${params.programId}/templates/${templateId}/preview.png?t=${new Date()}`} // &${preview}
+                alt="Preview of the template"
+              />
+            )}
           </div>
-          <div
-            id={fields.firstName.errorId}
-            className="-mt-3 mb-2 text-xs font-semibold text-red-500"
+        </div>
+        <div className="flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Add certificate</DialogTitle>
+            <DialogDescription>
+              Please enter the required information
+            </DialogDescription>
+          </DialogHeader>
+          <Form
+            method="POST"
+            className="grid gap-4 py-4"
+            {...getFormProps(form)}
           >
-            {fields.firstName.errors}
-          </div>
-          <FormField
-            {...getInputProps(fields.email, { type: "email" })}
-            label="Email"
-            error={fields.email.errors?.join(", ")}
-          />
-
-          <FormField
-            {...getInputProps(fields.teamName, { type: "text" })}
-            label="Team"
-            error={fields.teamName.errors?.join(", ")}
-          />
-
-          <Label htmlFor="templateId">Template</Label>
-          <Select
-            {...getSelectProps(fields.templateId)}
-            defaultValue={
-              templates.length === 1 ? templates[0].id.toString() : undefined
-            }
-          >
-            <SelectTrigger
-              aria-invalid={getSelectProps(fields.templateId)["aria-invalid"]}
-            >
-              <SelectValue placeholder="Select a template" />
-            </SelectTrigger>
-            <SelectContent>
-              {templates.map((template: Template) => (
-                <SelectItem key={template.id} value={template.id.toString()}>
-                  {template.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {fields.templateId.errors && (
-            <div className="text-xs font-semibold text-red-500 w-full">
-              {fields.templateId.errors.join(", ")}
+            <div className="flex flex-col gap-1 mb-8">
+              <Label htmlFor="templateId">Template</Label>
+              <Select
+                {...getSelectProps(fields.templateId)}
+                defaultValue={
+                  templates.length === 1
+                    ? templates[0].id.toString()
+                    : undefined
+                }
+                onValueChange={setTemplateId}
+              >
+                <SelectTrigger
+                  aria-invalid={
+                    getSelectProps(fields.templateId)["aria-invalid"]
+                  }
+                >
+                  <SelectValue placeholder="Select a template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((template: Template) => (
+                    <SelectItem
+                      key={template.id}
+                      value={template.id.toString()}
+                    >
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {fields.templateId.errors && (
+                <div className="text-xs font-semibold text-red-500 w-full">
+                  {fields.templateId.errors.join(", ")}
+                </div>
+              )}
             </div>
-          )}
-          <div id={form.errorId}>{form.errors}</div>
-        </Form>
-        <DialogFooter>
-          <Button type="submit" form={form.id} disabled={isSubmitting}>
-            {isSubmitting && <LoaderCircle className="mr-2 animate-spin" />}
-            Create certificate
-          </Button>
-        </DialogFooter>
+            <div className="flex gap-4">
+              <FormField
+                {...getInputProps(fields.firstName, { type: "text" })}
+                // onBlur={handleUpdatePreview}
+                label="First name"
+                error={""}
+              />
+              <FormField
+                {...getInputProps(fields.lastName, { type: "text" })}
+                // onBlur={handleUpdatePreview}
+                label="Last name"
+                error={fields.lastName.errors?.join(", ")}
+              />
+            </div>
+            {fields.firstName.errors && (
+              <div
+                id={fields.firstName.errorId}
+                className="-mt-3 mb-2 text-xs font-semibold text-red-500"
+              >
+                {fields.firstName.errors}
+              </div>
+            )}
+            <FormField
+              {...getInputProps(fields.email, { type: "email" })}
+              label="Email"
+              error={fields.email.errors?.join(", ")}
+            />
+
+            <FormField
+              {...getInputProps(fields.teamName, { type: "text" })}
+              // onBlur={handleUpdatePreview}
+              label="Team"
+              error={fields.teamName.errors?.join(", ")}
+            />
+            <div id={form.errorId}>{form.errors}</div>
+          </Form>
+          <div className="flex-grow" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              Cancel
+            </Button>
+
+            <Button type="submit" form={form.id} disabled={isSubmitting}>
+              {isSubmitting && <LoaderCircle className="mr-2 animate-spin" />}
+              Create certificate
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
+
+// @todo add ErrorBoundary // Unique constraint failed on the fields: (`"batchId"`, `email`) -> code: 'P2002',

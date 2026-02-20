@@ -196,7 +196,31 @@ export default function EditCertificateDialog({
           </DialogDescription>
         </DialogHeader>
         <Form method="POST" className="grid gap-2 py-4" {...getFormProps(form)}>
-          <div className="grid grid-cols-2 gap-2 mb-2">
+          <Label htmlFor="templateId">Template</Label>
+          <Select
+            {...getSelectProps(fields.templateId)}
+            defaultValue={certificate.templateId.toString()}
+          >
+            <SelectTrigger
+              aria-invalid={getSelectProps(fields.templateId)["aria-invalid"]}
+            >
+              <SelectValue placeholder="Select a template" />
+            </SelectTrigger>
+            <SelectContent>
+              {templates.map((template: Template) => (
+                <SelectItem key={template.id} value={template.id.toString()}>
+                  {template.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {fields.templateId.errors && (
+            <div className="text-xs font-semibold text-red-500 w-full">
+              {fields.templateId.errors.join(", ")}
+            </div>
+          )}
+          
+          <div className="grid grid-cols-2 gap-2 mb-2">            
             <FormField
               {...getInputProps(fields.firstName, { type: "text" })}
               label="First name"
@@ -225,29 +249,6 @@ export default function EditCertificateDialog({
             label="Team"
             error={fields.teamName.errors?.join(", ")}
           />
-          <Label htmlFor="templateId">Template</Label>
-          <Select
-            {...getSelectProps(fields.templateId)}
-            defaultValue={certificate.templateId.toString()}
-          >
-            <SelectTrigger
-              aria-invalid={getSelectProps(fields.templateId)["aria-invalid"]}
-            >
-              <SelectValue placeholder="Select a template" />
-            </SelectTrigger>
-            <SelectContent>
-              {templates.map((template: Template) => (
-                <SelectItem key={template.id} value={template.id.toString()}>
-                  {template.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {fields.templateId.errors && (
-            <div className="text-xs font-semibold text-red-500 w-full">
-              {fields.templateId.errors.join(", ")}
-            </div>
-          )}
           <div id={form.errorId}>{form.errors}</div>
         </Form>
         <DialogFooter>
