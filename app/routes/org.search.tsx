@@ -142,7 +142,7 @@ export default function OrgSearchResults({ loaderData }: Route.ComponentProps) {
                 <TableCell>
                   <Button variant="outline" asChild>
                     <Link
-                      to={`/org/program/${cert.batch.program.id}/batch/${cert.batch.id}/certificates/${cert.id}/preview`}
+                      to={`/org/program/${cert.batch.program.id}/batch/${cert.batch.id}/certificates/${cert.id}/preview#c${cert.id}`}
                       className="hover:underline"
                     >
                       Open

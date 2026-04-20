@@ -2,7 +2,14 @@ import type { Route } from "./+types/org.program.$programId.batch.$batchId.certi
 import type { Certificate, Template } from "~/generated/prisma/client";
 import { Link, Outlet, useLocation } from "react-router";
 
-import { ArrowDown, ChevronDown, Eye, MailCheck, Settings } from "lucide-react";
+import {
+  ArrowDown,
+  ChevronDown,
+  Eye,
+  MailCheck,
+  RefreshCw,
+  Settings,
+} from "lucide-react";
 
 import { CertificateRefresh } from "~/components/certificate-refresh";
 import { CertificateSendNotification } from "~/components/certificate-send-notification";
@@ -77,6 +84,7 @@ export default function BatchCertificatesPage({
   const location = useLocation();
   const { programId } = params;
   const { certificates, templates } = loaderData;
+  const certId = params.certId && Number(params.certId);
 
   const view = location.state?.view ?? "table";
   const sort = location.state?.sort ?? "firstName";
@@ -136,7 +144,7 @@ export default function BatchCertificatesPage({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pb-8">
       {view === "table" && (
         <Table>
           <TableHeader>
@@ -193,7 +201,11 @@ export default function BatchCertificatesPage({
             {sortedCerts.map((cert: Certificate) => {
               const template = templatesMap.get(cert.templateId);
               return (
-                <TableRow key={cert.email}>
+                <TableRow
+                  key={cert.email}
+                  id={`c${cert.id}`}
+                  data-state={cert.id === certId ? "selected" : ""}
+                >
                   <TableCell>
                     {cert.firstName} {cert.lastName}
                   </TableCell>
@@ -261,7 +273,11 @@ export default function BatchCertificatesPage({
                         </DropdownMenu>
                       </div>
                       <Button variant="outline" asChild>
-                        <Link to={`${cert.id}/preview`}>
+                        <Link
+                          to={`${cert.id}/preview`}
+                          state={{ view: "table" }}
+                          preventScrollReset
+                        >
                           <Eye /> Preview
                         </Link>
                       </Button>
@@ -310,10 +326,14 @@ export default function BatchCertificatesPage({
         </Table>
       )}
       {view === "grid" && (
-        <div className="grid auto-cols-min grid-cols-5 xl:grid-cols-6 p-8 pb-18 gap-12">
+        <div className="grid auto-cols-min grid-cols-4 xl:grid-cols-5 p-8 pb-18 gap-12">
           {certificates.map((cert: Certificate) => {
             return (
-              <div key={cert.email} className="flex flex-col">
+              <div
+                key={cert.email}
+                id={`c${cert.id}`}
+                className="flex flex-col"
+              >
                 <div className="flex items-center">
                   <span className="text-sm text-muted-foreground pl-1 flex-grow">
                     {cert.firstName} {cert.lastName}
@@ -326,16 +346,24 @@ export default function BatchCertificatesPage({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56 -ml-12" align="start">
                       <DropdownMenuGroup>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            className="flex items-center gap-1"
+                            to={`${cert.id}/edit`}
+                            aria-label="Edit certificate"
+                            preventScrollReset                            
+                          >
+                            <Settings className="size-4" />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem>
                           <AsyncAction action={`${cert.id}/refresh`}>
                             <button
                               type="submit"
-                              className="flex flex-col items-start text-left"
+                              className="flex items-center gap-1"
                             >
-                              <b>Refresh certificate</b>
-                              <div className="text-sm text-muted-foreground">
-                                Update template and variables to current values.
-                              </div>
+                              <RefreshCw className="size-4" /> Refresh certificate
                             </button>
                           </AsyncAction>
                         </DropdownMenuItem>
@@ -343,11 +371,17 @@ export default function BatchCertificatesPage({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <img
-                  className="drop-shadow-xl self-center"
-                  src={`/cert/${cert.uuid}/preview.png?t=${cert.updatedAt}`}
-                  alt="Preview of the certificate"
-                />
+                <Link
+                  to={`${cert.id}/preview`}
+                  state={{ view: "grid" }}
+                  preventScrollReset
+                >
+                  <img
+                    className="drop-shadow-xl self-center"
+                    src={`/cert/${cert.uuid}/preview.png?t=${cert.updatedAt}`}
+                    alt="Preview of the certificate"
+                  />
+                </Link>
               </div>
             );
           })}
