@@ -1,6 +1,6 @@
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates";
 import type { Certificate, Template } from "~/generated/prisma/client";
-import { Link, Outlet, useLocation } from "react-router";
+import { Link, Outlet, useLocation, useNavigate } from "react-router";
 
 import {
   ArrowDown,
@@ -81,6 +81,7 @@ export default function BatchCertificatesPage({
   loaderData,
   params,
 }: Route.ComponentProps) {
+  const navigate = useNavigate();
   const location = useLocation();
   const { programId } = params;
   const { certificates, templates } = loaderData;
@@ -200,17 +201,22 @@ export default function BatchCertificatesPage({
           <TableBody>
             {sortedCerts.map((cert: Certificate) => {
               const template = templatesMap.get(cert.templateId);
+              const handleClick = () => {
+                navigate(`${cert.id}/preview`, { preventScrollReset: true });
+              };
               return (
                 <TableRow
                   key={cert.email}
                   id={`c${cert.id}`}
                   data-state={cert.id === certId ? "selected" : ""}
                 >
-                  <TableCell>
+                  <TableCell onClick={handleClick}>
                     {cert.firstName} {cert.lastName}
                   </TableCell>
-                  <TableCell className="font-medium">{cert.email}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium" onClick={handleClick}>
+                    {cert.email}
+                  </TableCell>
+                  <TableCell onClick={handleClick}>
                     {cert.teamName || <Badge variant="outline">empty</Badge>}
                   </TableCell>
                   <TableCell>
@@ -351,7 +357,7 @@ export default function BatchCertificatesPage({
                             className="flex items-center gap-1"
                             to={`${cert.id}/edit`}
                             aria-label="Edit certificate"
-                            preventScrollReset                            
+                            preventScrollReset
                           >
                             <Settings className="size-4" />
                             Edit
@@ -363,7 +369,8 @@ export default function BatchCertificatesPage({
                               type="submit"
                               className="flex items-center gap-1"
                             >
-                              <RefreshCw className="size-4" /> Refresh certificate
+                              <RefreshCw className="size-4" /> Refresh
+                              certificate
                             </button>
                           </AsyncAction>
                         </DropdownMenuItem>
