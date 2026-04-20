@@ -1,7 +1,8 @@
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.$certId.preview";
-import { Link } from "react-router";
+import { useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
 
-import { XIcon } from "lucide-react";
+import { Settings, XIcon, ArrowUpRight } from "lucide-react";
 import { H2 } from "~/components/typography/headlines";
 import { Button } from "~/components/ui/button";
 
@@ -37,20 +38,47 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { certificate, socialPreview };
 }
 
-export default function CertificatePage({ loaderData }: Route.ComponentProps) {
+export default function CertificatePage({
+  loaderData,
+  params,
+}: Route.ComponentProps) {
   const { certificate, socialPreview } = loaderData;
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const view = location.state?.view ?? "table";
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        navigate(
+          `/org/program/${params.programId}/batch/${params.batchId}/certificates`,
+          {
+            preventScrollReset: true,
+            state: { view },
+          },
+        );
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [navigate]);
 
   return (
     <div className="flex flex-col bg-background h-full w-[40%] mt-24 fixed z-50 bottom-0 right-0 p-4 gap-8 pb-12 overflow-auto drop-shadow-xl">
-      <div className="flex justify-end">
-        <Button variant="outline" size="icon" asChild>
-          <Link to="../">
-            <XIcon />
+      <div className="flex items-center justify-end">
+        <Button variant="outline" asChild>
+          <Link to="../" state={{ view }} preventScrollReset>
+            <XIcon /> Close
           </Link>
         </Button>
       </div>
-      <H2 /* className="flex px-8" */>
-        {certificate.firstName} {certificate.lastName}
+      <H2>
+        <span className="px-8">
+          {certificate.firstName} {certificate.lastName}
+        </span>
       </H2>
 
       <div className="flex px-8 gap-2">
@@ -59,8 +87,20 @@ export default function CertificatePage({ loaderData }: Route.ComponentProps) {
             Download Certificate
           </Link>
         </Button>
+        <Button variant="outline" asChild>
+          <Link
+            to={`/org/program/${params.programId}/batch/${params.batchId}/certificates/${certificate.id}/edit`}
+            aria-label="Edit certificate"
+            preventScrollReset
+          >
+            <Settings /> Edit
+          </Link>
+        </Button>
+
         <Button variant="link" asChild>
-          <Link to={`/view/${certificate.uuid}`}>View public page</Link>
+          <Link to={`/view/${certificate.uuid}`}>
+            View public page <ArrowUpRight />
+          </Link>
         </Button>
       </div>
 

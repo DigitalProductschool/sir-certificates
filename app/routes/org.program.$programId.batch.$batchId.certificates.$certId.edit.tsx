@@ -100,7 +100,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     await generatePreviewOfCertificate(certificate, skipIfExists);
   }
 
-  return redirect(`../`);
+  return redirect(`/org/program/${params.programId}/batch/${params.batchId}/certificates#c${params.certId}`);
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
