@@ -37,7 +37,11 @@ import {
   generateCertificate,
   generatePreviewOfCertificate,
 } from "~/lib/pdf.server";
-import { prisma, throwErrorResponse } from "~/lib/prisma.server";
+import {
+  prisma,
+  PrismaClientKnownRequestError,
+  throwErrorResponse,
+} from "~/lib/prisma.server";
 
 export function meta() {
   return [{ title: "Add Certificate" }];
@@ -57,6 +61,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const inputs = submission.value;
+  let dbError: string | null = null;
 
   const certificate = await prisma.certificate
     .create({
@@ -79,9 +84,29 @@ export async function action({ request, params }: Route.ActionArgs) {
       },
     })
     .catch((error) => {
-      console.error(error);
-      throwErrorResponse(error, "Could not create certificate");
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2002" /* for now this is a special case */
+      ) {
+        dbError = error.code;
+        return;
+      } else {
+        console.error(error);
+        throwErrorResponse(error, "Could not create certificate");
+      }
     });
+
+  if (!certificate && dbError !== null) {
+    if (dbError === "P2002") {
+      return submission.reply({
+        fieldErrors: {
+          email: [
+            "There is already a certificate with this email in the batch.",
+          ],
+        },
+      });
+    }
+  }
 
   if (certificate) {
     const skipIfExists = false;
