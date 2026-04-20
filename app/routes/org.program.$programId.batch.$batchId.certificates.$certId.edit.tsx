@@ -40,7 +40,11 @@ import {
   generateCertificate,
   generatePreviewOfCertificate,
 } from "~/lib/pdf.server";
-import { prisma, throwErrorResponse } from "~/lib/prisma.server";
+import {
+  prisma,
+  PrismaClientKnownRequestError,
+  throwErrorResponse,
+} from "~/lib/prisma.server";
 import { CertificateInputSchema as schema } from "~/lib/schemas";
 
 export function meta() {
@@ -59,6 +63,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const inputs = submission.value;
+  let dbError: string | null = null;
 
   const certificate = await prisma.certificate
     .update({
@@ -85,9 +90,29 @@ export async function action({ request, params }: Route.ActionArgs) {
       },
     })
     .catch((error) => {
-      console.error(error);
-      throwErrorResponse(error, "Could not update certificate");
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2002" /* for now this is a special case */
+      ) {
+        dbError = error.code;
+        return;
+      } else {
+        console.error(error);
+        throwErrorResponse(error, "Could not update certificate");
+      }
     });
+
+  if (!certificate && dbError !== null) {
+    if (dbError === "P2002") {
+      return submission.reply({
+        fieldErrors: {
+          email: [
+            "There is already a certificate with this email in the batch.",
+          ],
+        },
+      });
+    }
+  }
 
   if (certificate) {
     const skipIfExists = false;
@@ -100,7 +125,9 @@ export async function action({ request, params }: Route.ActionArgs) {
     await generatePreviewOfCertificate(certificate, skipIfExists);
   }
 
-  return redirect(`/org/program/${params.programId}/batch/${params.batchId}/certificates#c${params.certId}`);
+  return redirect(
+    `/org/program/${params.programId}/batch/${params.batchId}/certificates#c${params.certId}`,
+  );
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
