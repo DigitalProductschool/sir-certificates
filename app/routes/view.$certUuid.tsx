@@ -14,6 +14,7 @@ import { getUser } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/text-variables";
+import { getPublicOrg } from "~/lib/organisation.server";
 
 // @todo replace domain config
 // @todo create a CertificateSelected type and use it here
@@ -56,12 +57,22 @@ export function meta({ data }: Route.MetaArgs) {
       property: "og:url",
       content: `${data?.domain}/view/${data?.certificate.uuid}`,
     },
+    {
+      property: "og:type",
+      content: "website",
+    },
+    {
+      property: "author",
+      content: data?.org.name,
+    },
   ];
 }
 
 // @todo select relevant individual fields for certificate, batch and program
 export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await getUser(request);
+
+  const org = await getPublicOrg();
 
   const certificate = await prisma.certificate
     .findUnique({
@@ -119,7 +130,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   // Remove certificate email to prevent exposure // @todo Improve type safety for this
   certificate.email = "";
-  return { certificate, userIsOwner, domain };
+  return { certificate, userIsOwner, org, domain };
 }
 
 export default function ViewCertificate({ loaderData }: Route.ComponentProps) {
