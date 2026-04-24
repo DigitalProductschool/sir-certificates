@@ -3,7 +3,6 @@ import type { PasswordAssessment } from "~/components/password-indicator";
 import bcrypt from "bcryptjs";
 import { useState } from "react";
 import { Form, data } from "react-router";
-import { Layout } from "~/components/layout";
 
 import {
 	PasswordIndicator,
@@ -18,7 +17,6 @@ import {
 	CardContent,
 	CardDescription,
 	CardHeader,
-	CardFooter,
 	CardTitle,
 } from "~/components/ui/card";
 
@@ -157,7 +155,8 @@ export default function AcceptInvitationPage({
 	}
 
 	return (
-		<Layout type="modal">
+		<div className="h-screen flex flex-col items-center justify-center px-4">
+			<div className="grow"></div>
 			<img
 				src={`/logo/org.svg`}
 				alt=""
@@ -165,12 +164,12 @@ export default function AcceptInvitationPage({
 				role="presentation"
 			/>
 
-			<Card className="mx-auto max-w-sm">
+			<Card className="mx-auto w-full max-w-sm shadow-none border-none bg-transparent">
 				<CardHeader>
-					<CardTitle className="text-2xl">
+					<CardTitle className="text-2xl text-center">
 						Accept invitation
 					</CardTitle>
-					<CardDescription>
+					<CardDescription className="text-center text-balance">
 						To accept the invitation and complete your registration,
 						please provide a password you would like to use for your
 						account.
@@ -195,14 +194,10 @@ export default function AcceptInvitationPage({
 								setPassword(event.target.value);
 							}}
 						/>
-						<Label>
-							Password strength
-							<PasswordIndicator
-								passwordStrength={passwordStrength?.result}
-							/>
-						</Label>
-					</CardContent>
-					<CardFooter>
+						<Label>Password strength</Label>
+						<PasswordIndicator
+							passwordStrength={passwordStrength?.result}
+						/>
 						<Button
 							type="submit"
 							className="w-full"
@@ -210,7 +205,7 @@ export default function AcceptInvitationPage({
 						>
 							Accept Invite
 						</Button>
-					</CardFooter>
+					</CardContent>
 				</Form>
 			</Card>
 			<div className="text-xs grow flex flex-row items-end pb-12">
@@ -218,6 +213,6 @@ export default function AcceptInvitationPage({
 				<a href={org?.imprintUrl ?? ""}>Imprint</a>&emsp;&middot;&emsp;
 				<a href={org?.privacyUrl ?? ""}>Privacy</a>
 			</div>
-		</Layout>
+		</div>
 	);
 }
