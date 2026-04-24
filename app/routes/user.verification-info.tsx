@@ -1,5 +1,4 @@
 import type { Route } from "./+types/user.verification-info";
-import { Layout } from "~/components/layout";
 import {
 	Card,
 	CardContent,
@@ -8,6 +7,8 @@ import {
 	CardTitle,
 } from "~/components/ui/card";
 import { getPublicOrg } from "~/lib/organisation.server";
+
+import { MailIcon } from "lucide-react"
 
 export async function loader() {
 	const org = await getPublicOrg();
@@ -19,24 +20,38 @@ export default function VerificationInfoPage({
 }: Route.ComponentProps) {
 	const { org } = loaderData;
 	return (
-		<Layout type="modal">
-			<Card className="mx-auto max-w-sm">
+		<div className="h-screen flex flex-col items-center justify-center px-4">
+			<div className="grow"></div>
+			<img
+				src={`/logo/org.svg`}
+				alt=""
+				className="size-20 dark:invert"
+				role="presentation"
+			/>
+
+			<Card className="mx-auto w-full max-w-sm shadow-none border-none bg-transparent">
 				<CardHeader>
-					<CardTitle className="text-2xl">
-						User registration
+					<CardTitle className="text-2xl text-center">
+						Thank you for signing up to {org?.name} Certificates.
 					</CardTitle>
-					<CardDescription>
+					<CardDescription className=" text-center">
 						Please verify your email to activate your account.
 					</CardDescription>
 				</CardHeader>
 
-				<CardContent className="grid gap-4">
-					Thank you for signing up to {org?.name} Certificates. Before
-					you can get started, we need to verify your email address.
-					Please check your inbox and click on the link we just sent
-					you.
+				<CardContent className="text-center text-balance">
+					Before you can get started, we need to <b>verify your email
+					address</b>. Please check your inbox and click on the link we
+					just sent you.
+
+					<div className="flex justify-center p-6"><MailIcon className="size-10" /></div>
 				</CardContent>
 			</Card>
-		</Layout>
+			<div className="text-xs grow flex flex-row items-end pb-12">
+				{org?.name}&emsp;&middot;&emsp;
+				<a href={org?.imprintUrl ?? ""}>Imprint</a>&emsp;&middot;&emsp;
+				<a href={org?.privacyUrl ?? ""}>Privacy</a>
+			</div>
+		</div>
 	);
 }
