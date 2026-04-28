@@ -62,7 +62,7 @@ export function meta({ data }: Route.MetaArgs) {
       content: "website",
     },
     {
-      property: "author",
+      name: "author",
       content: data?.org.name,
     },
   ];
