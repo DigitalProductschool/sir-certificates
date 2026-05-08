@@ -1,10 +1,7 @@
 import type { OrganisationLogo, Prisma } from "~/generated/prisma/client";
-import type { FileUpload } from "@mjackson/form-data-parser";
+import type { FileUpload } from "@remix-run/form-data-parser";
 import { unlink } from "node:fs/promises";
-import {
-	openLazyFile,
-	writeFile as lazyWriteFile,
-} from "@remix-run/fs";
+import { openLazyFile, writeFile as lazyWriteFile } from "@remix-run/fs";
 
 import { prisma } from "./prisma.server";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";

@@ -2,7 +2,7 @@ import type { Route } from "./+types/org.typeface.create";
 import type { Typeface } from "~/generated/prisma/client";
 import { useEffect, useState } from "react";
 import { Form, redirect, useNavigate, useRouteError } from "react-router";
-import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
+import { type FileUpload, parseFormData } from "@remix-run/form-data-parser";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -47,12 +47,12 @@ export async function action({ request }: Route.ActionArgs) {
         });
 
       if (typeface) {
-        return await saveTypefaceUpload(typeface, fileUpload);
+        return (await saveTypefaceUpload(typeface, fileUpload)).name;
       }
     }
-  }
+  };
 
-  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@remix-run/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
   const formData = await parseFormData(
     request,
     { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
@@ -63,7 +63,7 @@ export async function action({ request }: Route.ActionArgs) {
     (formData.get("typefaceName") as string) || "(Typeface Name)";
   const weight = Number(formData.get("weight")) || 400;
   const style = (formData.get("style") as string) || "normal";
-  const typefaceTTF = formData.get("ttf") as File;
+  const typefaceTTF = formData.get("ttf") as string;
 
   if (!typefaceTTF || typeface === undefined) {
     throw new Response(null, {

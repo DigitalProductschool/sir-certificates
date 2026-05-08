@@ -10,7 +10,7 @@ import archiver from "archiver";
 import { pdf as pdfPreview } from "pdf-to-img";
 import { PDFDocument, PDFPage, PDFFont, type Color, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import { FileUpload } from "@mjackson/form-data-parser";
+import { FileUpload } from "@remix-run/form-data-parser";
 import slug from "slug";
 import QRCode from "qrcode";
 
@@ -211,6 +211,7 @@ export async function generateTemplateSample(template: Template) {
     uuid: randomUUID(),
     email: "mock-user@dpschool.io",
     updatedAt: new Date(),
+    publishedAt: new Date(),
     notifiedAt: null,
     mjResponse: {},
   };

@@ -1,4 +1,4 @@
-import type { FileUpload } from "@mjackson/form-data-parser";
+import type { FileUpload } from "@remix-run/form-data-parser";
 import type { Program, ProgramLogo } from "~/generated/prisma/client";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
