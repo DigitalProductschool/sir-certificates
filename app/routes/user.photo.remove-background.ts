@@ -1,8 +1,6 @@
 import type { Route } from "./+types/user.photo.remove-background";
 import { redirect } from "react-router";
 import { type FileUpload, parseFormData } from "@remix-run/form-data-parser";
-import { type LazyContent, LazyFile } from "@remix-run/lazy-file";
-
 import { requireUserId } from "~/lib/auth.server";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -45,31 +43,10 @@ export async function action({ request }: Route.ActionArgs) {
 				});
 			}
 
-			const contentLength = Number(
-				response.headers.get("content-length"),
-			);
-
-			if (contentLength > 0) {
-				// Streaming response back to client
-				const transparentContent: LazyContent = {
-					byteLength: contentLength,
-					stream() {
-						return response.body !== null
-							? response.body
-							: new ReadableStream();
-					},
-				};
-
-				return new LazyFile(transparentContent, "transparent.png", {
-					type: "image/png",
-				});
-			} else {
-				// If content-length is not set, we cannot stream and have to buffer the file first.
-				const buffer = await response.arrayBuffer();
-				return new File([buffer], "transparent.png", {
-					type: "image/png",
-				});
-			}
+			const buffer = await response.arrayBuffer();
+			return new File([buffer], "transparent.png", {
+				type: "image/png",
+			});
 		}
 	};
 
@@ -80,8 +57,6 @@ export async function action({ request }: Route.ActionArgs) {
 		uploadHandler,
 	);
 
-	// @todo at this stage the file does get fully buffered into memory, instead of streaming the response back.
-	// @todo if we refactor the POST request to send raw binary instead of form/multipart, maybe we can avoid the form parsing and stream everything all the way through
 	const photo = formData.get("photo") as File;
 
 	if (photo) {
