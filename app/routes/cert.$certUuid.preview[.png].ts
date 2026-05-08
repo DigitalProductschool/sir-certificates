@@ -22,7 +22,9 @@ export async function loader({ params }: Route.LoaderArgs) {
 		});
 	}
 
-	const preview = await generatePreviewOfCertificate(certificate, true);
+
+    /* @todo Refactor to LazyFile and streaming the response */
+    const preview = await generatePreviewOfCertificate(certificate, true);
 
 	if(!preview) {
 		throw new Response(null, {

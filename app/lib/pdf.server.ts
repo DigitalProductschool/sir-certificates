@@ -19,10 +19,7 @@ import { prisma, throwErrorResponse } from "./prisma.server";
 import { replaceVariables } from "./text-variables";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 
-import {
-  openFile as lazyOpenFile,
-  writeFile as lazyWriteFile,
-} from "@remix-run/fs";
+import { openLazyFile, writeFile as lazyWriteFile } from "@remix-run/fs";
 import type { CertificatesWithBatch } from "./types";
 import { domain } from "./config.server";
 import { generateRandomId } from "./utils";
@@ -528,7 +525,7 @@ export async function saveTemplateUpload(
 
   const filepath = `${templateDir}/${template.id}.pdf`;
   await lazyWriteFile(filepath, templatePDF);
-  return lazyOpenFile(filepath);
+  return openLazyFile(filepath);
 }
 
 export async function duplicateTemplate(

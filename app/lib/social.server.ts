@@ -8,10 +8,7 @@ import type {
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeFile, unlink } from "node:fs/promises";
-import {
-  openFile as lazyOpenFile,
-  writeFile as lazyWriteFile,
-} from "@remix-run/fs";
+import { openLazyFile, writeFile as lazyWriteFile } from "@remix-run/fs";
 
 import sharp from "sharp";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
@@ -51,7 +48,7 @@ export async function saveSocialBackgroundUpload(
 
   const filepath = `${socialDir}/${social.id}.background.${extension}`;
   await lazyWriteFile(filepath, image);
-  return lazyOpenFile(filepath);
+  return openLazyFile(filepath);
 }
 
 export async function readBackgroundImage(social: SocialPreview) {
@@ -152,8 +149,8 @@ export async function generateSocialPreview(
   const photo = userPhoto
     ? await readPhoto(userPhoto)
     : withPlaceholder
-    ? await readFileIfExists(`${assetsDir}/photo-placeholder.png`)
-    : false;
+      ? await readFileIfExists(`${assetsDir}/photo-placeholder.png`)
+      : false;
 
   if (background && certificatePreview) {
     const certificateBuffer = Buffer.from(certificatePreview);
@@ -271,10 +268,10 @@ async function composeImages(
         certPos.h + shadowMargin
       }">
             <rect x="${shadowMargin}" y="${shadowMargin}" width="${
-        certPos.w
-      }" height="${
-        certPos.h + shadowMargin
-      }" rx="5" fill="black" filter="drop-shadow(0px 0px ${shadowBlur}px rgb(0 0 0 / 0.25))" />
+              certPos.w
+            }" height="${
+              certPos.h + shadowMargin
+            }" rx="5" fill="black" filter="drop-shadow(0px 0px ${shadowBlur}px rgb(0 0 0 / 0.25))" />
         </svg>`,
     );
 

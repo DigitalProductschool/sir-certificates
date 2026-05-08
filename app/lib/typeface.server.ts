@@ -7,10 +7,7 @@ import { unlink } from "node:fs/promises";
 
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
-import {
-  openFile as lazyOpenFile,
-  writeFile as lazyWriteFile,
-} from "@remix-run/fs";
+import { openLazyFile, writeFile as lazyWriteFile } from "@remix-run/fs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const typefaceDir = resolve(__dirname, "../../storage/typefaces");
@@ -26,7 +23,7 @@ export async function saveTypefaceUpload(
 
   const filepath = `${typefaceDir}/${typeface.id}.ttf`;
   await lazyWriteFile(filepath, typefaceTTF);
-  return lazyOpenFile(filepath);
+  return openLazyFile(filepath);
 }
 
 export async function deleteTypefaceTTF(typefaceId: number) {

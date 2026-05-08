@@ -3,10 +3,7 @@ import type { Program, ProgramLogo } from "~/generated/prisma/client";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { unlink } from "node:fs/promises";
-import {
-  openFile as lazyOpenFile,
-  writeFile as lazyWriteFile,
-} from "@remix-run/fs";
+import { openLazyFile, writeFile as lazyWriteFile } from "@remix-run/fs";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma } from "./prisma.server";
 
@@ -104,7 +101,7 @@ export async function saveProgramLogoUpload(
 
   const filepath = `${logoDir}/${logo.id}.logo.${extension}`;
   await lazyWriteFile(filepath, image);
-  return lazyOpenFile(filepath);
+  return openLazyFile(filepath);
 }
 
 export async function readProgramLogo(logo: ProgramLogo) {

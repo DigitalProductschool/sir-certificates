@@ -2,7 +2,7 @@ import type { OrganisationLogo, Prisma } from "~/generated/prisma/client";
 import type { FileUpload } from "@mjackson/form-data-parser";
 import { unlink } from "node:fs/promises";
 import {
-	openFile as lazyOpenFile,
+	openLazyFile,
 	writeFile as lazyWriteFile,
 } from "@remix-run/fs";
 
@@ -149,7 +149,7 @@ export async function saveOrganisationLogoUpload(
 
 	const filepath = `${logoDir}/_org.${logo.id}.logo.${extension}`;
 	await lazyWriteFile(filepath, image);
-	return lazyOpenFile(filepath);
+	return openLazyFile(filepath);
 }
 
 export async function readOrganisationLogo(logo: OrganisationLogo) {
