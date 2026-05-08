@@ -156,6 +156,7 @@ model Certificate {
   template      Template @relation(fields: [templateId], references: [id])
   templateId    Int
   updatedAt     DateTime  @updatedAt
+  publishedAt   DateTime  @default(now())  
   notifiedAt    DateTime?
   mjResponse    Json?
 
