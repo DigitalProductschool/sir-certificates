@@ -4,6 +4,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router";
 
 import {
   ArrowDown,
+  BadgeCheck,
   ChevronDown,
   Eye,
   MailCheck,
@@ -293,18 +294,32 @@ export default function BatchCertificatesPage({
                     <CertificateSendNotification certificate={cert} />
                   </TableCell>
                   <TableCell>
-                    {cert.notifiedAt ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <MailCheck />
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          {cert.notifiedAt.toLocaleString("en-UK")}
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <>&emsp;</>
-                    )}
+                    <div className="flex items-center">
+                      {cert.notifiedAt ? (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <MailCheck />
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            {cert.notifiedAt.toLocaleString("en-UK")}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <>&emsp;</>
+                      )}
+                      {cert.publishedAt ? (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <BadgeCheck />
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            {cert.publishedAt.toLocaleString("en-UK")}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <>&emsp;</>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
