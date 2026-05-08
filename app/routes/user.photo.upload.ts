@@ -1,7 +1,7 @@
 import type { Route } from "./+types/user.photo.upload";
 import type { UserPhoto } from "~/generated/prisma/client";
 import { redirect } from "react-router";
-import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
+import { type FileUpload, parseFormData } from "@remix-run/form-data-parser";
 import { requireUserId } from "~/lib/auth.server";
 import { saveTransparentPhotoUpload } from "~/lib/user.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
@@ -39,19 +39,20 @@ export async function action({ request }: Route.ActionArgs) {
 				});
 
 			if (userPhoto) {
-				return await saveTransparentPhotoUpload(userPhoto, fileUpload);
+				return (await saveTransparentPhotoUpload(userPhoto, fileUpload))
+					.name;
 			}
 		}
 	};
 
-	// @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+	// @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@remix-run/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
 	const formData = await parseFormData(
 		request,
 		{ maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
 		uploadHandler,
 	);
 
-	const photo = formData.get("photo") as File;
+	const photo = formData.get("photo") as string;
 
 	if (!photo) {
 		return new Response(null, {
@@ -63,6 +64,6 @@ export async function action({ request }: Route.ActionArgs) {
 	return { userPhoto };
 }
 
-export async function loader() {  
+export async function loader() {
 	return redirect(`/user/photo`);
 }

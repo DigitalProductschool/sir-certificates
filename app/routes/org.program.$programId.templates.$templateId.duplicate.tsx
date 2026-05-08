@@ -1,7 +1,7 @@
 import type { Route } from "./+types/org.program.$programId.templates.$templateId.duplicate";
 import { useEffect, useState, useRef } from "react";
 import { Form, redirect, useNavigate } from "react-router";
-import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
+import { type FileUpload, parseFormData } from "@remix-run/form-data-parser";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -70,11 +70,12 @@ export async function action({ request, params }: Route.ActionArgs) {
         fileUpload.fieldName === "pdf" &&
         fileUpload.type === "application/pdf"
       ) {
-        if (template) return await saveTemplateUpload(template, fileUpload);
+        if (template)
+          return (await saveTemplateUpload(template, fileUpload)).name;
       }
     };
 
-    // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+    // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@remix-run/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
     const formData = await parseFormData(
       request,
       { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
@@ -85,7 +86,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       (formData.get("name") as string) || `${existing.name} Copy`;
     const templateLocale =
       (formData.get("locale") as string) || existing.locale;
-    const templatePDF = formData.get("pdf") as File;
+    const templatePDF = formData.get("pdf") as string;
 
     template = await prisma.template
       .update({

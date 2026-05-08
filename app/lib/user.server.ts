@@ -3,7 +3,7 @@ import type {
   UserInvitation,
   UserPhoto,
 } from "~/generated/prisma/client";
-import type { FileUpload } from "@mjackson/form-data-parser";
+import type { FileUpload } from "@remix-run/form-data-parser";
 import type { InviteForm, UserAuthenticated } from "./types";
 import type { RegisterSchemaType } from "./schemas";
 import { randomUUID } from "node:crypto";

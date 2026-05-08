@@ -1,7 +1,7 @@
 import type { Route } from "./+types/org.program.$programId.social.upload";
 import type { SocialPreview } from "~/generated/prisma/client";
 import { redirect } from "react-router";
-import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
+import { type FileUpload, parseFormData } from "@remix-run/form-data-parser";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import {
@@ -66,18 +66,18 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
 
       // Save background image to disk
-      return await saveSocialBackgroundUpload(social, fileUpload);
+      return (await saveSocialBackgroundUpload(social, fileUpload)).name;
     }
   };
 
-  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@remix-run/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
   const formData = await parseFormData(
     request,
     { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
     uploadHandler,
   );
 
-  const backgroundImage = formData.get("backgroundImage") as File;
+  const backgroundImage = formData.get("backgroundImage") as string;
 
   if (!backgroundImage || social === undefined) {
     return new Response(null, {
@@ -102,7 +102,6 @@ export async function action({ request, params }: Route.ActionArgs) {
   return { social };
 }
 
-export async function loader({ params }: Route.LoaderArgs) {  
+export async function loader({ params }: Route.LoaderArgs) {
   return redirect(`/org/program/${params.programId}/social`);
 }
-

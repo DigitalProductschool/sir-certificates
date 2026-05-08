@@ -1,5 +1,5 @@
 import type { Typeface } from "~/generated/prisma/client";
-import type { FileUpload } from "@mjackson/form-data-parser";
+import type { FileUpload } from "@remix-run/form-data-parser";
 
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";

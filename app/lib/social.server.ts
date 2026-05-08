@@ -1,4 +1,4 @@
-import type { FileUpload } from "@mjackson/form-data-parser";
+import type { FileUpload } from "@remix-run/form-data-parser";
 import type {
   Certificate,
   SocialPreview,

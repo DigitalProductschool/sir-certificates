@@ -2,8 +2,15 @@ import type { Route } from "./+types/org.program.$programId.templates.create";
 import type { Template } from "~/generated/prisma/client";
 import { useEffect, useState } from "react";
 
-import { Form, isRouteErrorResponse, redirect, useNavigate, useRouteError, type ErrorResponse } from "react-router";
-import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
+import {
+  Form,
+  isRouteErrorResponse,
+  redirect,
+  useNavigate,
+  useRouteError,
+  type ErrorResponse,
+} from "react-router";
+import { type FileUpload, parseFormData } from "@remix-run/form-data-parser";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -65,12 +72,12 @@ export async function action({ request, params }: Route.ActionArgs) {
         });
 
       if (template) {
-        return await saveTemplateUpload(template, fileUpload);
+        return (await saveTemplateUpload(template, fileUpload)).name;
       }
     }
   };
 
-  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@mjackson/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@remix-run/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
   const formData = await parseFormData(
     request,
     { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
@@ -80,7 +87,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const templateName = (formData.get("name") as string) || "(Template Name)";
   const templateLocale =
     (formData.get("locale") as string) || defaultLocale.code;
-  const templatePDF = formData.get("pdf") as File;
+  const templatePDF = formData.get("pdf") as string;
 
   if (!templatePDF) {
     throw new Response(null, {
@@ -199,7 +206,7 @@ export default function CreateTemplateDialog() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
-  let routeError : ErrorResponse | null = null;
+  let routeError: ErrorResponse | null = null;
   console.error(error);
 
   if (isRouteErrorResponse(error)) {
