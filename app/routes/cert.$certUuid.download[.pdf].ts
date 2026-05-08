@@ -24,6 +24,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 		});
 	}
 
+    /* @todo Refactor to LazyFile and streaming the response */
 	const skipIfExists = true;
 	const pdf = await generateCertificate(
 		certificate.batch,

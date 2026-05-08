@@ -59,6 +59,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     ? true
     : false;
 
+  /* @todo Refactor to LazyFile and streaming the response */
   const imageBuffer = await generateSocialPreview(
     social,
     certificate,

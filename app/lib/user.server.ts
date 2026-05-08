@@ -11,10 +11,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { unlink } from "node:fs/promises";
 import bcrypt from "bcryptjs";
-import {
-  openFile as lazyOpenFile,
-  writeFile as lazyWriteFile,
-} from "@remix-run/fs";
+import { openLazyFile, writeFile as lazyWriteFile } from "@remix-run/fs";
 
 import { domain } from "./config.server";
 import { mailjetSend } from "./email.server";
@@ -225,7 +222,7 @@ export async function saveTransparentPhotoUpload(
 
   const filepath = `${userPhotoDir}/${userPhoto.id}.transparent.png`;
   await lazyWriteFile(filepath, photo);
-  return lazyOpenFile(filepath);
+  return openLazyFile(filepath);
 }
 
 export async function readPhoto(userPhoto: UserPhoto) {
