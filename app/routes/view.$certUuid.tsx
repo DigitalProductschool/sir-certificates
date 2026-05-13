@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useRouteLoaderData, useSearchParams } from "react-router";
 import { ArrowRight, Download, Share } from "lucide-react";
 import Markdown from "markdown-to-jsx/react";
+import { ErrorPublic } from "~/components/error-public";
 import { Button } from "~/components/ui/button";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import {
@@ -291,5 +292,19 @@ export default function ViewCertificate({ loaderData }: Route.ComponentProps) {
         />
       </div>
     </div>
+  );
+}
+
+export function ErrorBoundary() {
+  return (
+    <ErrorPublic
+      customErrors={{
+        404: {
+          title: "No certificate found",
+          message: "There is no certificate with the provided ID here.",
+          detail: "If there should be a certificate here, contact us.",
+        },
+      }}
+    />
   );
 }
