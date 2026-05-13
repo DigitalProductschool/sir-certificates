@@ -21,6 +21,7 @@ export function CertificateSendNotification({
 				variant={
 					wasPublished ? (wasSent ? "outline" : "default") : "outline"
 				}
+				size="sm"
 			>
 				{fetcher.state !== "idle" ? (
 					<LoaderCircle className="mr-2 animate-spin" />
