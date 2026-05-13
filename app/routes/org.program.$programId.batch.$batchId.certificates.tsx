@@ -84,7 +84,7 @@ export default function BatchCertificatesPage({
 }: Route.ComponentProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { programId } = params;
+  const { programId, batchId } = params;
   const { certificates, templates } = loaderData;
   const certId = params.certId && Number(params.certId);
 
@@ -262,7 +262,9 @@ export default function BatchCertificatesPage({
                           >
                             <DropdownMenuGroup>
                               <DropdownMenuItem>
-                                <AsyncAction action={`${cert.id}/refresh`}>
+                                <AsyncAction
+                                  action={`/org/program/${programId}/batch/${batchId}/certificates/${cert.id}/refresh`}
+                                >
                                   <button
                                     type="submit"
                                     className="flex flex-col items-start text-left"
@@ -290,8 +292,25 @@ export default function BatchCertificatesPage({
                       </Button>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-2 items-center">
                     <CertificateSendNotification certificate={cert} />
+                    {cert.publishedAt ? (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <BadgeCheck />
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          Published at{" "}
+                          {cert.publishedAt.toLocaleString("en-UK")}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <AsyncAction
+                        action={`/org/program/${programId}/batch/${batchId}/certificates/${cert.id}/publish`}
+                      >
+                        <Button type="submit">Publish</Button>
+                      </AsyncAction>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center">
@@ -302,18 +321,6 @@ export default function BatchCertificatesPage({
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             {cert.notifiedAt.toLocaleString("en-UK")}
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <>&emsp;</>
-                      )}
-                      {cert.publishedAt ? (
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <BadgeCheck />
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            {cert.publishedAt.toLocaleString("en-UK")}
                           </TooltipContent>
                         </Tooltip>
                       ) : (
