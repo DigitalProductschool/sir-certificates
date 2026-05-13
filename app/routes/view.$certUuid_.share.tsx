@@ -31,6 +31,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const certificate = await prisma.certificate.findUnique({
     where: {
       uuid: params.certUuid,
+        publishedAt: {
+          not: null,
+        },      
     },
     include: {
       batch: {

@@ -49,6 +49,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   const certificates = await prisma.certificate.findMany({
     where: {
       email: user.email,
+      publishedAt: {
+        not: null,
+      },
     },
     include: {
       batch: {
