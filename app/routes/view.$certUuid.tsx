@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useRouteLoaderData, useSearchParams } from "react-router";
 import { ArrowRight, Download, Share } from "lucide-react";
 import Markdown from "markdown-to-jsx/react";
+import { ErrorPublic } from "~/components/error-public";
 import { Button } from "~/components/ui/button";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import {
@@ -16,56 +17,63 @@ import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/text-variables";
 import { getPublicOrg } from "~/lib/organisation.server";
 
+// @todo use React 19 <meta> tags in Page component instead of this
 // @todo replace domain config
 // @todo create a CertificateSelected type and use it here
 export function meta({ data }: Route.MetaArgs) {
-  return [
-    {
-      title: `${data?.certificate.firstName} ${data?.certificate.lastName} is certified by ${data?.certificate.batch.program.name}`,
-    },
-    {
-      name: "description",
-      content: data?.certificate
-        ? replaceVariables(
-            data?.certificate.batch.program.achievement ?? "",
-            data?.certificate.template.locale,
-            data?.certificate,
-            data?.certificate.batch,
-          )
-        : "",
-    },
-    {
-      property: "og:title",
-      content: `${data?.certificate.firstName} ${data?.certificate.lastName} is certified by ${data?.certificate.batch.program.name}`,
-    },
-    {
-      property: "og:description",
-      content: data?.certificate
-        ? replaceVariables(
-            data?.certificate.batch.program.achievement ?? "",
-            data?.certificate.template.locale,
-            data?.certificate,
-            data?.certificate.batch,
-          )
-        : "",
-    },
-    {
-      property: "og:image",
-      content: `${data?.domain}/cert/${data?.certificate.uuid}/social-preview.png?t=${data?.certificate.updatedAt.getTime()}`,
-    },
-    {
-      property: "og:url",
-      content: `${data?.domain}/view/${data?.certificate.uuid}`,
-    },
-    {
-      property: "og:type",
-      content: "website",
-    },
-    {
-      name: "author",
-      content: data?.org.name,
-    },
-  ];
+  return data
+    ? [
+        {
+          title: `${data?.certificate.firstName} ${data?.certificate.lastName} is certified by ${data?.certificate.batch.program.name}`,
+        },
+        {
+          name: "description",
+          content: data?.certificate
+            ? replaceVariables(
+                data?.certificate.batch.program.achievement ?? "",
+                data?.certificate.template.locale,
+                data?.certificate,
+                data?.certificate.batch,
+              )
+            : "",
+        },
+        {
+          property: "og:title",
+          content: `${data?.certificate.firstName} ${data?.certificate.lastName} is certified by ${data?.certificate.batch.program.name}`,
+        },
+        {
+          property: "og:description",
+          content: data?.certificate
+            ? replaceVariables(
+                data?.certificate.batch.program.achievement ?? "",
+                data?.certificate.template.locale,
+                data?.certificate,
+                data?.certificate.batch,
+              )
+            : "",
+        },
+        {
+          property: "og:image",
+          content: `${data?.domain}/cert/${data?.certificate.uuid}/social-preview.png?t=${data?.certificate.updatedAt.getTime()}`,
+        },
+        {
+          property: "og:url",
+          content: `${data?.domain}/view/${data?.certificate.uuid}`,
+        },
+        {
+          property: "og:type",
+          content: "website",
+        },
+        {
+          name: "author",
+          content: data?.org.name,
+        },
+      ]
+    : [
+        {
+          title: "Error",
+        },
+      ];
 }
 
 // @todo select relevant individual fields for certificate, batch and program
@@ -78,6 +86,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     .findUnique({
       where: {
         uuid: params.certUuid,
+        publishedAt: {
+          not: null,
+        },
       },
       select: {
         uuid: true,
@@ -85,6 +96,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         lastName: true,
         email: true,
         teamName: true,
+        publishedAt: true,
         updatedAt: true,
         batch: {
           select: {
@@ -291,5 +303,19 @@ export default function ViewCertificate({ loaderData }: Route.ComponentProps) {
         />
       </div>
     </div>
+  );
+}
+
+export function ErrorBoundary() {
+  return (
+    <ErrorPublic
+      customErrors={{
+        404: {
+          title: "No certificate found",
+          message: "There is no certificate with the provided ID here.",
+          detail: "If there should be a certificate here, contact us.",
+        },
+      }}
+    />
   );
 }

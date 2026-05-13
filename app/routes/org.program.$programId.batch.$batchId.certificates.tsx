@@ -4,26 +4,16 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router";
 
 import {
   ArrowDown,
-  ChevronDown,
+  BadgeCheck,
+  BadgeIcon,
   Eye,
   MailCheck,
-  RefreshCw,
-  Settings,
+  MailOpen,
 } from "lucide-react";
 
 import { CertificateRefresh } from "~/components/certificate-refresh";
-import { CertificateSendNotification } from "~/components/certificate-send-notification";
-
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
-
 import {
   Table,
   TableBody,
@@ -32,7 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-
 import {
   Tooltip,
   TooltipContent,
@@ -41,7 +30,7 @@ import {
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
-import { AsyncAction } from "~/components/async-action";
+import { CertificateMenu } from "~/components/certificate-menu";
 
 export function meta() {
   return [{ title: "Certificates" }];
@@ -87,6 +76,7 @@ export default function BatchCertificatesPage({
   const { certificates, templates } = loaderData;
   const certId = params.certId && Number(params.certId);
 
+  // @refactor to a hook or context?
   const view = location.state?.view ?? "table";
   const sort = location.state?.sort ?? "firstName";
 
@@ -194,8 +184,8 @@ export default function BatchCertificatesPage({
                   )}
                 </div>
               </TableHead>
-              <TableHead colSpan={2}>Actions</TableHead>
-              <TableHead></TableHead>
+              <TableHead>Actions</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -231,80 +221,55 @@ export default function BatchCertificatesPage({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-4 items-center">
-                      <div className="flex items-center">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" className="w-12" asChild>
-                              <Link
-                                to={`${cert.id}/edit`}
-                                aria-label="Edit certificate"
-                                preventScrollReset
-                              >
-                                <Settings />
-                              </Link>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            Edit certificate
-                          </TooltipContent>
-                        </Tooltip>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="w-8">
-                              <ChevronDown />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            className="w-56 -ml-12"
-                            align="start"
-                          >
-                            <DropdownMenuGroup>
-                              <DropdownMenuItem>
-                                <AsyncAction action={`${cert.id}/refresh`}>
-                                  <button
-                                    type="submit"
-                                    className="flex flex-col items-start text-left"
-                                  >
-                                    <b>Refresh certificate</b>
-                                    <div className="text-sm text-muted-foreground">
-                                      Update template and variables to current
-                                      values.
-                                    </div>
-                                  </button>
-                                </AsyncAction>
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      <Button variant="outline" asChild>
+                    <div className="flex items-center">
+                      <Button variant="outline" size="sm" asChild>
                         <Link
                           to={`${cert.id}/preview`}
                           state={{ view: "table" }}
                           preventScrollReset
                         >
-                          <Eye /> Preview
+                          <Eye /> Open
                         </Link>
                       </Button>
+                      <CertificateMenu
+                        certificate={cert}
+                        programId={programId}
+                        view={view}
+                      />
                     </div>
                   </TableCell>
                   <TableCell>
-                    <CertificateSendNotification certificate={cert} />
-                  </TableCell>
-                  <TableCell>
-                    {cert.notifiedAt ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <MailCheck />
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          {cert.notifiedAt.toLocaleString("en-UK")}
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <>&emsp;</>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {cert.publishedAt ? (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <BadgeCheck className="size-5 text-gray-600" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            Published at
+                            <br />
+                            {cert.publishedAt.toLocaleString("en-UK")}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <BadgeIcon className="size-5 text-gray-200" />
+                      )}
+
+                      {cert.notifiedAt ? (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <MailCheck className="size-5 text-gray-600" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            Mail sent
+                            <br />
+                            {cert.notifiedAt.toLocaleString("en-UK")}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <MailOpen className="size-5 text-gray-200" />
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -341,42 +306,28 @@ export default function BatchCertificatesPage({
                 className="flex flex-col"
               >
                 <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground pl-1 flex-grow">
+                  <div className="flex flex-grow text-sm text-muted-foreground pl-1 gap-1">
+                    {cert.publishedAt ? (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <BadgeCheck className="size-5 text-slate-500" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          Published at
+                          <br />
+                          {cert.publishedAt.toLocaleString("en-UK")}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <BadgeIcon className="size-5 text-gray-200" />
+                    )}
                     {cert.firstName} {cert.lastName}
-                  </span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="w-8">
-                        <ChevronDown />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 -ml-12" align="start">
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            className="flex items-center gap-1"
-                            to={`${cert.id}/edit`}
-                            aria-label="Edit certificate"
-                            preventScrollReset
-                          >
-                            <Settings className="size-4" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <AsyncAction action={`${cert.id}/refresh`}>
-                            <button
-                              type="submit"
-                              className="flex items-center gap-1"
-                            >
-                              <RefreshCw className="size-4" /> Refresh
-                              certificate
-                            </button>
-                          </AsyncAction>
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  </div>
+                  <CertificateMenu
+                    certificate={cert}
+                    programId={programId}
+                    view={view}
+                  />
                 </div>
                 <Link
                   to={`${cert.id}/preview`}

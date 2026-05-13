@@ -141,6 +141,8 @@ export async function generateSocialPreview(
   userPhoto?: UserPhoto | null,
   withPlaceholder: boolean = false, // use a placeholder as fallback when no user photo available?
 ) {
+  // @todo refactor with disk-storage caching
+
   const background = await readBackgroundImage(social);
   const certificatePreview = await generatePreviewOfCertificate(
     certificate,

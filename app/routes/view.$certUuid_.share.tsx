@@ -18,6 +18,7 @@ import { domain } from "~/lib/config.server";
 import { requireUserId, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/text-variables";
+import { ErrorPublic } from "~/components/error-public";
 
 export function meta() {
   return [{ title: "Share certificate" }];
@@ -30,6 +31,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const certificate = await prisma.certificate.findUnique({
     where: {
       uuid: params.certUuid,
+        publishedAt: {
+          not: null,
+        },      
     },
     include: {
       batch: {
@@ -212,3 +216,18 @@ export default function ViewCertificateShare({
     </div>
   );
 }
+
+export function ErrorBoundary() {
+  return (
+    <ErrorPublic
+      customErrors={{
+        404: {
+          title: "No certificate found",
+          message: "There is no certificate with the provided ID here.",
+          detail: "If there should be a certificate here, contact us.",
+        },
+      }}
+    />
+  );
+}
+

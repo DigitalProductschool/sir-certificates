@@ -160,12 +160,19 @@ export default function BatchPage({
             <Button variant="outline" asChild>
               <Link
                 to={`${params.batchId}/certificates/download.zip`}
-                className="mr-4"
                 reloadDocument
               >
-                Download Certificates
+                Download All
               </Link>
             </Button>
+            {/* @todo implement as AsyncAction or similar */ }
+            <Button variant="outline" asChild>
+              <Link to={``}>Publish All</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to={``}>Send All</Link>
+            </Button>
+
             <div className="flex-grow" />
 
             <div className="flex">

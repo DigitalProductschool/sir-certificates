@@ -41,7 +41,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-router/node": "^7.15.0",
     "@react-router/serve": "^7.15.0",
-    "@remix-run/form-data-parser": "^0.17.0",    
+    "@remix-run/form-data-parser": "^0.17.0",
     "@remix-run/fs": "^0.4.3",
     "@remix-run/lazy-file": "^5.0.3",
     "archiver": "^7.0.1",

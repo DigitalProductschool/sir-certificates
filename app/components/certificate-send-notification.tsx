@@ -11,13 +11,17 @@ export function CertificateSendNotification({
 	certificate,
 }: SendNotificationProps) {
 	const fetcher = useFetcher();
+	const wasPublished = certificate.publishedAt ? true : false;
 	const wasSent = certificate.notifiedAt ? true : false;
 	return (
 		<fetcher.Form action={`/cert/${certificate.uuid}/notify`} method="POST">
 			<Button
 				type="submit"
 				disabled={fetcher.state !== "idle"}
-				variant={wasSent ? "outline" : "default"}
+				variant={
+					wasPublished ? (wasSent ? "outline" : "default") : "outline"
+				}
+				size="sm"
 			>
 				{fetcher.state !== "idle" ? (
 					<LoaderCircle className="mr-2 animate-spin" />

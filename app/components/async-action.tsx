@@ -13,6 +13,7 @@ export function AsyncAction({ action, children }: AsyncActionProps) {
 			action={action}
 			method="POST"
 			className={fetcher.state !== "idle" ? "opacity-50" : ""}
+			preventScrollReset
 		>
 			{children}
 		</fetcher.Form>
