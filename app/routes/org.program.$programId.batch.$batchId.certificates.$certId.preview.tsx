@@ -2,7 +2,13 @@ import type { Route } from "./+types/org.program.$programId.batch.$batchId.certi
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 
-import { Settings, XIcon, ArrowUpRight } from "lucide-react";
+import {
+  Settings,
+  XIcon,
+  ArrowUpRight,
+  ArrowLeft,
+  ArrowRight,
+} from "lucide-react";
 import { H2 } from "~/components/typography/headlines";
 import { Button } from "~/components/ui/button";
 
@@ -47,6 +53,13 @@ export default function CertificatePage({
   const location = useLocation();
 
   const view = location.state?.view ?? "table";
+  const sort = location.state?.sort;
+  const certListIds: number[] = location.state?.certListIds ?? [];
+  const currentIdx = certListIds.indexOf(Number(params.certId));
+  const prevId = currentIdx > 0 ? certListIds[currentIdx - 1] : null;
+  const nextId =
+    currentIdx < certListIds.length - 1 ? certListIds[currentIdx + 1] : null;
+  const navState = { view, sort, certListIds };
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -60,15 +73,65 @@ export default function CertificatePage({
           },
         );
       }
+      if ((e.key === "ArrowLeft" || e.key === "ArrowUp") && prevId) {
+        e.preventDefault();
+        navigate(`../${prevId}/preview`, {
+          preventScrollReset: true,
+          state: navState,
+        });
+      }
+      if ((e.key === "ArrowRight" || e.key === "ArrowDown") && nextId) {
+        e.preventDefault();
+        navigate(`../${nextId}/preview`, {
+          preventScrollReset: true,
+          state: navState,
+        });
+      }
     };
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [navigate]);
+  }, [navigate, prevId, nextId]);
 
   return (
     <div className="flex flex-col bg-background h-full w-[40%] mt-24 fixed z-50 bottom-0 right-0 p-4 gap-8 pb-12 overflow-auto drop-shadow-xl">
-      <div className="flex items-center justify-end">
+      <div className="flex items-center gap-2 justify-end">
+        <Button
+          variant="outline"
+          size="icon"
+          disabled={!prevId}
+          asChild={!!prevId}
+        >
+          {prevId ? (
+            <Link
+              to={`../${prevId}/preview`}
+              state={navState}
+              preventScrollReset
+            >
+              <ArrowLeft aria-label="Open previous" />
+            </Link>
+          ) : (
+            <ArrowLeft />
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          disabled={!nextId}
+          asChild={!!nextId}
+        >
+          {nextId ? (
+            <Link
+              to={`../${nextId}/preview`}
+              state={navState}
+              preventScrollReset
+            >
+              <ArrowRight aria-label="Open next" />
+            </Link>
+          ) : (
+            <ArrowRight />
+          )}
+        </Button>
         <Button variant="outline" asChild>
           <Link to="../" state={{ view }} preventScrollReset>
             <XIcon /> Close
