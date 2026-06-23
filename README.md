@@ -41,6 +41,19 @@ Run the dev server:
 npm run dev
 ```
 
+If you want to keep your `.env` file outside the project directory (e.g. to prevent AI coding tools from reading your secrets), use `dev.sh` instead:
+
+```shellscript
+./dev.sh /path/to/.env
+```
+
+Or via npm (defaults to `../.env`):
+
+```shellscript
+npm run dev:safe
+npm run dev:safe -- /path/to/.env
+```
+
 ## Configuration
 
 ### MailJet
