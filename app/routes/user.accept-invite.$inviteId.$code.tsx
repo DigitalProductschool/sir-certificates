@@ -66,7 +66,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 			update: {
 				isAdmin: invite.isAdmin,
 				password: passwordHash,
-				adminOfPrograms: { set: setAdminOfPrograms },
+				adminOfPrograms: { connect: setAdminOfPrograms },
 			},
 			create: {
 				firstName: invite.firstName,
