@@ -192,7 +192,10 @@ export default function BatchCertificatesPage({
             {sortedCerts.map((cert: Certificate) => {
               const template = templatesMap.get(cert.templateId);
               const handleClick = () => {
-                navigate(`${cert.id}/preview`, { preventScrollReset: true });
+                navigate(`${cert.id}/preview`, {
+                  preventScrollReset: true,
+                  state: { view, sort, certListIds: sortedCerts.map((c) => c.id) },
+                });
               };
               return (
                 <TableRow
@@ -225,7 +228,11 @@ export default function BatchCertificatesPage({
                       <Button variant="outline" size="sm" asChild>
                         <Link
                           to={`${cert.id}/preview`}
-                          state={{ view: "table" }}
+                          state={{
+                            view: "table",
+                            sort,
+                            certListIds: sortedCerts.map((c) => c.id),
+                          }}
                           preventScrollReset
                         >
                           <Eye /> Open
@@ -331,7 +338,11 @@ export default function BatchCertificatesPage({
                 </div>
                 <Link
                   to={`${cert.id}/preview`}
-                  state={{ view: "grid" }}
+                  state={{
+                    view: "grid",
+                    sort,
+                    certListIds: sortedCerts.map((c) => c.id),
+                  }}
                   preventScrollReset
                 >
                   <img
