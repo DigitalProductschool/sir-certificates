@@ -243,11 +243,9 @@ export default function AcceptInvitationPage({
 							Dear {invite.firstName}, you&apos;ve been invited to
 							manage certificates for the following {org.name}{" "}
 							programs:{" "}
-							{programs
-								.map((p) => (
-									<strong key={p.id}>{p.name}</strong>
-								))
-								.join(", ")}
+							<strong>
+								{programs.map((p) => p.name).join(", ")}
+							</strong>
 							.
 						</p>
 						{!invitedExists &&
