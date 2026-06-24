@@ -172,14 +172,14 @@ export const sendInvitationEmail = async (
     from
       ? `${from.firstName} ${from.lastName} is inviting you`
       : "You have been invited"
-  } to become an admiminstrator for the ${
+  } to become a program manager for the ${
     org.name
   } certificates tool.\n\nTo accept the invitation, please click on the following link:\n${acceptUrl}\n\nThank you!`;
   const html = `<p>Dear ${invite.firstName} ${invite.lastName},</p><p>${
     from
       ? `${from.firstName} ${from.lastName} is inviting you`
       : "You have been invited"
-  } to become an admiminstrator for the ${
+  } to become  a program manager for the ${
     org.name
   } certificates tool.</p><p>To accept the invitation, please click on the following link:<br /><a href="${acceptUrl}">${acceptUrl}</a></p><p>Thank you!</p>`;
 
