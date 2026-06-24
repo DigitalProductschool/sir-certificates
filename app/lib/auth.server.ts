@@ -139,8 +139,15 @@ export async function login(formData: FormData) {
 		});
 	}
 
-	// @todo support redirectTo parameter from login form
-	const redirectTo = user.isAdmin ? "/org/program" : "/";
+	const rawRedirectTo = formData.get("redirectTo");
+	const redirectTo =
+		typeof rawRedirectTo === "string" &&
+		rawRedirectTo.startsWith("/") &&
+		!rawRedirectTo.startsWith("//")
+			? rawRedirectTo
+			: user.isAdmin
+				? "/org/program"
+				: "/";
 	return createUserSessionAndRedirect(user, redirectTo);
 }
 

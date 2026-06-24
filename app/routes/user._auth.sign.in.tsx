@@ -50,6 +50,7 @@ export default function UserSignIn({
   const navigation = useNavigation();
   const [searchParams /*, setSearchParams*/] = useSearchParams();
   const paramEmail = searchParams.get("email");
+  const redirectTo = searchParams.get("redirectTo") ?? "";
 
   const email =
     actionData?.initialValue?.email ||
@@ -83,6 +84,9 @@ export default function UserSignIn({
 
       <CardContent className="grid gap-4">
         <Form method="POST" {...getFormProps(form)} className="grid gap-4">
+          {redirectTo && (
+            <input type="hidden" name="redirectTo" value={redirectTo} />
+          )}
           {form.errors && (
             <div
               id={form.errorId}
