@@ -239,6 +239,12 @@ export async function requireAdminWithProgram(
 	return await requireAccessToProgram(adminId, programId);
 }
 
+export async function requireLocalhost(request: Request) {
+	if (new URL(request.url).hostname !== "localhost") {
+		throw new Response(null, { status: 404, statusText: "Not Found" });
+	}
+}
+
 export async function getUser(
 	request: Request,
 ): Promise<UserAuthenticated | null> {

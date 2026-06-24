@@ -37,8 +37,40 @@ export function ErrorPublic({
 								"The page you were looking for is not here."}
 						</p>
 						<p className="text-center text-xs">
-							{customErrors[404]?.message ||
+							{customErrors[404]?.detail ||
 								"Error 404: Not found."}
+						</p>
+					</>
+				);
+				break;
+			case 403:
+				content = (
+					<>
+						<title>{customErrors[403]?.title || "Access denied"}</title>
+						<TiffyBroken className="size-24" />
+						<p>
+							{customErrors[403]?.message ||
+								"You need an additional permission to access this page."}
+						</p>
+						<p className="text-center text-xs">
+							{customErrors[403]?.detail ||
+								"Error 403: Forbidden."}
+						</p>
+					</>
+				);
+				break;
+			case 400:
+				content = (
+					<>
+						<title>{customErrors[400]?.title || "Uhhhhmmmm"}</title>
+						<TiffyLost className="size-24" />
+						<p>
+							{customErrors[400]?.message ||
+								"We got a badly mangled request or invalid input data. In any case, no idea how to proceed here."}
+						</p>
+						<p className="text-center text-xs">
+							{customErrors[400]?.detail ||
+								"Error 400: Bad request."}
 						</p>
 					</>
 				);
