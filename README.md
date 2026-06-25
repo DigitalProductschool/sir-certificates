@@ -127,6 +127,6 @@ We use [Tailwind CSS](https://tailwindcss.com/) and [ShadCn UI](https://ui.shadc
 
 The UI components are located in `/app/components/ui`.
 
-To add a UI component, run `npx shadcn-ui@0.8.0 add dialog` (we're currently on version 0.8.0)
+To add a UI component, run `npx shadcn@latest add dialog`
 
 See the Remix.run and [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information on how to use custom css.

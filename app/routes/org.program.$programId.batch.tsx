@@ -19,6 +19,8 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
+import { BatchActionDialog } from "~/components/batch-action-dialog";
+
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 
@@ -165,13 +167,34 @@ export default function BatchPage({
                 Download All
               </Link>
             </Button>
-            {/* @todo implement as AsyncAction or similar */ }
-            <Button variant="outline" asChild>
-              <Link to={``}>Publish All</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to={``}>Send All</Link>
-            </Button>
+            <BatchActionDialog
+              programId={params.programId!}
+              batchId={params.batchId!}
+              triggerLabel="Publish All"
+              title="Publish All Certificates"
+              description="After publishing, the certificates will be immediately available online, but not yet sent to participants' email."
+              actionLabel="Publish Now"
+              progressLabel="published"
+              allDoneMessage="All certificates in this batch are already published."
+              toastTitle="All certificates published!"
+              filterFn={(c) => !c.publishedAt}
+              getEndpoint={(c) =>
+                `/org/program/${params.programId}/batch/${params.batchId}/certificates/${c.id}/publish`
+              }
+            />
+            <BatchActionDialog
+              programId={params.programId!}
+              batchId={params.batchId!}
+              triggerLabel="Send All"
+              title="Send All Certificates"
+              description="Each participant will receive an email with their certificate attached."
+              actionLabel="Send Now"
+              progressLabel="sent"
+              allDoneMessage="All certificates in this batch have already been sent."
+              toastTitle="All certificates sent!"
+              filterFn={(c) => !c.notifiedAt}
+              getEndpoint={(c) => `/cert/${c.uuid}/notify`}
+            />
 
             <div className="flex-grow" />
 
