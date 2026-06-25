@@ -242,7 +242,7 @@ export default function AcceptInvitationPage({
 						<p>
 							Dear {invite.firstName}, you&apos;ve been invited to
 							manage certificates for the following {org.name}{" "}
-							programs:{" "}
+							program(s):{" "}
 							<strong>
 								{programs.map((p) => p.name).join(", ")}
 							</strong>
