@@ -11,6 +11,9 @@ const mailjet = new Mailjet({
 async function mailjetSend(
 	mailConfig: SendEmailV3_1.Body,
 ): Promise<LibraryResponse<SendEmailV3_1.Response>> {
+	if (process.env.MJ_SANDBOX === "TRUE") {
+		mailConfig.SandboxMode = true;
+	}
 	return mailjet.post("send", { version: "v3.1" }).request(mailConfig);
 }
 
