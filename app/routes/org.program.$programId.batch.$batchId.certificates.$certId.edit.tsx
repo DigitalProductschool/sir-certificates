@@ -1,6 +1,6 @@
 import type { Route } from "./+types/org.program.$programId.batch.$batchId.certificates.$certId.edit";
 import type { Template } from "~/generated/prisma/client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Form, redirect, useNavigate, useNavigation } from "react-router";
 import {
   getFormProps,
@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogFooter,
   DialogTitle,
+  DialogClose,
 } from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
 import {
@@ -177,7 +178,6 @@ export default function EditCertificateDialog({
   const { certificate, templates } = loaderData;
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const [open, setOpen] = useState(true);
 
   const [templateId, setTemplateId] = useState(
     certificate.templateId.toString(),
@@ -200,25 +200,12 @@ export default function EditCertificateDialog({
     navigation.formAction ===
     `/org/program/${params.programId}/batch/${params.batchId}/certificates/${params.certId}/edit`;
 
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, [navigate]);
+  function handleOpenChange(open: boolean) {
+    if (!open) navigate(-1);
+  }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) navigate(-1);
-      }}
-    >
+    <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[800px] grid grid-cols-1 sm:grid-cols-2 gap-12">
         <div className="bg-muted -m-6 rounded-l-lg hidden sm:block">
           <div className="w-full p-6 aspect-[1/1.38]">
@@ -324,9 +311,9 @@ export default function EditCertificateDialog({
                 </TooltipContent>
               </Tooltip>
             </Form>
-            <Button variant="outline" onClick={() => navigate(-1)}>
-              Cancel
-            </Button>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
             <Button type="submit" form={form.id} disabled={isSubmitting}>
               {isSubmitting && <LoaderCircle className="mr-2 animate-spin" />}
               Save changes
