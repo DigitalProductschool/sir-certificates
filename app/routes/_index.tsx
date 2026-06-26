@@ -111,7 +111,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
             <SidebarTrigger className="-ml-1" />
           </header>
 
-          <h1 className="text-5xl font-bold px-16">
+          <h1 className="text-3xl font-bold px-16">
             {certificates.length === 0 ? "Hi" : "Congratulations"}{" "}
             {user?.firstName}!
           </h1>
@@ -119,7 +119,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
           <p className="px-16 max-w-[70ch] text-balance">
             {certificates.length === 0
               ? `It looks like you have not received any certificates from ${org.name} yet. If your certificate is missing, please talk to your program coordinator. If you have not joined any program yet, have a look at the programs offering certification below.`
-              : `Here are all your certificates from ${org.name}`}
+              : `Here we have all your certificates from ${org.name}.`}
           </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 px-16 py-12 gap-16">
