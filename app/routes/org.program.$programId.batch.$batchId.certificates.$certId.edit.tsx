@@ -204,6 +204,8 @@ export default function EditCertificateDialog({
     if (!open) navigate(-1);
   }
 
+  // @todo figure out a better way to preserve view state (grid or table) and preserve it across form submission
+
   return (
     <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[800px] grid grid-cols-1 sm:grid-cols-2 gap-12">
