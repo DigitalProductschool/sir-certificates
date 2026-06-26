@@ -4,13 +4,18 @@ import { Link, useLocation, useNavigate } from "react-router";
 
 import {
   Settings,
-  XIcon,
   ArrowUpRight,
   ArrowLeft,
   ArrowRight,
 } from "lucide-react";
-import { H2 } from "~/components/typography/headlines";
 import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
@@ -61,18 +66,11 @@ export default function CertificatePage({
     currentIdx < certListIds.length - 1 ? certListIds[currentIdx + 1] : null;
   const navState = { view, sort, certListIds };
 
+  const closeUrl = `/org/program/${params.programId}/batch/${params.batchId}/certificates`;
+  const closeState = { view };
+
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        navigate(
-          `/org/program/${params.programId}/batch/${params.batchId}/certificates`,
-          {
-            preventScrollReset: true,
-            state: { view },
-          },
-        );
-      }
       if ((e.key === "ArrowLeft" || e.key === "ArrowUp") && prevId) {
         e.preventDefault();
         navigate(`../${prevId}/preview`, {
@@ -93,98 +91,111 @@ export default function CertificatePage({
     return () => document.removeEventListener("keydown", down);
   }, [navigate, prevId, nextId]);
 
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      navigate(closeUrl, { preventScrollReset: true, state: closeState });
+    }
+  }
+
   return (
-    <div className="flex flex-col bg-background h-full w-[40%] mt-24 fixed z-50 bottom-0 right-0 p-4 gap-8 pb-12 overflow-auto drop-shadow-xl">
-      <div className="flex items-center gap-2 justify-end">
-        <Button
-          variant="outline"
-          size="icon"
-          disabled={!prevId}
-          asChild={!!prevId}
-        >
-          {prevId ? (
-            <Link
-              to={`../${prevId}/preview`}
-              state={navState}
-              preventScrollReset
+    <Dialog open onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="sm:max-w-2xl max-h-[90svh] flex flex-col gap-0 p-0 overflow-hidden"
+        showCloseButton={false}
+      >
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={!prevId}
+              asChild={!!prevId}
             >
-              <ArrowLeft aria-label="Open previous" />
-            </Link>
-          ) : (
-            <ArrowLeft />
-          )}
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          disabled={!nextId}
-          asChild={!!nextId}
-        >
-          {nextId ? (
-            <Link
-              to={`../${nextId}/preview`}
-              state={navState}
-              preventScrollReset
+              {prevId ? (
+                <Link
+                  to={`../${prevId}/preview`}
+                  state={navState}
+                  preventScrollReset
+                >
+                  <ArrowLeft aria-label="Open previous" />
+                </Link>
+              ) : (
+                <ArrowLeft />
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={!nextId}
+              asChild={!!nextId}
             >
-              <ArrowRight aria-label="Open next" />
-            </Link>
-          ) : (
-            <ArrowRight />
-          )}
-        </Button>
-        <Button variant="outline" asChild>
-          <Link to="../" state={{ view }} preventScrollReset>
-            <XIcon /> Close
-          </Link>
-        </Button>
-      </div>
-      <H2>
-        <span className="px-8">
-          {certificate.firstName} {certificate.lastName}
-        </span>
-      </H2>
+              {nextId ? (
+                <Link
+                  to={`../${nextId}/preview`}
+                  state={navState}
+                  preventScrollReset
+                >
+                  <ArrowRight aria-label="Open next" />
+                </Link>
+              ) : (
+                <ArrowRight />
+              )}
+            </Button>
+            <DialogTitle className="flex-1 ml-2">
+              {certificate.firstName} {certificate.lastName}
+            </DialogTitle>
+            <DialogClose asChild>
+              <Button variant="outline" size="sm">
+                Close
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogHeader>
 
-      <div className="flex px-8 gap-2">
-        <Button asChild>
-          <Link to={`/cert/${certificate.uuid}/download.pdf`} reloadDocument>
-            Download Certificate
-          </Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link
-            to={`/org/program/${params.programId}/batch/${params.batchId}/certificates/${certificate.id}/edit`}
-            aria-label="Edit certificate"
-            preventScrollReset
-          >
-            <Settings /> Edit
-          </Link>
-        </Button>
+        <div className="bg-muted overflow-y-auto flex flex-col gap-6 px-6 py-6">
+          <div className="flex gap-2 flex-wrap">
+            <Button asChild>
+              <Link to={`/cert/${certificate.uuid}/download.pdf`} reloadDocument>
+                Download Certificate
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link
+                to={`/org/program/${params.programId}/batch/${params.batchId}/certificates/${certificate.id}/edit`}
+                aria-label="Edit certificate"
+                preventScrollReset
+              >
+                <Settings /> Edit
+              </Link>
+            </Button>
+            <div className="grow"/>
+            <Button variant="link" asChild>
+              <Link to={`/view/${certificate.uuid}`}>
+                View public page <ArrowUpRight />
+              </Link>
+            </Button>
+          </div>
 
-        <Button variant="link" asChild>
-          <Link to={`/view/${certificate.uuid}`}>
-            View public page <ArrowUpRight />
-          </Link>
-        </Button>
-      </div>
-
-      <img
-        className="px-8 drop-shadow-xl self-center"
-        src={`/cert/${certificate.uuid}/preview.png?t=${certificate.updatedAt}`}
-        alt="Preview of the certificate"
-      />
-
-      {socialPreview && (
-        <div className="px-8">
-          <span className="text-sm font-semibold text-muted-foreground">
-            Social Media Preview
-          </span>
           <img
-            src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}`}
-            className="drop-shadow-xl aspect-[1.91/1]"
-            alt="Social media preview for shared certificates"
+            className="drop-shadow-xl self-center w-full"
+            src={`/cert/${certificate.uuid}/preview.png?t=${certificate.updatedAt}`}
+            alt="Preview of the certificate"
           />
+
+          {socialPreview && (
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-semibold text-muted-foreground">
+                Social Media Preview
+              </span>
+              <img
+                src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}`}
+                className="drop-shadow-xl aspect-[1.91/1]"
+                alt="Social media preview for shared certificates"
+              />
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
