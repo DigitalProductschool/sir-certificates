@@ -6,8 +6,10 @@ import {
   ArrowDown,
   BadgeCheck,
   BadgeIcon,
+  BadgePlus,
   Download,
   Eye,
+  FileUp,
   LayoutGrid,
   MailCheck,
   MailOpen,
@@ -143,12 +145,16 @@ export default function BatchCertificatesPage({
     <div className="flex flex-col gap-4 pb-8">
       <div className="flex items-center gap-4">
         <Button variant="outline" asChild>
-          <Link to="create">Add Certificate</Link>
+          <Link to="create">
+            <BadgePlus /> Add Certificate
+          </Link>
         </Button>
 
         <Button variant="outline" asChild>
-          <Link to={`/org/program/${params.programId}/batch/${params.batchId}/import`}>
-            Import Certificates
+          <Link
+            to={`/org/program/${params.programId}/batch/${params.batchId}/import`}
+          >
+            <FileUp /> Import Certificates
           </Link>
         </Button>
 
@@ -167,8 +173,8 @@ export default function BatchCertificatesPage({
           certificates={certificates}
           triggerIcon={<BadgeCheck />}
           triggerLabel="Publish All"
-          title="Publish All Certificates"
-          description="After publishing, the certificates will be immediately available online, but not yet sent to participants' email. / Publishing makes them verifiable via link."
+          title="Publish all certificates"
+          description="A published certificate will be accessible online through it's unique link and also visible to logged-in users. Published certificates can also be verified through the included QR code. The certificates are not being emailed to recipients during this step."
           actionLabel="Publish Now"
           progressLabel="published"
           allDoneMessage="All certificates in this batch are already published."
@@ -182,8 +188,8 @@ export default function BatchCertificatesPage({
           certificates={certificates}
           triggerIcon={<Send />}
           triggerLabel="Send All"
-          title="Send All Certificates"
-          description="Each participant will receive an email with their certificate attached."
+          title="Send all certificates"
+          description="Each participant will receive an email with their certificate attached as a PDF. Unpublished certificates will also be sent, but without a link to the online certificate."
           actionLabel="Send Now"
           progressLabel="sent"
           allDoneMessage="All certificates in this batch have already been sent."
@@ -278,7 +284,11 @@ export default function BatchCertificatesPage({
               const handleClick = () => {
                 navigate(`${cert.id}/preview`, {
                   preventScrollReset: true,
-                  state: { view, sort, certListIds: sortedCerts.map((c) => c.id) },
+                  state: {
+                    view,
+                    sort,
+                    certListIds: sortedCerts.map((c) => c.id),
+                  },
                 });
               };
               return (
