@@ -2,8 +2,8 @@ import type { Route } from "./+types/org.program.$programId.batch";
 import type { Batch } from "~/generated/prisma/client";
 
 import { useEffect } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router";
-import { LayoutGrid, TableIcon, Settings } from "lucide-react";
+import { Link, Outlet, useNavigate } from "react-router";
+import { Settings } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -18,8 +18,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-
-import { BatchActionDialog } from "~/components/batch-action-dialog";
 
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
@@ -61,9 +59,6 @@ export default function BatchPage({
 }: Route.ComponentProps) {
   const { program } = loaderData;
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const view = location.state?.view ?? "table";
 
   const latestBatch =
     program.batches.length > 0 ? program.batches[0] : undefined;
@@ -146,84 +141,6 @@ export default function BatchPage({
         <Button variant="outline" asChild>
           <Link to="create">Add Batch</Link>
         </Button>
-
-        {currentBatch && (
-          <>
-            <Button variant="outline" asChild>
-              <Link to={`${params.batchId}/certificates/create`}>
-                Add Certificate
-              </Link>
-            </Button>
-
-            <Button variant="outline" asChild>
-              <Link to={`${params.batchId}/import`}>Import Certificates</Link>
-            </Button>
-
-            <Button variant="outline" asChild>
-              <Link
-                to={`${params.batchId}/certificates/download.zip`}
-                reloadDocument
-              >
-                Download All
-              </Link>
-            </Button>
-            <BatchActionDialog
-              programId={params.programId!}
-              batchId={params.batchId!}
-              triggerLabel="Publish All"
-              title="Publish All Certificates"
-              description="After publishing, the certificates will be immediately available online, but not yet sent to participants' email."
-              actionLabel="Publish Now"
-              progressLabel="published"
-              allDoneMessage="All certificates in this batch are already published."
-              toastTitle="All certificates published!"
-              filterFn={(c) => !c.publishedAt}
-              getEndpoint={(c) =>
-                `/org/program/${params.programId}/batch/${params.batchId}/certificates/${c.id}/publish`
-              }
-            />
-            <BatchActionDialog
-              programId={params.programId!}
-              batchId={params.batchId!}
-              triggerLabel="Send All"
-              title="Send All Certificates"
-              description="Each participant will receive an email with their certificate attached."
-              actionLabel="Send Now"
-              progressLabel="sent"
-              allDoneMessage="All certificates in this batch have already been sent."
-              toastTitle="All certificates sent!"
-              filterFn={(c) => !c.notifiedAt}
-              getEndpoint={(c) => `/cert/${c.uuid}/notify`}
-            />
-
-            <div className="flex-grow" />
-
-            <div className="flex">
-              <Button variant="ghost" size="icon" asChild>
-                <Link
-                  to={`${currentBatch.id}/certificates`}
-                  aria-label="Table View"
-                  state={{ view: "table" }}
-                  aria-current={view === "table"}
-                  className={`aria-[current=false]:text-muted-foreground`}
-                >
-                  <TableIcon />
-                </Link>
-              </Button>
-              <Button variant="ghost" size="icon" asChild>
-                <Link
-                  to={`${currentBatch.id}/certificates`}
-                  aria-label="Table View"
-                  state={{ view: "grid" }}
-                  aria-current={view === "grid"}
-                  className={`aria-[current=false]:text-muted-foreground`}
-                >
-                  <LayoutGrid />
-                </Link>
-              </Button>
-            </div>
-          </>
-        )}
 
         {program.batches.length === 0 && (
           <div>No batches added yet. Create your first batch.</div>

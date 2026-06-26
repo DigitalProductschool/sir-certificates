@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { useFetcher } from "react-router";
+import { useRef, useState } from "react";
+import { useRevalidator } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -18,13 +18,13 @@ import { useToast } from "~/hooks/use-toast";
 type Cert = {
   id: number;
   uuid: string;
-  publishedAt: string | null;
-  notifiedAt: string | null;
+  publishedAt: Date | null;
+  notifiedAt: Date | null;
 };
 
 type BatchActionDialogProps = {
-  programId: string;
-  batchId: string;
+  certificates: Cert[];
+  triggerIcon?: React.ReactNode;
   triggerLabel: string;
   title: string;
   description: string;
@@ -37,8 +37,8 @@ type BatchActionDialogProps = {
 };
 
 export function BatchActionDialog({
-  programId,
-  batchId,
+  certificates,
+  triggerIcon,
   triggerLabel,
   title,
   description,
@@ -49,8 +49,8 @@ export function BatchActionDialog({
   filterFn,
   getEndpoint,
 }: BatchActionDialogProps) {
-  const fetcher = useFetcher();
   const { toast } = useToast();
+  const revalidator = useRevalidator();
 
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(0);
@@ -59,10 +59,8 @@ export function BatchActionDialog({
   const isRunningRef = useRef(false);
   const cursorRef = useRef(0);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (open) {
-      fetcher.load(`/org/program/${programId}/batch/${batchId}/certificates`);
+  const handleOpenChange = (willBeOpen: boolean) => {
+    if (willBeOpen) {
       setDone(0);
       setIsComplete(false);
       setIsRunning(false);
@@ -70,18 +68,21 @@ export function BatchActionDialog({
       cursorRef.current = 0;
     } else {
       isRunningRef.current = false;
+      revalidator.revalidate();
     }
-  }, [open]);
+    setOpen(willBeOpen);
+  };
 
-  const certs: Cert[] = (fetcher.data as { certificates?: Cert[] })?.certificates ?? [];
-  const pending = certs.filter(filterFn);
-  const initialDone = certs.length - pending.length;
+  const pending = certificates.filter(filterFn);
+  const initialDone = certificates.length - pending.length;
   const totalDone = initialDone + done;
-  const progress = certs.length > 0 ? (totalDone / certs.length) * 100 : 0;
-  const allDone = certs.length > 0 && pending.length === 0;
+  const progress =
+    certificates.length > 0 ? (totalDone / certificates.length) * 100 : 0;
+  const allDone = certificates.length > 0 && pending.length === 0;
 
   const handleStart = async () => {
     if (isRunningRef.current || pending.length === 0) return;
+    
     setIsRunning(true);
     isRunningRef.current = true;
 
@@ -112,17 +113,22 @@ export function BatchActionDialog({
     if (cursorRef.current >= pending.length) {
       setIsComplete(true);
       toast({ title: toastTitle });
+      revalidator.revalidate();
     }
   };
 
   const handlePause = () => {
     isRunningRef.current = false;
+    revalidator.revalidate();
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline">{triggerLabel}</Button>
+        <Button variant="outline">
+          {triggerIcon}
+          {triggerLabel}
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -131,18 +137,16 @@ export function BatchActionDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-2 min-h-10 justify-center">
-          {fetcher.state === "loading" ? (
-            <p className="text-sm text-muted-foreground">Loading certificates…</p>
-          ) : certs.length > 0 ? (
+          {certificates.length > 0 && (
             <>
               <Progress value={progress} />
               <p className="text-sm text-muted-foreground">
                 {allDone
                   ? allDoneMessage
-                  : `${totalDone} of ${certs.length} ${progressLabel}`}
+                  : `${totalDone} of ${certificates.length} ${progressLabel}`}
               </p>
             </>
-          ) : null}
+          )}
         </div>
 
         <DialogFooter>
@@ -155,10 +159,7 @@ export function BatchActionDialog({
               Pause
             </Button>
           ) : (
-            <Button
-              onClick={handleStart}
-              disabled={fetcher.state === "loading" || pending.length === 0}
-            >
+            <Button onClick={handleStart} disabled={pending.length === 0}>
               {done > 0 ? "Resume" : actionLabel}
             </Button>
           )}
