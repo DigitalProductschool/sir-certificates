@@ -162,6 +162,7 @@ export default function CertificatePage({
             <Button variant="outline" asChild>
               <Link
                 to={`/org/program/${params.programId}/batch/${params.batchId}/certificates/${certificate.id}/edit`}
+                state={navState}
                 aria-label="Edit certificate"
                 preventScrollReset
               >
