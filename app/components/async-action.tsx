@@ -1,24 +1,32 @@
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { useFetcher } from "react-router";
 
 interface AsyncActionProps {
 	action: string;
-	children?: ReactNode;
+	children?: ReactNode | ((isPending: boolean) => ReactNode);
+	onSuccess?: () => void;
 }
 
-// @refactor for better user feedback (animation / toast)
-// @refactor for compatibility with DropdownMenu (i.e. in CertificateMenu) 
-
-export function AsyncAction({ action, children }: AsyncActionProps) {
+export function AsyncAction({ action, children, onSuccess }: AsyncActionProps) {
 	const fetcher = useFetcher();
+	const isPending = fetcher.state !== "idle";
+
+	useEffect(() => {
+		// this requires the action handler to return data (not just null or redirect)
+		if (fetcher.state === "idle" && fetcher.data != null) {
+			onSuccess?.();
+		}
+	}, [fetcher.state, fetcher.data, onSuccess]);
+
 	return (
 		<fetcher.Form
 			action={action}
 			method="POST"
-			className={fetcher.state !== "idle" ? "opacity-50" : ""}
+			className={isPending ? "opacity-50" : ""}
 			preventScrollReset
 		>
-			{children}
+			{typeof children === "function" ? children(isPending) : children}
 		</fetcher.Form>
 	);
 }

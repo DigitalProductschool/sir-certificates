@@ -1,10 +1,12 @@
 import type { Certificate } from "~/generated/prisma/client";
 
+import { useState } from "react";
 import { Link } from "react-router";
 import {
 	BadgeCheck,
 	ChevronDown,
 	ExternalLink,
+	Loader2,
 	RefreshCw,
 	SendIcon,
 	Settings,
@@ -30,8 +32,10 @@ export function CertificateMenu({
 	programId: string;
 	view: "table" | "grid";
 }) {
+	const [open, setOpen] = useState(false);
+
 	return (
-		<DropdownMenu modal={false}>
+		<DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
 			<DropdownMenuTrigger asChild>
 				<Button variant="ghost" size="icon-sm" className="w-8">
 					<ChevronDown />
@@ -65,16 +69,25 @@ export function CertificateMenu({
 							Edit
 						</Link>
 					</DropdownMenuItem>
-					<DropdownMenuItem>
+					<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
 						<AsyncAction
 							action={`/org/program/${programId}/batch/${certificate.batchId}/certificates/${certificate.id}/refresh`}
+							onSuccess={() => setOpen(false)}
 						>
-							<button
-								type="submit"
-								className="flex items-center gap-2"
-							>
-								<RefreshCw className="size-4" /> Refresh
-							</button>
+							{(isPending) => (
+								<button
+									type="submit"
+									disabled={isPending}
+									className="flex items-center gap-2"
+								>
+									{isPending ? (
+										<Loader2 className="size-4 animate-spin" />
+									) : (
+										<RefreshCw className="size-4" />
+									)}
+									Refresh
+								</button>
+							)}
 						</AsyncAction>
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
@@ -83,31 +96,48 @@ export function CertificateMenu({
 
 				<DropdownMenuGroup>
 					{!certificate.publishedAt && (
-						<DropdownMenuItem>
+						<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
 							<AsyncAction
 								action={`/org/program/${programId}/batch/${certificate.batchId}/certificates/${certificate.id}/publish`}
+								onSuccess={() => setOpen(false)}
 							>
-								<button
-									type="submit"
-									className="flex items-center gap-2"
-								>
-									<BadgeCheck className="size-4" /> Publish
-								</button>
+								{(isPending) => (
+									<button
+										type="submit"
+										disabled={isPending}
+										className="flex items-center gap-2"
+									>
+										{isPending ? (
+											<Loader2 className="size-4 animate-spin" />
+										) : (
+											<BadgeCheck className="size-4" />
+										)}
+										Publish
+									</button>
+								)}
 							</AsyncAction>
 						</DropdownMenuItem>
 					)}
 
-					<DropdownMenuItem>
+					<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
 						<AsyncAction
 							action={`/cert/${certificate.uuid}/notify`}
+							onSuccess={() => setOpen(false)}
 						>
-							<button
-								type="submit"
-								className="flex items-center gap-2"
-							>
-								<SendIcon className="size-4" />{" "}
-								{certificate.notifiedAt ? "Resend" : "Send"}
-							</button>
+							{(isPending) => (
+								<button
+									type="submit"
+									disabled={isPending}
+									className="flex items-center gap-2"
+								>
+									{isPending ? (
+										<Loader2 className="size-4 animate-spin" />
+									) : (
+										<SendIcon className="size-4" />
+									)}
+									{certificate.notifiedAt ? "Resend" : "Send"}
+								</button>
+							)}
 						</AsyncAction>
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
@@ -115,16 +145,27 @@ export function CertificateMenu({
 				<DropdownMenuSeparator />
 
 				<DropdownMenuGroup>
-					<DropdownMenuItem variant="destructive">
+					<DropdownMenuItem
+						variant="destructive"
+						onSelect={(e) => e.preventDefault()}
+					>
 						<AsyncAction
 							action={`/org/program/${programId}/batch/${certificate.batchId}/certificates/${certificate.id}/delete`}
 						>
-							<button
-								type="submit"
-								className="flex items-center gap-2"
-							>
-								<Trash2Icon className="size-4" /> Delete
-							</button>
+							{(isPending) => (
+								<button
+									type="submit"
+									disabled={isPending}
+									className="flex items-center gap-2"
+								>
+									{isPending ? (
+										<Loader2 className="size-4 animate-spin" />
+									) : (
+										<Trash2Icon className="size-4" />
+									)}
+									Delete
+								</button>
+							)}
 						</AsyncAction>
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
