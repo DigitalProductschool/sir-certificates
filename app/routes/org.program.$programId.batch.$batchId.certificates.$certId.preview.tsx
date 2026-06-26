@@ -100,7 +100,7 @@ export default function CertificatePage({
   return (
     <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-2xl max-h-[90svh] flex flex-col gap-0 p-0 overflow-hidden"
+        className="sm:max-w-[800px] max-h-[90svh] flex flex-col gap-0 p-0 overflow-hidden"
         showCloseButton={false}
       >
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
