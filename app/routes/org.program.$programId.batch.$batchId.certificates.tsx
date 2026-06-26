@@ -6,11 +6,16 @@ import {
   ArrowDown,
   BadgeCheck,
   BadgeIcon,
+  Download,
   Eye,
+  LayoutGrid,
   MailCheck,
   MailOpen,
+  Send,
+  TableIcon,
 } from "lucide-react";
 
+import { BatchActionDialog } from "~/components/batch-action-dialog";
 import { CertificateRefresh } from "~/components/certificate-refresh";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -136,6 +141,85 @@ export default function BatchCertificatesPage({
 
   return (
     <div className="flex flex-col gap-4 pb-8">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" asChild>
+          <Link to="create">Add Certificate</Link>
+        </Button>
+
+        <Button variant="outline" asChild>
+          <Link to={`/org/program/${params.programId}/batch/${params.batchId}/import`}>
+            Import Certificates
+          </Link>
+        </Button>
+
+        <div className="flex-grow">&emsp;</div>
+
+        <Button variant="outline" asChild>
+          <Link to="download.zip" reloadDocument>
+            <Download />
+            Download All
+          </Link>
+        </Button>
+
+        {/* @todo add check if social preview exists before publish all – show a warning if not / or general complete setup flow? */}
+
+        <BatchActionDialog
+          certificates={certificates}
+          triggerIcon={<BadgeCheck />}
+          triggerLabel="Publish All"
+          title="Publish All Certificates"
+          description="After publishing, the certificates will be immediately available online, but not yet sent to participants' email. / Publishing makes them verifiable via link."
+          actionLabel="Publish Now"
+          progressLabel="published"
+          allDoneMessage="All certificates in this batch are already published."
+          toastTitle="All certificates published!"
+          filterFn={(c) => !c.publishedAt}
+          getEndpoint={(c) =>
+            `/org/program/${params.programId}/batch/${params.batchId}/certificates/${c.id}/publish`
+          }
+        />
+        <BatchActionDialog
+          certificates={certificates}
+          triggerIcon={<Send />}
+          triggerLabel="Send All"
+          title="Send All Certificates"
+          description="Each participant will receive an email with their certificate attached."
+          actionLabel="Send Now"
+          progressLabel="sent"
+          allDoneMessage="All certificates in this batch have already been sent."
+          toastTitle="All certificates sent!"
+          filterFn={(c) => !c.notifiedAt}
+          getEndpoint={(c) => `/cert/${c.uuid}/notify`}
+        />
+
+        <div>&emsp;</div>
+
+        <div className="flex">
+          <Button variant="ghost" size="icon" asChild>
+            <Link
+              to="."
+              aria-label="Table View"
+              state={{ view: "table" }}
+              aria-current={view === "table"}
+              className="aria-[current=false]:text-muted-foreground"
+            >
+              <TableIcon />
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" asChild>
+            <Link
+              to="."
+              aria-label="Grid View"
+              state={{ view: "grid" }}
+              aria-current={view === "grid"}
+              className="aria-[current=false]:text-muted-foreground"
+            >
+              <LayoutGrid />
+            </Link>
+          </Button>
+        </div>
+      </div>
+
       {view === "table" && (
         <Table>
           <TableHeader>
