@@ -105,7 +105,7 @@ function Toolbar({
                   });
                 } catch (error) {
                   // @todo fix typing out hex values (because invalid values are rejected, you can only change single characters or copy/paste)
-                  console.log("Invalid color: ", event.target.value);
+                  console.log("Invalid color: ", event.target.value, error);
                 }
               }}
             />
@@ -144,7 +144,7 @@ function Toolbar({
                   });
                 } catch (error) {
                   // @todo fix typing out hex values (because invalid values are rejected, you can only change single characters or copy/paste)
-                  console.log("Invalid color: ", event.target.value);
+                  console.log("Invalid color: ", event.target.value, error);
                 }
               }}
             />
@@ -202,8 +202,9 @@ export function LayoutQRCodeEditor({
       <div className="flex flex-col gap-2 text-sm rounded-lg border bg-card text-card-foreground shadow-sm">
         <Toolbar settings={qrcode} onChange={onChange} />
         <div className="px-4 pt-1 pb-3 flex items-center gap-2">
-          The QR Code contains the URL leading to the public website for the
-          certificate. It can be used to verify the certificate.
+          The QR Code is only shown on published certificates and contains the
+          URL leading to the public website for the certificate. It can be used
+          to verify the certificate.
         </div>
       </div>
     </div>
