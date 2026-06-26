@@ -31,7 +31,7 @@ export function CertificateMenu({
 	view: "table" | "grid";
 }) {
 	return (
-		<DropdownMenu>
+		<DropdownMenu modal={false}>
 			<DropdownMenuTrigger asChild>
 				<Button variant="ghost" size="icon-sm" className="w-8">
 					<ChevronDown />
