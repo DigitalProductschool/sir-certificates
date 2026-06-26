@@ -93,12 +93,21 @@ export default function BatchPage({
           >
             <SelectTrigger className="w-[280px] [&>span]:line-clamp-none">
               <SelectValue placeholder="Select a Batch" asChild>
-                <div className="flex gap-2 text-left items-center">
-                  {currentBatch?.name}
-                  <div className="text-xs text-muted-foreground">
-                    {currentBatch?.startDate.toLocaleDateString("en-UK")}–{" "}
-                    {currentBatch?.endDate.toLocaleDateString("en-UK")}
-                  </div>
+                <div>
+                  {currentBatch?.name}&ensp;
+                  <span className="text-xs text-muted-foreground">
+                    {currentBatch?.startDate.toLocaleDateString("en-UK", {
+                      year: "2-digit",
+                      month: "numeric",
+                      day: "numeric",
+                    })}
+                    –
+                    {currentBatch?.endDate.toLocaleDateString("en-UK", {
+                      year: "2-digit",
+                      month: "numeric",
+                      day: "numeric",
+                    })}
+                  </span>
                 </div>
               </SelectValue>
             </SelectTrigger>
@@ -111,10 +120,19 @@ export default function BatchPage({
                     textValue={batch.name}
                   >
                     {batch.name}
-                    <div className="text-xs text-muted-foreground">
-                      {batch.startDate.toLocaleDateString("en-UK")}–{" "}
-                      {batch.endDate.toLocaleDateString("en-UK")}
-                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {batch.startDate.toLocaleDateString("en-UK", {
+                        year: "2-digit",
+                        month: "numeric",
+                        day: "numeric",
+                      })}
+                      –
+                      {batch.endDate.toLocaleDateString("en-UK", {
+                        year: "2-digit",
+                        month: "numeric",
+                        day: "numeric",
+                      })}
+                    </span>
                   </SelectItem>
                 );
               })}
