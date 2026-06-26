@@ -143,8 +143,12 @@ export async function generateCertificate(
     });
   });
 
-  // Add QR Code
-  if (template.qrcode && template.qrcode.show === true) {
+  // Add QR Code only if the certificate has been published
+  if (
+    certificate.publishedAt !== null &&
+    template.qrcode &&
+    template.qrcode.show === true
+  ) {
     drawQRCode(
       page,
       `${domain}/view/${certificate.uuid}`,
