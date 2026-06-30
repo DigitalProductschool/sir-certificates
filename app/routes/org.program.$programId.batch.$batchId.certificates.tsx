@@ -7,7 +7,6 @@ import {
   BadgeCheck,
   BadgeIcon,
   BadgePlus,
-  Download,
   Eye,
   FileUp,
   LayoutGrid,
@@ -18,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { BatchActionDialog } from "~/components/batch-action-dialog";
+import { DownloadDialog } from "~/components/download-dialog";
 import { CertificateRefresh } from "~/components/certificate-refresh";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -173,12 +173,10 @@ export default function BatchCertificatesPage({
 
         <div className="flex-grow">&emsp;</div>
 
-        <Button variant="outline" asChild>
-          <Link to="download.zip" reloadDocument>
-            <Download />
-            Download All
-          </Link>
-        </Button>
+        <DownloadDialog
+          zipUrl={`/org/program/${params.programId}/batch/${params.batchId}/certificates/download.zip`}
+          printUrl={`/org/program/${params.programId}/batch/${params.batchId}/certificates/download-print.pdf`}
+        />
 
         {/* @todo add check if social preview exists before publish all – show a warning if not / or general complete setup flow? */}
 
