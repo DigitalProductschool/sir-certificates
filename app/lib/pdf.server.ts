@@ -610,25 +610,32 @@ export const sampleQR: PrismaJson.QRCode = {
   ec: "M",
 };
 
-export type CertEntry = { cert: Certificate; buffer?: Buffer };
+export type CertificateData = { cert: Certificate; buffer?: Buffer };
 
-export async function resolveCertEntries(
+export async function resolveCertificateData(
   certificates: CertificatesWithBatch[],
   includeQR: boolean,
-): Promise<CertEntry[]> {
+): Promise<CertificateData[]> {
   if (!includeQR) {
     return certificates.map((cert) => ({ cert }));
   }
 
   const unpublished = certificates.filter((c) => c.publishedAt === null);
   const templateIds = [...new Set(unpublished.map((c) => c.templateId))];
-  const templates = await prisma.template.findMany({ where: { id: { in: templateIds } } });
+  const templates = await prisma.template.findMany({
+    where: { id: { in: templateIds } },
+  });
   const templateMap = new Map(templates.map((t) => [t.id, t]));
 
-  const entries: CertEntry[] = [];
+  const entries: CertificateData[] = [];
   for (const cert of certificates) {
     if (cert.publishedAt === null) {
-      const buffer = await renderCertificatePDF(cert.batch, cert, templateMap.get(cert.templateId)!, true);
+      const buffer = await renderCertificatePDF(
+        cert.batch,
+        cert,
+        templateMap.get(cert.templateId)!,
+        true,
+      );
       entries.push({ cert, buffer });
     } else {
       entries.push({ cert });
@@ -637,13 +644,16 @@ export async function resolveCertEntries(
   return entries;
 }
 
-export async function mergeCertificatesForPrint(entries: CertEntry[]) {
+export async function mergeCertificatesForPrint(entries: CertificateData[]) {
   const mergedPdf = await PDFDocument.create();
 
   for (const { cert, buffer } of entries) {
     const pdfBytes = buffer ?? (await readFile(`${certDir}/${cert.id}.pdf`));
     const certPdf = await PDFDocument.load(pdfBytes);
-    const copiedPages = await mergedPdf.copyPages(certPdf, certPdf.getPageIndices());
+    const copiedPages = await mergedPdf.copyPages(
+      certPdf,
+      certPdf.getPageIndices(),
+    );
     copiedPages.forEach((page) => mergedPdf.addPage(page));
   }
 
@@ -657,8 +667,8 @@ export async function mergeCertificatesForPrint(entries: CertEntry[]) {
   });
 }
 
-export function downloadCertificates(entries: CertEntry[]) {
-  // PassThrough stream for piping the archive directly to the response  
+export function downloadCertificates(entries: CertificateData[]) {
+  // PassThrough stream for piping the archive directly to the response
   const stream = new PassThrough();
   const archive = archiver("zip", { zlib: { level: 9 } });
   const zipFilename = "certificates.zip";
