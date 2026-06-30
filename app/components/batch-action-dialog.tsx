@@ -26,6 +26,7 @@ type BatchActionDialogProps = {
   certificates: Cert[];
   triggerIcon?: React.ReactNode;
   triggerLabel: string;
+  primary?: boolean;
   title: string;
   description: string;
   actionLabel: string;
@@ -40,6 +41,7 @@ export function BatchActionDialog({
   certificates,
   triggerIcon,
   triggerLabel,
+  primary = false,
   title,
   description,
   actionLabel,
@@ -125,7 +127,7 @@ export function BatchActionDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant={primary && pending.length > 0 ? "default" : "outline"}>
           {triggerIcon}
           {triggerLabel}
         </Button>
@@ -136,13 +138,13 @@ export function BatchActionDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2 min-h-10 justify-center">
+        <div className="flex flex-col gap-2 justify-center">
           {certificates.length > 0 && (
             <>
-              <Progress value={progress} />
+              <Progress value={progress} variant="thin" />
               <p className="text-sm text-muted-foreground">
                 {allDone
-                  ? allDoneMessage
+                  ? `${totalDone} of ${certificates.length} – ${allDoneMessage}`
                   : `${totalDone} of ${certificates.length} ${progressLabel}`}
               </p>
             </>

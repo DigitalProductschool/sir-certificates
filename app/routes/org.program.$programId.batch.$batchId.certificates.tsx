@@ -102,6 +102,14 @@ export default function BatchCertificatesPage({
     }
   }
 
+  const hasPublishedCertificates = certificates.some(
+    (c) => c.publishedAt !== null,
+  );
+
+  const hasNotifiedCertificates = certificates.some(
+    (c) => c.notifiedAt !== null,
+  );  
+
   let sortedCerts = certificates;
   switch (sort) {
     case "firstName": // already sorted
@@ -150,7 +158,7 @@ export default function BatchCertificatesPage({
           </Link>
         </Button>
 
-        <Button variant="outline" asChild>
+        <Button variant={certificates.length === 0 ? "default" : "outline"} asChild>
           <Link
             to={`/org/program/${params.programId}/batch/${params.batchId}/import`}
           >
@@ -173,11 +181,12 @@ export default function BatchCertificatesPage({
           certificates={certificates}
           triggerIcon={<BadgeCheck />}
           triggerLabel="Publish All"
+          primary={!hasPublishedCertificates}
           title="Publish all certificates"
           description="A published certificate will be accessible online through it's unique link and also visible to logged-in users. Published certificates can also be verified through the included QR code. The certificates are not being emailed to recipients during this step."
           actionLabel="Publish Now"
           progressLabel="published"
-          allDoneMessage="All certificates in this batch are already published."
+          allDoneMessage="all certificates published"
           toastTitle="All certificates published!"
           filterFn={(c) => !c.publishedAt}
           getEndpoint={(c) =>
@@ -188,11 +197,12 @@ export default function BatchCertificatesPage({
           certificates={certificates}
           triggerIcon={<Send />}
           triggerLabel="Send All"
+          primary={hasPublishedCertificates && !hasNotifiedCertificates}
           title="Send all certificates"
           description="Each participant will receive an email with their certificate attached as a PDF. Unpublished certificates will also be sent, but without a link to the online certificate."
           actionLabel="Send Now"
           progressLabel="sent"
-          allDoneMessage="All certificates in this batch have already been sent."
+          allDoneMessage="all certificates sent via email"
           toastTitle="All certificates sent!"
           filterFn={(c) => !c.notifiedAt}
           getEndpoint={(c) => `/cert/${c.uuid}/notify`}
@@ -391,7 +401,7 @@ export default function BatchCertificatesPage({
             )}
             {certificates.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5}>No certificates created yet</TableCell>
+                <TableCell colSpan={5}>No certificates created yet.</TableCell>
               </TableRow>
             )}
           </TableBody>
