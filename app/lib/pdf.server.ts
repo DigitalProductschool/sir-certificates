@@ -608,6 +608,27 @@ export const sampleQR: PrismaJson.QRCode = {
   ec: "M",
 };
 
+export async function mergeCertificatesForPrint(certificates: Certificate[]) {
+  const mergedPdf = await PDFDocument.create();
+
+  for (const cert of certificates) {
+    const pdfPath = `${certDir}/${cert.id}.pdf`;
+    const pdfBytes = await readFile(pdfPath);
+    const certPdf = await PDFDocument.load(pdfBytes);
+    const copiedPages = await mergedPdf.copyPages(certPdf, certPdf.getPageIndices());
+    copiedPages.forEach((page) => mergedPdf.addPage(page));
+  }
+
+  const mergedBytes = Buffer.from(await mergedPdf.save());
+
+  return new Response(mergedBytes, {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="certificates-print.pdf"`,
+    },
+  });
+}
+
 export function downloadCertificates(certificates: Certificate[]) {
   // PassThrough stream for piping the archive directly to the response
   const stream = new PassThrough();
