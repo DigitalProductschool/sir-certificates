@@ -83,6 +83,8 @@ export default function BatchCertificatesPage({
   const { certificates, templates } = loaderData;
   const certId = params.certId && Number(params.certId);
 
+  const currentPath = location.pathname.replace(/\/$/, ""); // remove trailing slash from path during SSR
+
   // @refactor to a hook or context?
   const view = location.state?.view ?? "table";
   const sort = location.state?.sort ?? "firstName";
@@ -108,7 +110,7 @@ export default function BatchCertificatesPage({
 
   const hasNotifiedCertificates = certificates.some(
     (c) => c.notifiedAt !== null,
-  );  
+  );
 
   let sortedCerts = certificates;
   switch (sort) {
@@ -158,7 +160,10 @@ export default function BatchCertificatesPage({
           </Link>
         </Button>
 
-        <Button variant={certificates.length === 0 ? "default" : "outline"} asChild>
+        <Button
+          variant={certificates.length === 0 ? "default" : "outline"}
+          asChild
+        >
           <Link
             to={`/org/program/${params.programId}/batch/${params.batchId}/import`}
           >
@@ -213,7 +218,7 @@ export default function BatchCertificatesPage({
         <div className="flex">
           <Button variant="ghost" size="icon" asChild>
             <Link
-              to="."
+              to={currentPath}
               aria-label="Table View"
               state={{ view: "table" }}
               aria-current={view === "table"}
@@ -224,7 +229,7 @@ export default function BatchCertificatesPage({
           </Button>
           <Button variant="ghost" size="icon" asChild>
             <Link
-              to="."
+              to={currentPath}
               aria-label="Grid View"
               state={{ view: "grid" }}
               aria-current={view === "grid"}
@@ -242,21 +247,21 @@ export default function BatchCertificatesPage({
             <TableRow>
               <TableHead>
                 <Button variant="ghost" className="pl-0" asChild>
-                  <Link to="." state={{ sort: "firstName" }}>
+                  <Link to={currentPath} state={{ sort: "firstName" }}>
                     Name {sort === "firstName" && <ArrowDown />}
                   </Link>
                 </Button>
               </TableHead>
               <TableHead className="font-medium">
                 <Button variant="ghost" className="pl-0" asChild>
-                  <Link to="." state={{ sort: "email" }}>
+                  <Link to={currentPath} state={{ sort: "email" }}>
                     Email {sort === "email" && <ArrowDown />}
                   </Link>
                 </Button>
               </TableHead>
               <TableHead>
                 <Button variant="ghost" className="pl-0" asChild>
-                  <Link to="." state={{ sort: "teamName" }}>
+                  <Link to={currentPath} state={{ sort: "teamName" }}>
                     Team {sort === "teamName" && <ArrowDown />}
                   </Link>
                 </Button>
@@ -264,7 +269,7 @@ export default function BatchCertificatesPage({
               <TableHead>
                 <div className="flex items-center">
                   <Button variant="ghost" className="pl-0" asChild>
-                    <Link to="." state={{ sort: "templateId" }}>
+                    <Link to={currentPath} state={{ sort: "templateId" }}>
                       Template {sort === "templateId" && <ArrowDown />}
                     </Link>
                   </Button>
