@@ -28,7 +28,8 @@ export function DownloadDialog({ zipUrl, printUrl }: DownloadDialogProps) {
   const [includeQR, setIncludeQR] = useState(false);
 
   const handleDownload = () => {
-    window.location.href = format === "zip" ? zipUrl : printUrl;
+    const base = format === "zip" ? zipUrl : printUrl;
+    window.location.href = includeQR ? `${base}?includeQR=true` : base;
     setOpen(false);
   };
 
@@ -67,9 +68,8 @@ export function DownloadDialog({ zipUrl, printUrl }: DownloadDialogProps) {
                 <FileText className="size-4" />
                 Single PDF for printing
               </div>
-              <p className="text-sm text-muted-foreground">
-                All certificates merged into one multi-page PDF, ready to print
-                or share as a single file.
+              <p className="text-sm text-muted-foreground text-pretty">
+                All certificates merged into one multi-page PDF, ready to be printed.
               </p>
             </div>
           </label>
@@ -83,7 +83,7 @@ export function DownloadDialog({ zipUrl, printUrl }: DownloadDialogProps) {
                 <FileArchive className="size-4" />
                 ZIP archive
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground text-pretty">
                 Each certificate as an individual PDF file, packed into a ZIP
                 archive.
               </p>
@@ -91,20 +91,26 @@ export function DownloadDialog({ zipUrl, printUrl }: DownloadDialogProps) {
           </label>
         </RadioGroup>
 
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="include-qr"
-            checked={includeQR}
-            onCheckedChange={(v) => setIncludeQR(v === true)}
-            disabled
-          />
-          <Label
-            htmlFor="include-qr"
-            className="text-muted-foreground cursor-not-allowed"
-          >
-            Include QR codes for unpublished certificates
-          </Label>
-        </div>
+        <label
+          htmlFor="include-qr"
+          className="flex flex-col gap-2 rounded-lg p-4 pt-2 cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="include-qr"
+              checked={includeQR}
+              onCheckedChange={(v) => setIncludeQR(v === true)}
+              className="cursor-pointer"
+            />
+            <Label htmlFor="include-qr" className="cursor-pointer">
+              Show QR codes for unpublished certificates
+            </Label>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            If you enable this option, make sure to publish the certificates
+            before handing over the printed version.
+          </p>
+        </label>
 
         <DialogFooter>
           <Button onClick={handleDownload}>Download now</Button>
