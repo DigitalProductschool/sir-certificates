@@ -77,14 +77,14 @@ export function BatchActionDialog({
 
   const pending = certificates.filter(filterFn);
   const initialDone = certificates.length - pending.length;
-  const totalDone = initialDone + done;
+  const totalDone = Math.min(initialDone + done, certificates.length);
   const progress =
     certificates.length > 0 ? (totalDone / certificates.length) * 100 : 0;
   const allDone = certificates.length > 0 && pending.length === 0;
 
   const handleStart = async () => {
     if (isRunningRef.current || pending.length === 0) return;
-    
+
     setIsRunning(true);
     isRunningRef.current = true;
 
