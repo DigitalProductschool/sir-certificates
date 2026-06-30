@@ -84,6 +84,69 @@ async function assembleTypefacesFromLayout(
 
 // @todo dry up the code for generateCertificate and generateCertificateTemplate
 
+export async function renderCertificatePDF(
+  batch: Batch,
+  certificate: CertificatesWithBatch,
+  template: Template,
+  forceQR = false,
+) {
+  // Get PDF template // @todo simplify by loading from path string?
+  const templatePath = `${dir}/templates/${certificate.templateId}.pdf`;
+  const templateBuffer = await readFile(templatePath);
+  const pdf = await PDFDocument.load(templateBuffer);
+
+  // Load custom fonts
+  pdf.registerFontkit(fontkit);
+  const fontMap = await assembleTypefacesFromLayout(pdf, template.layout);
+
+  // Get a page reference to apply modifications
+  const page = pdf.getPages()[0];
+
+  const texts = template.layout;
+  texts.forEach((text: PrismaJson.TextBlock) => {
+    const lines = text.lines.map((line: PrismaJson.TextSegment) => {
+      const replacements = replaceVariables(
+        line.text,
+        template.locale,
+        certificate,
+        batch,
+      );
+      return { text: replacements, font: fontMap.get(line.font)! };
+    });
+
+    drawTextBlock(page, lines, {
+      size: text.size,
+      lineHeight: text.lineHeight,
+      x: text.x,
+      y: text.y,
+      maxWidth: text.maxWidth,
+      color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
+      align: text.align,
+    });
+  });
+
+  // Add QR code only if the certificate has been published or user is forcing inclusion,
+  // and QR code is configured in template
+  if (
+    (certificate.publishedAt !== null || forceQR) &&
+    template.qrcode &&
+    template.qrcode.show === true
+  ) {
+    drawQRCode(
+      page,
+      `${domain}/view/${certificate.uuid}`,
+      template.qrcode.x,
+      template.qrcode.y,
+      template.qrcode.width,
+      template.qrcode.background,
+      template.qrcode.color,
+      template.qrcode.ec,
+    );
+  }
+
+  return Buffer.from(await pdf.save());
+}
+
 export async function generateCertificate(
   batch: Batch,
   certificate: CertificatesWithBatch,
@@ -104,69 +167,8 @@ export async function generateCertificate(
     }
   }
 
-  // Get PDF template // @todo simplify by loading from path string?
-  const templatePath = `${dir}/templates/${certificate.templateId}.pdf`;
-  const templateBuffer = await readFile(templatePath);
-  const pdf = await PDFDocument.load(templateBuffer);
-
-  // Load custom fonts
-  pdf.registerFontkit(fontkit);
-  const fontMap = await assembleTypefacesFromLayout(pdf, template.layout);
-
-  // Modify page
-  const page = pdf.getPages()[0];
-
-  const texts = template.layout;
-  texts.forEach((text: PrismaJson.TextBlock) => {
-    const lines = text.lines.map((line: PrismaJson.TextSegment) => {
-      const replacements = replaceVariables(
-        line.text,
-        template.locale,
-        certificate,
-        batch,
-      );
-
-      return {
-        text: replacements,
-        font: fontMap.get(line.font)!,
-      };
-    });
-
-    drawTextBlock(page, lines, {
-      size: text.size,
-      lineHeight: text.lineHeight,
-      x: text.x,
-      y: text.y,
-      maxWidth: text.maxWidth,
-      color: text.color ? rgb(...text.color) : rgb(0, 0, 0),
-      align: text.align,
-    });
-  });
-
-  // Add QR Code only if the certificate has been published
-  if (
-    certificate.publishedAt !== null &&
-    template.qrcode &&
-    template.qrcode.show === true
-  ) {
-    drawQRCode(
-      page,
-      `${domain}/view/${certificate.uuid}`,
-      template.qrcode.x,
-      template.qrcode.y,
-      template.qrcode.width,
-      template.qrcode.background,
-      template.qrcode.color,
-      template.qrcode.ec,
-    );
-  }
-
-  // Wrap up and return as buffer
-  const pdfBytes = await pdf.save();
-  const pdfBuffer = Buffer.from(pdfBytes);
-
+  const pdfBuffer = await renderCertificatePDF(batch, certificate, template);
   await writeFile(pdfFilePath, pdfBuffer);
-
   return pdfBuffer;
 }
 
@@ -608,12 +610,38 @@ export const sampleQR: PrismaJson.QRCode = {
   ec: "M",
 };
 
-export async function mergeCertificatesForPrint(certificates: Certificate[]) {
+export type CertEntry = { cert: Certificate; buffer?: Buffer };
+
+export async function resolveCertEntries(
+  certificates: CertificatesWithBatch[],
+  includeQR: boolean,
+): Promise<CertEntry[]> {
+  if (!includeQR) {
+    return certificates.map((cert) => ({ cert }));
+  }
+
+  const unpublished = certificates.filter((c) => c.publishedAt === null);
+  const templateIds = [...new Set(unpublished.map((c) => c.templateId))];
+  const templates = await prisma.template.findMany({ where: { id: { in: templateIds } } });
+  const templateMap = new Map(templates.map((t) => [t.id, t]));
+
+  const entries: CertEntry[] = [];
+  for (const cert of certificates) {
+    if (cert.publishedAt === null) {
+      const buffer = await renderCertificatePDF(cert.batch, cert, templateMap.get(cert.templateId)!, true);
+      entries.push({ cert, buffer });
+    } else {
+      entries.push({ cert });
+    }
+  }
+  return entries;
+}
+
+export async function mergeCertificatesForPrint(entries: CertEntry[]) {
   const mergedPdf = await PDFDocument.create();
 
-  for (const cert of certificates) {
-    const pdfPath = `${certDir}/${cert.id}.pdf`;
-    const pdfBytes = await readFile(pdfPath);
+  for (const { cert, buffer } of entries) {
+    const pdfBytes = buffer ?? (await readFile(`${certDir}/${cert.id}.pdf`));
     const certPdf = await PDFDocument.load(pdfBytes);
     const copiedPages = await mergedPdf.copyPages(certPdf, certPdf.getPageIndices());
     copiedPages.forEach((page) => mergedPdf.addPage(page));
@@ -629,12 +657,10 @@ export async function mergeCertificatesForPrint(certificates: Certificate[]) {
   });
 }
 
-export function downloadCertificates(certificates: Certificate[]) {
-  // PassThrough stream for piping the archive directly to the response
+export function downloadCertificates(entries: CertEntry[]) {
+  // PassThrough stream for piping the archive directly to the response  
   const stream = new PassThrough();
-  const archive = archiver("zip", {
-    zlib: { level: 9 }, // Sets the compression level.
-  });
+  const archive = archiver("zip", { zlib: { level: 9 } });
   const zipFilename = "certificates.zip";
 
   archive.on("error", (err: Error) => {
@@ -642,24 +668,23 @@ export function downloadCertificates(certificates: Certificate[]) {
     stream.emit("error", err);
   });
 
-  // Pipe archive data into the PassThrough stream
   archive.pipe(stream);
 
-  // Add files to the archive
-  certificates.forEach((cert) => {
-    archive.file(`${certDir}/${cert.id}.pdf`, {
-      name: cert.teamName
-        ? `${slug(cert.teamName)}/${slug(cert.firstName)} ${slug(
-            cert.lastName || "",
-          )}.certificate.pdf`
-        : `${slug(cert.firstName)} ${slug(cert.lastName || "")}.certificate.pdf`,
-    });
+  entries.forEach(({ cert, buffer }) => {
+    const name = cert.teamName
+      ? `${slug(cert.teamName)}/${slug(cert.firstName)} ${slug(cert.lastName || "")}.certificate.pdf`
+      : `${slug(cert.firstName)} ${slug(cert.lastName || "")}.certificate.pdf`;
+
+    if (buffer) {
+      archive.append(buffer, { name });
+    } else {
+      archive.file(`${certDir}/${cert.id}.pdf`, { name });
+    }
   });
 
   // Finalize the archive (starts streaming to the response)
   archive.finalize();
 
-  // Return the streaming response
   return new Response(stream as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/zip",
