@@ -46,9 +46,9 @@ export function SidebarParticipant({
           to="/"
           className="duration-200 transition-all flex items-center shrink-0 gap-1 text-black group-data-[collapsible=icon]:size-6"
         >
-          <img src={`/logo/org.svg`} alt="Logo" className="size-6" />
+          <img src={`/logo/org.svg`} alt="Logo" className="size-6 dark:invert" />
 
-          <span className="duration-200 transition-[width] w-30 overflow-hidden text-xl font-bold group-data-[collapsible=icon]:w-0">
+          <span className="duration-200 transition-[width] w-30 overflow-hidden text-xl font-bold group-data-[collapsible=icon]:w-0 dark:invert">
             Certificates
           </span>
           <span className="sr-only">Certificates</span>
@@ -68,7 +68,7 @@ export function SidebarParticipant({
                 >
                   <NavLink to={`/view/${cert.uuid}`}>
                     {cert.batch.program.logo ? (
-                      <div className="flex size-8 aspect-square items-center justify-center rounded-lg bg-white">
+                      <div className="flex size-8 aspect-square items-center justify-center rounded-lg bg-white dark:bg-black/50">
                         <img
                           src={`/logo/program/${cert.batch.program.logo.uuid}.svg`}
                           alt={cert.batch.program.name}
