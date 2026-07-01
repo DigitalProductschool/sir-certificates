@@ -72,7 +72,7 @@ export default function OrgDashboard({ loaderData }: Route.ComponentProps) {
             </div>
           </header>
           {/* @todo push the layout container further down into the Outlet and render the Outlet directly. Layout control should stay with the routes */}
-          <div className="grid flex-1 items-start gap-4 px-4">
+          <div className="grid flex-1 items-start gap-4 px-4 pb-8">
             <Outlet />
           </div>
         </SidebarInset>
