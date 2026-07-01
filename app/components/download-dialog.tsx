@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, FileArchive, FileText } from "lucide-react";
+import { Download, FileArchive, FileText, Loader2 } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -26,15 +26,45 @@ export function DownloadDialog({ zipUrl, printUrl }: DownloadDialogProps) {
   const [open, setOpen] = useState(false);
   const [format, setFormat] = useState<DownloadFormat>("print");
   const [includeQR, setIncludeQR] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    setIsDownloading(true);
     const base = format === "zip" ? zipUrl : printUrl;
-    window.location.href = includeQR ? `${base}?includeQR=true` : base;
-    setOpen(false);
+    const url = includeQR ? `${base}?includeQR=true` : base;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Download failed");
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+
+      const disposition = response.headers.get("content-disposition");
+      const match = disposition?.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      a.download = match
+        ? match[1].replace(/['"]/g, "")
+        : format === "zip"
+          ? "certificates.zip"
+          : "certificates.pdf";
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+
+      setOpen(false);
+    } catch {
+      window.location.href = url;
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => !isDownloading && setOpen(v)}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <Download />
@@ -53,6 +83,7 @@ export function DownloadDialog({ zipUrl, printUrl }: DownloadDialogProps) {
           value={format}
           onValueChange={(v) => setFormat(v as DownloadFormat)}
           className="flex flex-col gap-3"
+          disabled={isDownloading}
         >
           <label
             htmlFor="format-print"
@@ -101,6 +132,7 @@ export function DownloadDialog({ zipUrl, printUrl }: DownloadDialogProps) {
               checked={includeQR}
               onCheckedChange={(v) => setIncludeQR(v === true)}
               className="cursor-pointer"
+              disabled={isDownloading}
             />
             <Label htmlFor="include-qr" className="cursor-pointer">
               Show QR codes for unpublished certificates
@@ -113,7 +145,16 @@ export function DownloadDialog({ zipUrl, printUrl }: DownloadDialogProps) {
         </label>
 
         <DialogFooter>
-          <Button onClick={handleDownload}>Download now</Button>
+          <Button onClick={handleDownload} disabled={isDownloading}>
+            {isDownloading ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Preparing download…
+              </>
+            ) : (
+              "Download certificates"
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

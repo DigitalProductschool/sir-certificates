@@ -187,7 +187,7 @@ export default function BatchCertificatesPage({
           primary={!hasPublishedCertificates}
           title="Publish all certificates"
           description="A published certificate will be accessible online through it's unique link and also visible to logged-in users. Published certificates can also be verified through the included QR code. The certificates are not being emailed to recipients during this step."
-          actionLabel="Publish Now"
+          actionLabel="Publish certificates"
           progressLabel="published"
           allDoneMessage="all certificates published"
           toastTitle="All certificates published!"
@@ -203,7 +203,7 @@ export default function BatchCertificatesPage({
           primary={hasPublishedCertificates && !hasNotifiedCertificates}
           title="Send all certificates"
           description="Each participant will receive an email with their certificate attached as a PDF. Unpublished certificates will also be sent, but without a link to the online certificate."
-          actionLabel="Send Now"
+          actionLabel="Send certificates"
           progressLabel="sent"
           allDoneMessage="all certificates sent via email"
           toastTitle="All certificates sent!"
