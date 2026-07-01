@@ -121,7 +121,6 @@ export function BatchActionDialog({
 
   const handlePause = () => {
     isRunningRef.current = false;
-    revalidator.revalidate();
   };
 
   return (
