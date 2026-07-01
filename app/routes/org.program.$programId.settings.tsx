@@ -69,7 +69,7 @@ export default function ProgramSettings() {
       <div className="grid gap-8 py-4 max-w-[625px]">
         <section className="flex flex-col gap-2">
           <Label htmlFor="name">Program Name</Label>
-          <FormUpdate key={program.updatedAt}>
+          <FormUpdate>
             <Input id="name" name="name" defaultValue={program.name} required />
           </FormUpdate>
         </section>
@@ -80,7 +80,7 @@ export default function ProgramSettings() {
             Describe the key achievements the certificate is representing in a
             few words.
           </p>
-          <FormUpdate key={program.updatedAt}>
+          <FormUpdate>
             <Textarea
               id="achievement"
               name="achievement"
@@ -95,7 +95,7 @@ export default function ProgramSettings() {
             Provide a short description of the program.
           </p>
 
-          <FormUpdate key={program.updatedAt}>
+          <FormUpdate>
             <Textarea
               id="about"
               name="about"
@@ -112,7 +112,7 @@ export default function ProgramSettings() {
             directly to the application page.
           </p>
 
-          <FormUpdate key={program.updatedAt}>
+          <FormUpdate>
             <Input
               id="website"
               name="website"

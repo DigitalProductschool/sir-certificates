@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher, type HTMLFormMethod } from "react-router";
 import { LoaderCircle, Undo2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -20,6 +20,15 @@ export function FormUpdate({
 	const formRef = useRef<HTMLFormElement | null>(null);
 	const [hasChanges, setHasChanges] = useState(false);
 	const [isValid, setIsValid] = useState(false);
+	const prevFetcherState = useRef(fetcher.state);
+
+	useEffect(() => {
+		if (prevFetcherState.current !== "idle" && fetcher.state === "idle") {
+			formRef.current?.reset();
+			setHasChanges(false);
+		}
+		prevFetcherState.current = fetcher.state;
+	}, [fetcher.state]);
 
 	return (
 		<fetcher.Form
