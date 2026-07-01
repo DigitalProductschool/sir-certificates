@@ -32,7 +32,7 @@ export function ErrorPublic({
 					<>
 						<title>{customErrors[404]?.title || "Not found"}</title>
 						<TiffyLost className="size-24" />
-						<p>
+						<p className="text-center text-balance">
 							{customErrors[404]?.message ||
 								"The page you were looking for is not here."}
 						</p>
@@ -48,7 +48,7 @@ export function ErrorPublic({
 					<>
 						<title>{customErrors[403]?.title || "Access denied"}</title>
 						<TiffyBroken className="size-24" />
-						<p>
+						<p className="text-center text-balance">
 							{customErrors[403]?.message ||
 								"You need an additional permission to access this page."}
 						</p>
@@ -64,7 +64,7 @@ export function ErrorPublic({
 					<>
 						<title>{customErrors[400]?.title || "Uhhhhmmmm"}</title>
 						<TiffyLost className="size-24" />
-						<p>
+						<p className="text-center text-balance">
 							{customErrors[400]?.message ||
 								"We got a badly mangled request or invalid input data. In any case, no idea how to proceed here."}
 						</p>
