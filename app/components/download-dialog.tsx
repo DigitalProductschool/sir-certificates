@@ -41,14 +41,7 @@ export function DownloadDialog({ zipUrl, printUrl }: DownloadDialogProps) {
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = objectUrl;
-
-      const disposition = response.headers.get("content-disposition");
-      const match = disposition?.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      a.download = match
-        ? match[1].replace(/['"]/g, "")
-        : format === "zip"
-          ? "certificates.zip"
-          : "certificates.pdf";
+      a.download = format === "zip" ? "certificates.zip" : "certificates-print.pdf";
 
       document.body.appendChild(a);
       a.click();
