@@ -153,7 +153,7 @@ export default function BatchCertificatesPage({
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-8">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center gap-4">
         <Button variant="outline" asChild>
           <Link to="create">
