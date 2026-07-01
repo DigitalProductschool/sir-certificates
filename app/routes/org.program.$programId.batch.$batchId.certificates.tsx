@@ -377,7 +377,7 @@ export default function BatchCertificatesPage({
                       {cert.publishedAt ? (
                         <Tooltip>
                           <TooltipTrigger>
-                            <BadgeCheck className="size-5 text-gray-600" />
+                            <BadgeCheck className="size-5 text-gray-600 dark:text-gray-400" />
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             Published at
@@ -386,13 +386,13 @@ export default function BatchCertificatesPage({
                           </TooltipContent>
                         </Tooltip>
                       ) : (
-                        <BadgeIcon className="size-5 text-gray-200" />
+                        <BadgeIcon className="size-5 text-gray-200 dark:text-gray-700" />
                       )}
 
                       {cert.notifiedAt ? (
                         <Tooltip>
                           <TooltipTrigger>
-                            <MailCheck className="size-5 text-gray-600" />
+                            <MailCheck className="size-5 text-gray-600 dark:text-gray-400" />
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             Mail sent
@@ -401,7 +401,7 @@ export default function BatchCertificatesPage({
                           </TooltipContent>
                         </Tooltip>
                       ) : (
-                        <MailOpen className="size-5 text-gray-200" />
+                        <MailOpen className="size-5 text-gray-200 dark:text-gray-700" />
                       )}
                     </div>
                   </TableCell>
@@ -453,7 +453,7 @@ export default function BatchCertificatesPage({
                         </TooltipContent>
                       </Tooltip>
                     ) : (
-                      <BadgeIcon className="size-5 text-gray-200" />
+                      <BadgeIcon className="size-5 text-gray-200 dark:text-gray-700" />
                     )}
                     {cert.firstName} {cert.lastName}
                   </div>
