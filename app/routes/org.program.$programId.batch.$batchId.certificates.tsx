@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   MailCheck,
   MailOpen,
+  RefreshCw,
   Send,
   TableIcon,
 } from "lucide-react";
@@ -94,13 +95,13 @@ export default function BatchCertificatesPage({
     templatesMap.set(template.id, template);
   }
 
-  let certificatesNeedsRefresh = 0;
+  const certificatesNeedingRefresh = new Set<number>();
   for (const certificate of certificates) {
     const lastTemplateUpdate = templatesMap.get(
       certificate.templateId,
     )?.updatedAt;
     if (lastTemplateUpdate && lastTemplateUpdate > certificate.updatedAt) {
-      certificatesNeedsRefresh++;
+      certificatesNeedingRefresh.add(certificate.id);
     }
   }
 
@@ -172,6 +173,25 @@ export default function BatchCertificatesPage({
         </Button>
 
         <div className="flex-grow">&emsp;</div>
+
+        {certificatesNeedingRefresh.size > 0 && (
+          <BatchActionDialog
+            certificates={certificates}
+            triggerIcon={<RefreshCw />}
+            triggerLabel="Refresh All"
+            primary={true}
+            title="Refresh all certificates"
+            description="Some certificates are based on a template that has been updated since they were last generated. Refreshing will regenerate them with the latest version of the template."
+            actionLabel="Refresh certificates"
+            progressLabel="are up to date"
+            allDoneMessage="all certificates up to date"
+            toastTitle="All certificates refreshed!"
+            filterFn={(c) => certificatesNeedingRefresh.has(c.id)}
+            getEndpoint={(c) =>
+              `/org/program/${params.programId}/batch/${params.batchId}/certificates/${c.id}/refresh`
+            }
+          />
+        )}
 
         <DownloadDialog
           zipUrl={`/org/program/${params.programId}/batch/${params.batchId}/certificates/download.zip`}
@@ -272,15 +292,15 @@ export default function BatchCertificatesPage({
                     </Link>
                   </Button>
                   &emsp;
-                  {certificatesNeedsRefresh > 0 && (
+                  {certificatesNeedingRefresh.size > 0 && (
                     <Tooltip>
                       <TooltipTrigger>
                         <Badge variant="destructive">
-                          {certificatesNeedsRefresh}
+                          {certificatesNeedingRefresh.size}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        {certificatesNeedsRefresh} certificates need to be
+                        {certificatesNeedingRefresh.size} certificates need to be
                         refreshed
                       </TooltipContent>
                     </Tooltip>
