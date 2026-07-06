@@ -233,7 +233,7 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
           screen.
         </p>
         <p className="text-sm text-muted-foreground max-w-[500px]">
-          This needs to be a scalable vector image (SVG).
+          This needs to be a scalable vector image (SVG) and it can also be an animated SVG.
         </p>
         <div className="flex gap-4 mt-2 items-start">
           <div
