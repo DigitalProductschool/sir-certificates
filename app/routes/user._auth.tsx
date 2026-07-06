@@ -12,7 +12,12 @@ export default function UserBalloons() {
   return (
     <div className="h-screen grid grid-cols-2">
       {!isMobile && (
-        <div className="relative bg-zinc-900 flex flex-col">
+        <div
+          className="relative flex flex-col"
+          style={{
+            backgroundColor: org?.brandImage?.backgroundColor ?? "#18181b",
+          }}
+        >
           <div className="absolute top-8 inset-x-8 flex text-white items-center">
             <img
               src={`/asset/logo.svg`}
