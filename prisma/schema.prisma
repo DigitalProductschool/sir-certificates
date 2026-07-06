@@ -78,16 +78,17 @@ model UserPhoto {
 
 
 model Organisation {
-  id            Int       @id @default(autoincrement())  
+  id            Int       @id @default(autoincrement())
   name          String
   imprintUrl    String?   @db.VarChar(128)
   privacyUrl    String?   @db.VarChar(128)
   senderEmail   String?   @db.VarChar(128)
-  senderName    String?   @db.VarChar(128) 
+  senderName    String?   @db.VarChar(128)
   updatedAt     DateTime  @updatedAt
-  logo          OrganisationLogo?  
+  logo          OrganisationLogo?
+  brandImage    OrganisationBrandImage?
 
-  @@map("organisation")  
+  @@map("organisation")
 }
 
 model OrganisationLogo {
@@ -99,6 +100,17 @@ model OrganisationLogo {
   orgId         Int       @unique
 
   @@map("organisation_logo")
+}
+
+model OrganisationBrandImage {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique @db.Uuid
+  contentType   String    @db.VarChar(64)
+  updatedAt     DateTime  @updatedAt
+  org           Organisation @relation(fields: [orgId], references: [id])
+  orgId         Int       @unique
+
+  @@map("organisation_brand_image")
 }
 
 model Program {

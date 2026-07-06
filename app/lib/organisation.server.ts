@@ -1,4 +1,4 @@
-import type { OrganisationLogo, Prisma } from "~/generated/prisma/client";
+import type { OrganisationLogo, OrganisationBrandImage, Prisma } from "~/generated/prisma/client";
 import type { FileUpload } from "@remix-run/form-data-parser";
 import { unlink } from "node:fs/promises";
 import { openLazyFile, writeFile as lazyWriteFile } from "@remix-run/fs";
@@ -10,6 +10,7 @@ import { logoDir } from "./program.server";
 export type OrgWithLogo = Prisma.OrganisationGetPayload<{
 	include: {
 		logo: true;
+		brandImage: true;
 	};
 }>;
 
@@ -19,6 +20,7 @@ export type PublicOrgWithLogo = Prisma.OrganisationGetPayload<{
 		imprintUrl: true;
 		privacyUrl: true;
 		logo: true;
+		brandImage: true;
 	};
 }>;
 
@@ -36,6 +38,7 @@ export async function getOrg(): Promise<OrgWithLogo> {
 			},
 			include: {
 				logo: true,
+				brandImage: true,
 			},
 		});
 
@@ -50,6 +53,7 @@ export async function getOrg(): Promise<OrgWithLogo> {
 				senderName: null,
 				updatedAt: new Date(),
 				logo: null,
+				brandImage: null,
 			};
 		}
 	}
@@ -70,6 +74,7 @@ export async function getPublicOrg(): Promise<PublicOrgWithLogo> {
 				imprintUrl: true,
 				privacyUrl: true,
 				logo: true,
+				brandImage: true,
 			},
 		});
 
@@ -80,6 +85,7 @@ export async function getPublicOrg(): Promise<PublicOrgWithLogo> {
 				imprintUrl: null,
 				privacyUrl: null,
 				logo: null,
+				brandImage: null,
 			};
 		}
 	}
@@ -98,6 +104,7 @@ export async function saveOrg(update: {
 		data: update,
 		include: {
 			logo: true,
+			brandImage: true,
 		},
 	});
 	return org;
@@ -110,6 +117,7 @@ export async function refreshCachedOrg() {
 		},
 		include: {
 			logo: true,
+			brandImage: true,
 		},
 	});
 	publicOrg = await prisma.organisation.findUnique({
@@ -121,6 +129,7 @@ export async function refreshCachedOrg() {
 			imprintUrl: true,
 			privacyUrl: true,
 			logo: true,
+			brandImage: true,
 		},
 	});
 	return { org, publicOrg };
@@ -178,6 +187,64 @@ export async function deleteOrganisationLogo(logo: OrganisationLogo) {
 		(error) => {
 			console.error(
 				`Encountered the following error when trying to delete the organisation logo file in storage for ID ${logo.id}:`,
+			);
+			console.error(error);
+		},
+	);
+}
+
+export async function saveOrganisationBrandImageUpload(
+	brandImage: OrganisationBrandImage,
+	image: FileUpload,
+) {
+	const folderCreated = await ensureFolderExists(logoDir);
+	if (!folderCreated) {
+		throw new Error("Could not create social storage folder");
+	}
+
+	let extension: "svg" | "unkown";
+	switch (image.type) {
+		case "image/svg+xml":
+			extension = "svg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	const filepath = `${logoDir}/_org.${brandImage.id}.brand-image.${extension}`;
+	await lazyWriteFile(filepath, image);
+	return openLazyFile(filepath);
+}
+
+export async function readOrganisationBrandImage(brandImage: OrganisationBrandImage) {
+	let extension: "svg" | "unkown";
+	switch (brandImage.contentType) {
+		case "image/svg+xml":
+			extension = "svg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	return await readFileIfExists(
+		`${logoDir}/_org.${brandImage.id}.brand-image.${extension}`,
+	);
+}
+
+export async function deleteOrganisationBrandImage(brandImage: OrganisationBrandImage) {
+	let extension: "svg" | "unkown";
+	switch (brandImage.contentType) {
+		case "image/svg+xml":
+			extension = "svg";
+			break;
+		default:
+			extension = "unkown";
+	}
+
+	return await unlink(`${logoDir}/_org.${brandImage.id}.brand-image.${extension}`).catch(
+		(error) => {
+			console.error(
+				`Encountered the following error when trying to delete the organisation brand image file in storage for ID ${brandImage.id}:`,
 			);
 			console.error(error);
 		},

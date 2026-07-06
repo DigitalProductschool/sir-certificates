@@ -23,7 +23,7 @@ export default function VerificationInfoPage({
 		<div className="h-screen flex flex-col items-center justify-center px-4">
 			<div className="grow"></div>
 			<img
-				src={`/logo/org.svg`}
+				src={`/asset/logo.svg`}
 				alt=""
 				className="size-20 dark:invert"
 				role="presentation"

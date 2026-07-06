@@ -12,10 +12,10 @@ export default function UserBalloons() {
   return (
     <div className="h-screen grid grid-cols-2">
       {!isMobile && (
-        <div className="relative h-screen bg-zinc-900">
+        <div className="relative bg-zinc-900 flex flex-col">
           <div className="absolute top-8 inset-x-8 flex text-white items-center">
             <img
-              src={`/logo/org.svg`}
+              src={`/asset/logo.svg`}
               alt=""
               className="size-12 invert"
               role="presentation"
@@ -25,6 +25,14 @@ export default function UserBalloons() {
               Certificates
             </span>
           </div>
+          {org?.brandImage && (
+            <img
+              src={`/asset/brand-image.svg?t=${org.brandImage.updatedAt}`}
+              alt=""
+              role="presentation"
+              className="flex-1 object-contain p-[20%] min-h-[300px]"
+            />
+          )}
         </div>
       )}
       <div
@@ -49,7 +57,7 @@ export default function UserBalloons() {
         {isMobile && (
           <>
             <img
-              src={`/logo/org.svg`}
+              src={`/asset/logo.svg`}
               alt=""
               className="size-20 dark:invert"
               role="presentation"
@@ -57,7 +65,7 @@ export default function UserBalloons() {
           </>
         )}
         <Outlet />
-        <div className="grow flex flex-row justify-center items-end gap-4 pb-5 text-xs">
+        <div className="grow flex justify-center items-end gap-4 pb-5 text-xs">
           {org?.imprintUrl && (
             <a href={org.imprintUrl} target="_blank" rel="noopener noreferrer">
               Imprint

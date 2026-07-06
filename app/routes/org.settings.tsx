@@ -53,7 +53,9 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
   const { org } = loaderData;
 
   const fetcherIcon = useFetcher({ key: "program-icon" });
+  const fetcherBrandImage = useFetcher({ key: "org-brand-image" });
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const brandImageFileRef = useRef<HTMLInputElement | null>(null);
 
   const handleUploadClick = () => {
     fileRef.current?.click();
@@ -62,6 +64,22 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
   const handleFileChanged = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.value) {
       fetcherIcon.submit(event.currentTarget.form, {
+        method: "POST",
+        encType: "multipart/form-data",
+      });
+      window.setTimeout(() => {
+        event.target.value = "";
+      }, 100);
+    }
+  };
+
+  const handleBrandImageUploadClick = () => {
+    brandImageFileRef.current?.click();
+  };
+
+  const handleBrandImageFileChanged = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.value) {
+      fetcherBrandImage.submit(event.currentTarget.form, {
         method: "POST",
         encType: "multipart/form-data",
       });
@@ -134,7 +152,7 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
         </FormUpdate>
       </section>
 
-      <section className="flex flex-col gap-2 pb-24">
+      <section className="flex flex-col gap-2">
         <h2>Logo</h2>
         <p className="text-sm text-muted-foreground max-w-[500px]">
           Add the black logo mark of your organisation. If available, a compact
@@ -150,7 +168,7 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
           <div className="border rounded-lg aspect-square w-36 p-4 bg-white flex justify-center items-center">
             {org.logo ? (
               <img
-                src={`/logo/org.svg?t=${org.logo.updatedAt}`}
+                src={`/asset/logo.svg?t=${org.logo.updatedAt}`}
                 alt=""
                 role="presentation"
               />
@@ -162,7 +180,7 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
             {org.logo ? (
 
               <img
-                src={`/logo/org.svg?t=${org.logo.updatedAt}`}
+                src={`/asset/logo.svg?t=${org.logo.updatedAt}`}
                 alt=""
                 role="presentation"
                 className="invert"
@@ -199,6 +217,62 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
               <Form action={`logo-delete`} method="POST" className="flex grow">
                 <Button type="submit" variant="outline">
                   <Trash2Icon /> Remove logo
+                </Button>
+              </Form>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-2 pb-24">
+        <h2>Brand Image</h2>
+        <p className="text-sm text-muted-foreground max-w-[500px]">
+          Add a brand image or key visual illustration to be shown on the login
+          screen. It will be displayed on a dark background.
+        </p>
+        <p className="text-sm text-muted-foreground max-w-[500px]">
+          This needs to be a scalable vector image (SVG).
+        </p>
+        <div className="flex gap-4 mt-2 items-start">
+          <div className="border rounded-lg border-zinc-700 aspect-square w-56 p-6 bg-zinc-900 flex justify-center items-center">
+            {org.brandImage ? (
+              <img
+                src={`/asset/brand-image.svg?t=${org.brandImage.updatedAt}`}
+                alt=""
+                role="presentation"
+              />
+            ) : (
+              <span className="text-zinc-500 text-sm">No brand image</span>
+            )}
+          </div>
+          <div className="flex flex-col gap-2 items-stretch">
+            <fetcherBrandImage.Form
+              method="POST"
+              action="brand-image-upload"
+              encType="multipart/form-data"
+            >
+              <input
+                type="file"
+                accept="image/svg+xml"
+                name="orgBrandImage"
+                ref={brandImageFileRef}
+                hidden
+                onChange={handleBrandImageFileChanged}
+              />
+              <Button
+                type="button"
+                onClick={handleBrandImageUploadClick}
+                disabled={fetcherBrandImage.state !== "idle"}
+                className="w-full"
+              >
+                <ImageUp />
+                {org.brandImage ? "Replace" : "Upload"} brand image
+              </Button>
+            </fetcherBrandImage.Form>
+            {org.brandImage && (
+              <Form action="brand-image-delete" method="POST" className="flex grow">
+                <Button type="submit" variant="outline">
+                  <Trash2Icon /> Remove brand image
                 </Button>
               </Form>
             )}

@@ -4,7 +4,7 @@ import { readOrganisationLogo } from "~/lib/organisation.server";
 export async function loader() {
 	const logo = await prisma.organisationLogo.findUnique({
 		where: {
-			id: 1,
+			orgId: 1,
 		},
 	});
 
