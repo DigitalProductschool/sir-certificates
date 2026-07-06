@@ -46,7 +46,7 @@ export function SidebarParticipant({
           to="/"
           className="duration-200 transition-all flex items-center shrink-0 gap-1 text-black group-data-[collapsible=icon]:size-6"
         >
-          <img src={`/logo/org.svg`} alt="Logo" className="size-6 dark:invert" />
+          <img src={`/asset/logo.svg`} alt="Logo" className="size-6 dark:invert" />
 
           <span className="duration-200 transition-[width] w-30 overflow-hidden text-xl font-bold group-data-[collapsible=icon]:w-0 dark:invert">
             Certificates

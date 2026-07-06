@@ -24,7 +24,7 @@ export default function ForgotPasswordNextSteps({
 			<div className="grow"></div>
 
             <img
-              src={`/logo/org.svg`}
+              src={`/asset/logo.svg`}
               alt=""
               className="size-20 dark:invert"
               role="presentation"

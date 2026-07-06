@@ -1,33 +1,32 @@
-import type { Route } from "./+types/org.settings.logo-delete";
+import type { Route } from "./+types/org.settings.brand-image-delete";
 import { redirect } from "react-router";
 
 import { requireSuperAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import {
-  deleteOrganisationLogo,
+  deleteOrganisationBrandImage,
   refreshCachedOrg,
 } from "~/lib/organisation.server";
 
 export async function action({ request }: Route.ActionArgs) {
   await requireSuperAdmin(request);
 
-  // Clean up existing logo image
-  const existingLogo = await prisma.organisationLogo.findUnique({
+  const existingBrandImage = await prisma.organisationBrandImage.findUnique({
     where: {
       orgId: 1,
     },
   });
-  if (existingLogo) {
+  if (existingBrandImage) {
     try {
-      await deleteOrganisationLogo(existingLogo);
+      await deleteOrganisationBrandImage(existingBrandImage);
     } catch (error) {
       console.log(error);
-      // If the file was not on disk, we ignore that and proceed with deleting the record
+      // If the file was not on disk, ignore and proceed with deleting the record
     }
 
-    await prisma.organisationLogo.delete({
+    await prisma.organisationBrandImage.delete({
       where: {
-        id: existingLogo.id,
+        id: existingBrandImage.id,
       },
     });
 

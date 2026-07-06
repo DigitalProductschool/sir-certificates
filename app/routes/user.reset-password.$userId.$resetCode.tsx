@@ -179,7 +179,7 @@ export default function ResetPassword({
 			<div className="grow"></div>
 
 			<img
-				src={`/logo/org.svg`}
+				src={`/asset/logo.svg`}
 				alt=""
 				className="size-20 dark:invert"
 				role="presentation"
@@ -283,7 +283,7 @@ export function ErrorBoundary() {
 			<div className="grow"></div>
 
 			<img
-				src={`/logo/org.svg`}
+				src={`/asset/logo.svg`}
 				alt=""
 				className="size-12"
 				role="presentation"
