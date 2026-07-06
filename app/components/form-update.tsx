@@ -1,22 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { useFetcher, type HTMLFormMethod } from "react-router";
+import { useFetcher, type FetcherFormProps } from "react-router";
 import { LoaderCircle, Undo2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 
-interface FormUpdateProps {
-	action?: string;
-	method?: HTMLFormMethod;
-	className?: string;
+interface FormUpdateProps extends Omit<FetcherFormProps, "onChange" | "ref"> {
 	children: React.ReactNode;
-	preventScrollReset?: boolean;
 }
 
 export function FormUpdate({
 	children,
-	action,
 	method = "POST",
 	className = "",
 	preventScrollReset = true,
+	...props
 }: FormUpdateProps) {
 	const fetcher = useFetcher();
 	const formRef = useRef<HTMLFormElement | null>(null);
@@ -34,8 +30,8 @@ export function FormUpdate({
 
 	return (
 		<fetcher.Form
+			{...props}
 			ref={formRef}
-			action={action}
 			method={method}
 			className={`flex gap-2 ${className}`}
 			onChange={() => {
