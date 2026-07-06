@@ -56,6 +56,7 @@ export async function action({ request }: Route.ActionArgs) {
     }
   };
 
+  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@remix-run/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
   const formData = await parseFormData(
     request,
     { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
