@@ -77,7 +77,9 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
     brandImageFileRef.current?.click();
   };
 
-  const handleBrandImageFileChanged = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleBrandImageFileChanged = (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
     if (event.target.value) {
       fetcherBrandImage.submit(event.currentTarget.form, {
         method: "POST",
@@ -156,7 +158,8 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
         <h2>Logo</h2>
         <p className="text-sm text-muted-foreground max-w-[500px]">
           Add the black logo mark of your organisation. If available, a compact
-          (square-ish) version of the logo works best. We will show the inverted logo when the user has dark mode enabled.
+          (square-ish) version of the logo works best. We will show the inverted
+          logo when the user has dark mode enabled.
         </p>
         <p className="text-sm text-muted-foreground max-w-[500px]">
           This needs to be a scalable vector image (SVG) and the logo should be
@@ -178,7 +181,6 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
           </div>
           <div className="border rounded-lg border-slate-600 aspect-square w-36 p-4 bg-slate-900 flex justify-center items-center">
             {org.logo ? (
-
               <img
                 src={`/asset/logo.svg?t=${org.logo.updatedAt}`}
                 alt=""
@@ -228,13 +230,18 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
         <h2>Brand Image</h2>
         <p className="text-sm text-muted-foreground max-w-[500px]">
           Add a brand image or key visual illustration to be shown on the login
-          screen. It will be displayed on a dark background.
+          screen.
         </p>
         <p className="text-sm text-muted-foreground max-w-[500px]">
           This needs to be a scalable vector image (SVG).
         </p>
         <div className="flex gap-4 mt-2 items-start">
-          <div className="border rounded-lg border-zinc-700 aspect-square w-56 p-6 bg-zinc-900 flex justify-center items-center">
+          <div
+            className="border rounded-lg border-zinc-700 aspect-square w-76 p-6 flex justify-center items-center"
+            style={{
+              backgroundColor: org.brandImage?.backgroundColor ?? "#18181b",
+            }}
+          >
             {org.brandImage ? (
               <img
                 src={`/asset/brand-image.svg?t=${org.brandImage.updatedAt}`}
@@ -270,11 +277,32 @@ export default function OrgSettings({ loaderData }: Route.ComponentProps) {
               </Button>
             </fetcherBrandImage.Form>
             {org.brandImage && (
-              <Form action="brand-image-delete" method="POST" className="flex grow">
+              <Form
+                action="brand-image-delete"
+                method="POST"
+                className="flex grow"
+              >
                 <Button type="submit" variant="outline">
                   <Trash2Icon /> Remove brand image
                 </Button>
               </Form>
+            )}
+            {org.brandImage && (
+              <div className="flex flex-col gap-2 mt-2">
+                <Label htmlFor="backgroundColor">Background color</Label>
+                <FormUpdate
+                  key={`brand-image-color-${org.brandImage.backgroundColor}`}
+                  action="brand-image-color"
+                >
+                  <input
+                    type="color"
+                    id="backgroundColor"
+                    name="backgroundColor"
+                    defaultValue={org.brandImage.backgroundColor ?? "#18181b"}
+                    className="h-9 w-16 cursor-pointer rounded-md border border-input px-1 py-1"
+                  />
+                </FormUpdate>
+              </div>
             )}
           </div>
         </div>

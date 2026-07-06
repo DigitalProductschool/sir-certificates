@@ -8,6 +8,7 @@ interface FormUpdateProps {
 	method?: HTMLFormMethod;
 	className?: string;
 	children: React.ReactNode;
+	preventScrollReset?: boolean;
 }
 
 export function FormUpdate({
@@ -15,6 +16,7 @@ export function FormUpdate({
 	action,
 	method = "POST",
 	className = "",
+	preventScrollReset = true,
 }: FormUpdateProps) {
 	const fetcher = useFetcher();
 	const formRef = useRef<HTMLFormElement | null>(null);
@@ -40,6 +42,7 @@ export function FormUpdate({
 				setHasChanges(true);
 				setIsValid(formRef?.current?.checkValidity() ?? false);
 			}}
+			preventScrollReset={preventScrollReset}
 		>
 			{children}
 			<div className="flex gap-2">
