@@ -1,0 +1,7 @@
+User-agent: *
+
+Disallow: /org/
+Disallow: /user/
+
+Allow: /view/
+Allow: /$
