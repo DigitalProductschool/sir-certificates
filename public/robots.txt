@@ -4,4 +4,5 @@ Disallow: /org/
 Disallow: /user/
 
 Allow: /view/
+Allow: /user/sign/in
 Allow: /$
