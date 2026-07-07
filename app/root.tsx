@@ -17,7 +17,10 @@ import { getPublicOrg } from "./lib/organisation.server";
 import styles from "./tailwind.css?url";
 import { TooltipProvider } from "./components/ui/tooltip";
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+export const links: LinksFunction = () => [
+  { rel: "preload", href: styles, as: "style" },
+  { rel: "stylesheet", href: styles },
+];
 
 export function meta({ data }: Route.MetaArgs) {
   return [
