@@ -7,9 +7,9 @@ import { domain } from "~/lib/config.server";
 import type { EmailKey } from "~/lib/email-defaults";
 import {
   getEmailTemplate,
-  renderCertEmailTemplate,
-} from "~/lib/email-template-renderer.server";
-import { mailjetSend } from "~/lib/email.server";
+  mailjetSend,
+  renderEmailTemplate,
+} from "~/lib/email.server";
 import { getOrg } from "~/lib/organisation.server";
 import { generateCertificate } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
@@ -93,15 +93,16 @@ export async function action({ request, params }: Route.ActionArgs) {
     certificate.batch.programId,
     templateKey,
   );
-  const rendered = renderCertEmailTemplate(
+
+  const rendered = renderEmailTemplate(
     emailTemplate,
     certificate,
     certificate.batch,
     {
-      "program.name": certificate.batch.program.name,
-      "cert.url": certUrl,
-      "cert.loginUrl": loginUrl,
-      "cert.signAction": participant ? "in" : "up",
+      programName: certificate.batch.program.name,
+      certUrl,
+      loginUrl,
+      signAction: participant ? "in" : "up",
     },
     certificate.template.locale,
   );
