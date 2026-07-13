@@ -2,6 +2,11 @@ import { randomUUID } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../app/generated/prisma/client";
 import bcrypt from "bcryptjs";
+import {
+  EMAIL_DEFAULTS,
+  EMAIL_TEMPLATES,
+  type EmailKey,
+} from "../app/lib/email-defaults";
 
 const connectionString = `${process.env.DATABASE_URL}`;
 const adapter = new PrismaPg({ connectionString });
@@ -17,7 +22,7 @@ async function main() {
       imprintUrl: "https://www.certiffy.eu/imprint",
       privacyUrl: "https://www.certiffy.eu/privacy",
       senderEmail: "notifications@certiffy.eu",
-      senderName: "Certiffy"
+      senderName: "Certiffy",
     },
   });
   console.log("Organisation:", org);
@@ -83,6 +88,25 @@ async function main() {
     },
   });
   console.log("Batch", batch);
+
+  // Seed org-level email template defaults (idempotent)
+  for (const key of Object.keys(EMAIL_TEMPLATES) as EmailKey[]) {
+    const defaults = EMAIL_DEFAULTS[key];
+    const existing = await prisma.emailTemplate.findFirst({
+      where: { key, programId: null },
+    });
+    if (existing) {
+      await prisma.emailTemplate.update({
+        where: { id: existing.id },
+        data: defaults,
+      });
+    } else {
+      await prisma.emailTemplate.create({
+        data: { key, programId: null, ...defaults },
+      });
+    }
+    console.log(`EmailTemplate seeded: ${key}`);
+  }
 }
 
 main()
