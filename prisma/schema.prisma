@@ -117,14 +117,15 @@ model OrganisationBrandImage {
 model Program {
   id            Int       @id @default(autoincrement())
   name          String
-  about         String?    
+  about         String?
   achievement   String?
-  website       String?   @db.VarChar(128) 
+  website       String?   @db.VarChar(128)
   admins        User[]
   batches       Batch[]
-  logo          ProgramLogo?  
+  logo          ProgramLogo?
   templates     Template[]
-  socialPreview SocialPreview?  
+  emailTemplates EmailTemplate[]
+  socialPreview SocialPreview?
   updatedAt     DateTime  @updatedAt
 
   @@map("programs")
@@ -213,6 +214,21 @@ model Typeface {
   style         String    @db.VarChar(32)
 
   @@map("typefaces")  
+}
+
+model EmailTemplate {
+  id        Int      @id @default(autoincrement())
+  key       String
+  subject   String
+  htmlBody  String
+  textBody  String
+  program   Program? @relation(fields: [programId], references: [id], onDelete: Cascade)
+  programId Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([programId, key])
+  @@map("email_templates")
 }
 
 model SocialPreview {
