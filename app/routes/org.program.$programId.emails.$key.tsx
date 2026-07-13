@@ -104,7 +104,7 @@ export default function ProgramEmailKeyPage({
       </div>
 
       <Form
-        key={`${key}-${isCustomized}`}
+        key={`${key}-${isCustomized}-${template.subject}-${template.htmlBody}-${template.textBody}`}
         method="post"
         className="flex flex-col gap-4"
       >
