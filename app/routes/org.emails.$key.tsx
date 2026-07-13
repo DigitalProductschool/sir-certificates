@@ -83,7 +83,11 @@ export default function OrgEmailKeyPage({ loaderData }: Route.ComponentProps) {
         </p>
       </div>
 
-      <Form key={key} method="post" className="flex flex-col gap-4">
+      <Form
+        key={`${key}-${template.subject}-${template.htmlBody}-${template.textBody}`}
+        method="post"
+        className="flex flex-col gap-4"
+      >
         <div className="flex flex-col gap-1">
           <Label
             htmlFor={`${key}-subject`}
