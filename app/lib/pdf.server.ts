@@ -16,7 +16,7 @@ import QRCode from "qrcode";
 
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
-import { replaceVariables } from "./text-variables";
+import { replaceVariables } from "./text-utils";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 
 import { openLazyFile, writeFile as lazyWriteFile } from "@remix-run/fs";
@@ -270,6 +270,12 @@ export async function generateTemplateSample(template: Template) {
   await writeFile(pdfFilePath, pdfBuffer);
 
   return pdfBuffer;
+}
+
+export async function generateBlankA4Pdf() {
+  const pdf = await PDFDocument.create();
+  pdf.addPage([595.28, 841.89]); // A4 in points
+  return Buffer.from(await pdf.save());
 }
 
 export function drawTextBlock(

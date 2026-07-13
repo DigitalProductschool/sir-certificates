@@ -14,7 +14,7 @@ import {
 import { getUser } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
-import { replaceVariables } from "~/lib/text-variables";
+import { replaceVariables } from "~/lib/text-utils";
 import { getPublicOrg } from "~/lib/organisation.server";
 
 // @todo use React 19 <meta> tags in Page component instead of this

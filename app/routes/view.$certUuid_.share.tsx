@@ -17,7 +17,7 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { domain } from "~/lib/config.server";
 import { requireUserId, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
-import { replaceVariables } from "~/lib/text-variables";
+import { replaceVariables } from "~/lib/text-utils";
 import { ErrorPublic } from "~/components/error-public";
 
 export function meta() {
@@ -31,9 +31,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const certificate = await prisma.certificate.findUnique({
     where: {
       uuid: params.certUuid,
-        publishedAt: {
-          not: null,
-        },      
+      publishedAt: {
+        not: null,
+      },
     },
     include: {
       batch: {
@@ -230,4 +230,3 @@ export function ErrorBoundary() {
     />
   );
 }
-

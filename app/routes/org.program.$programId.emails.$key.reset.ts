@@ -3,7 +3,7 @@ import { redirect } from "react-router";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { isValidEmailKey } from "~/lib/email-defaults";
-import { prisma } from "~/lib/prisma.server";
+import { resetEmailTemplate } from "~/lib/email.server";
 
 export async function action({ request, params }: Route.ActionArgs) {
   const programId = Number(params.programId);
@@ -13,11 +13,9 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw new Response(null, { status: 404, statusText: "Not Found" });
   }
 
-  await prisma.emailTemplate.deleteMany({
-    where: { key: params.key, programId },
-  });
+  await resetEmailTemplate(programId, params.key);
 
-  return redirect(`/org/program/${params.programId}/emails/${params.key}`);
+  return redirect(`/org/program/${programId}/emails/${params.key}`);
 }
 
 export async function loader() {
