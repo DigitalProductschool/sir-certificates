@@ -17,6 +17,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { EmailSendPreview } from "~/components/email-send-preview";
 
 import { EMAIL_TEMPLATES, type EmailKey } from "~/lib/email-defaults";
+import type { EmailTemplateContent } from "~/lib/types";
 
 export function EmailTemplateForm({
   emailKey,
@@ -27,15 +28,17 @@ export function EmailTemplateForm({
   defaultDescription,
   sendPreviewAction,
   resetAction,
+  errors,
 }: {
   emailKey: EmailKey;
-  template: { subject: string; htmlBody: string; textBody: string };
+  template: EmailTemplateContent;
   variables: string[];
   isCustomized: boolean;
   customizedDescription: string;
   defaultDescription: string;
   sendPreviewAction: string;
   resetAction: string;
+  errors?: Record<string, string[] | undefined>;
 }) {
   const [confirmingReset, setConfirmingReset] = useState(false);
   const resetFetcher = useFetcher();
@@ -43,7 +46,9 @@ export function EmailTemplateForm({
   return (
     <div className="flex flex-col gap-4 max-w-3xl">
       <div>
-        <h2 className="text-lg font-semibold">{EMAIL_TEMPLATES[emailKey].label}</h2>
+        <h2 className="text-lg font-semibold">
+          {EMAIL_TEMPLATES[emailKey].label}
+        </h2>
         <p className="text-sm text-muted-foreground mt-1">
           {isCustomized ? customizedDescription : defaultDescription}
         </p>
@@ -61,7 +66,17 @@ export function EmailTemplateForm({
           >
             Subject
           </Label>
-          <Input id={`${emailKey}-subject`} name="subject" defaultValue={template.subject} required />
+          <Input
+            id={`${emailKey}-subject`}
+            name="subject"
+            defaultValue={template.subject}
+            required
+          />
+          {errors?.subject?.map((error) => (
+            <p key={error} className="text-xs text-destructive">
+              {error}
+            </p>
+          ))}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -79,6 +94,29 @@ export function EmailTemplateForm({
             className="font-mono text-xs leading-relaxed"
             required
           />
+          {// @todo show errors with a similar styling to warnings
+            errors?.htmlBody?.map((error) => (
+            <p key={error} className="text-xs text-destructive">
+              {error}
+            </p>
+          ))}
+          {!errors?.htmlBody &&
+            template.compatibilityWarnings &&
+            template.compatibilityWarnings.length > 0 && (
+              <div className="flex flex-col gap-0.5 mt-1 rounded-md border border-amber-300 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-950">
+                <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                  Email client compatibility warnings
+                </p>
+                {template.compatibilityWarnings.map((warning) => (
+                  <p
+                    key={warning}
+                    className="text-xs text-amber-700 dark:text-amber-400"
+                  >
+                    {warning}
+                  </p>
+                ))}
+              </div>
+            )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -96,13 +134,21 @@ export function EmailTemplateForm({
             className="font-mono text-xs leading-relaxed"
             required
           />
+          {errors?.textBody?.map((error) => (
+            <p key={error} className="text-xs text-destructive">
+              {error}
+            </p>
+          ))}
         </div>
 
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">Available variables</p>
           <div className="flex flex-wrap gap-2">
             {variables.map((v) => (
-              <code key={v} className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
+              <code
+                key={v}
+                className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono"
+              >
                 {v}
               </code>
             ))}
@@ -110,7 +156,9 @@ export function EmailTemplateForm({
         </div>
 
         <div className="flex gap-2 items-center">
-          <Button type="submit" variant="default" size="sm">Save</Button>
+          <Button type="submit" variant="default" size="sm">
+            Save
+          </Button>
           <EmailSendPreview action={sendPreviewAction} />
           {isCustomized && (
             <Button
@@ -130,7 +178,8 @@ export function EmailTemplateForm({
           <DialogHeader>
             <DialogTitle>Restore default template?</DialogTitle>
             <DialogDescription>
-              Your customisation will be permanently deleted and the default will be used instead.
+              Your customisation will be permanently deleted and the default
+              will be used instead.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

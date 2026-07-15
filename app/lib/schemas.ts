@@ -75,3 +75,9 @@ export const CertificateInputSchema = z.object({
 	teamName: z.string().optional().nullable(),
 	templateId: z.int("Please select a template"),
 });
+
+export const emailTemplateFieldsSchema = z.object({
+	subject: z.string().trim().min(1, "Subject is required"),
+	htmlBody: z.string().trim().min(1, "HTML body is required"),
+	textBody: z.string().trim().min(1, "Plain text body is required"),
+});
