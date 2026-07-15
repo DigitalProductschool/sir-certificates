@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.emails.$key";
-import { redirect } from "react-router";
+import { data, redirect, useActionData } from "react-router";
 
 import { EmailTemplateForm } from "~/components/email-template-form";
 
@@ -26,13 +26,17 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw new Response(null, { status: 404, statusText: "Not Found" });
   }
 
-  await saveEmailTemplate(null, params.key, await request.formData());
+  const result = await saveEmailTemplate(null, params.key, await request.formData());
+  if (!result.ok) {
+    return data(result, { status: 400 });
+  }
 
   return redirect(`${basePath}/${params.key}`);
 }
 
 export default function OrgEmailKeyPage({ loaderData }: Route.ComponentProps) {
   const { key, template, isCustomized, variables } = loaderData;
+  const actionData = useActionData<typeof action>();
 
   return (
     <EmailTemplateForm
@@ -44,6 +48,7 @@ export default function OrgEmailKeyPage({ loaderData }: Route.ComponentProps) {
       defaultDescription="Showing the built-in default. Save to create an organisation-wide override."
       sendPreviewAction={`${basePath}/${key}/send-preview`}
       resetAction={`${basePath}/${key}/reset`}
+      errors={actionData?.ok === false ? actionData.fieldErrors : undefined}
     />
   );
 }

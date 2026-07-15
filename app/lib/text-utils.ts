@@ -1,3 +1,5 @@
+import { Parser as HtmlParser } from "htmlparser2";
+
 import type { CertificateView, CertificateViewBatch } from "./types";
 
 export function replaceVariables(
@@ -101,7 +103,8 @@ export function replaceVariables(
 	return replacements;
 }
 
-const VOID_ELEMENTS = new Set([
+// List of self-closing tags, used to filter validation issues and improve HTML pretty formatting
+export const SELF_CLOSING = new Set([
 	"area",
 	"base",
 	"br",
@@ -134,7 +137,8 @@ export function prettyPrintHtml(html: string): string {
 		const tagName = token.match(/^<\/?(\w+)/)?.[1]?.toLowerCase();
 		const isSelfClosing =
 			isOpeningTag &&
-			(/\/>$/.test(token) || (tagName !== undefined && VOID_ELEMENTS.has(tagName)));
+			(/\/>$/.test(token) ||
+				(tagName !== undefined && SELF_CLOSING.has(tagName)));
 
 		if (isClosingTag) depth = Math.max(0, depth - 1);
 
@@ -144,4 +148,25 @@ export function prettyPrintHtml(html: string): string {
 	}
 
 	return lines.join("\n");
+}
+
+// Check if HTML is well-formed and has matching open/close tags.
+export function checkWellFormedHtml(html: string): string[] {
+	const errors: string[] = [];
+	const parser = new HtmlParser({
+		onopentag(name, _attribs, isImplied) {
+			if (isImplied) {
+				errors.push(
+					`A misplaced or unexpected closing tag required inserting a missing \`<${name}>\` opening tag`,
+				);
+			}
+		},
+		onclosetag(name, isImplied) {
+			if (isImplied && !SELF_CLOSING.has(name)) {
+				errors.push(`\`<${name}>\` is never closed`);
+			}
+		},
+	});
+	parser.end(html);
+	return errors;
 }

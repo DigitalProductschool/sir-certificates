@@ -1,34 +1,78 @@
 import { randomUUID } from "node:crypto";
-
 import Mailjet, {
-	type SendEmailV3_1,
-	type LibraryResponse,
+  type SendEmailV3_1,
+  type LibraryResponse,
 } from "node-mailjet";
+import {
+  caniemail,
+  formatIssue,
+  groupIssues,
+  sortIssues,
+  type IssueGroup,
+} from "caniemail";
+import { z } from "zod";
 
-import { EMAIL_DEFAULTS, EMAIL_KEY_VARIABLES, type EmailKey } from "~/lib/email-defaults";
-import { getOrg } from "~/lib/organisation.server";
-import { generateBlankA4Pdf, readPreviewOfTemplate } from "~/lib/pdf.server";
-import { prettyPrintHtml, replaceVariables } from "~/lib/text-utils";
-import { prisma } from "~/lib/prisma.server";
-import type { CertificateView, CertificateViewBatch } from "~/lib/types";
+import {
+  EMAIL_DEFAULTS,
+  EMAIL_KEY_VARIABLES,
+  type EmailKey,
+} from "./email-defaults";
+import { getOrg } from "./organisation.server";
+import { generateBlankA4Pdf, readPreviewOfTemplate } from "./pdf.server";
+import { prisma } from "./prisma.server";
+import { emailTemplateFieldsSchema } from "./schemas";
+import {
+  checkWellFormedHtml,
+  prettyPrintHtml,
+  replaceVariables,
+} from "./text-utils";
+import type { CertificateView, CertificateViewBatch, UserContact } from "./types";
+import type { EmailTemplate } from "~/generated/prisma/client";
+
+// Configure common email clients, we want to support
+const MAJOR_EMAIL_CLIENTS: Parameters<typeof caniemail>[0]["clients"] = [
+  "apple-mail.*",
+  "gmail.*",
+  "gmx.*",
+  "outlook.*",
+  "thunderbird.*",
+  "web-de.*",
+];
+
+export type EmailLinks = {
+  programName: string;
+  certUrl: string;
+  loginUrl: string;
+  signAction: "in" | "up";
+};
 
 const mailjet = new Mailjet({
-	apiKey: process.env.MJ_APIKEY_PUBLIC,
-	apiSecret: process.env.MJ_APIKEY_PRIVATE,
+  apiKey: process.env.MJ_APIKEY_PUBLIC,
+  apiSecret: process.env.MJ_APIKEY_PRIVATE,
 });
 
 async function mailjetSend(
-	mailConfig: SendEmailV3_1.Body,
+  mailConfig: SendEmailV3_1.Body,
 ): Promise<LibraryResponse<SendEmailV3_1.Response>> {
-	if (process.env.MJ_SANDBOX === "TRUE") {
-		mailConfig.SandboxMode = true;
-	}
-	return mailjet.post("send", { version: "v3.1" }).request(mailConfig);
+  if (process.env.MJ_SANDBOX === "TRUE") {
+    mailConfig.SandboxMode = true;
+  }
+  return mailjet.post("send", { version: "v3.1" }).request(mailConfig);
 }
 
 export { mailjetSend };
 
-export async function getEmailTemplate(programId: number | null, key: EmailKey) {
+export async function getEmailTemplate(
+  programId: number | null,
+  key: EmailKey,
+): Promise<
+  | EmailTemplate
+  | (Pick<EmailTemplate, "subject" | "htmlBody" | "textBody"> & {
+      id: null;
+      programId: null;
+      compatibilityWarnings: string[];
+    })
+> {
   if (programId !== null) {
     const programTemplate = await prisma.emailTemplate.findFirst({
       where: { programId, key },
@@ -41,18 +85,17 @@ export async function getEmailTemplate(programId: number | null, key: EmailKey) 
   });
   if (orgTemplate) return orgTemplate;
 
-  return { ...EMAIL_DEFAULTS[key], id: null, programId: null };
+  return {
+    ...EMAIL_DEFAULTS[key],
+    htmlBody: prettyPrintHtml(EMAIL_DEFAULTS[key].htmlBody),
+    id: null,
+    programId: null,
+    compatibilityWarnings: [] as string[],
+  };
 }
 
-export type EmailLinks = {
-  programName: string;
-  certUrl: string;
-  loginUrl: string;
-  signAction: "in" | "up";
-};
-
 export function renderEmailTemplate(
-  template: { subject: string; htmlBody: string; textBody: string },
+  template: Pick<EmailTemplate, "subject" | "htmlBody" | "textBody">,
   cert: CertificateView,
   batch: CertificateViewBatch,
   links: EmailLinks,
@@ -82,11 +125,46 @@ export async function loadEmailTemplateEditor(
     getEmailTemplate(programId, key),
   ]);
 
+  // @todo refactor to consistent return type across (load, get, ...) default, org, program
   return {
     key,
-    template: { ...template, htmlBody: prettyPrintHtml(template.htmlBody) },
+    template,
     isCustomized: !!override,
     variables: EMAIL_KEY_VARIABLES[key],
+  };
+}
+
+function summarizeIssueGroups(
+  groups: IssueGroup[],
+  issueType: "error" | "warning",
+): string[] {
+  return groups.map((group) => {
+    const [firstClient, ...otherClients] = group.clients;
+    const { message } = formatIssue({
+      client: firstClient,
+      issue: group.issue,
+      issueType,
+    });
+    return otherClients.length > 0
+      ? `${message} (also: ${otherClients.join(", ")})`
+      : message;
+  });
+}
+
+function checkEmailCompatibility(html: string): {
+  errors: string[];
+  warnings: string[];
+} {
+  const result = caniemail({ clients: MAJOR_EMAIL_CLIENTS, html });
+  return {
+    errors: summarizeIssueGroups(
+      sortIssues(groupIssues(result.issues.errors)),
+      "error",
+    ),
+    warnings: summarizeIssueGroups(
+      sortIssues(groupIssues(result.issues.warnings)),
+      "warning",
+    ),
   };
 }
 
@@ -94,10 +172,35 @@ export async function saveEmailTemplate(
   programId: number | null,
   key: EmailKey,
   formData: FormData,
-) {
-  const subject = String(formData.get("subject") ?? "").trim();
-  const htmlBody = prettyPrintHtml(String(formData.get("htmlBody") ?? "").trim());
-  const textBody = String(formData.get("textBody") ?? "").trim();
+): Promise<
+  | { ok: true }
+  | { ok: false; fieldErrors: Record<string, string[] | undefined> }
+> {
+  // @todo refactor for better return values
+
+  const parsed = emailTemplateFieldsSchema.safeParse({
+    subject: formData.get("subject"),
+    htmlBody: formData.get("htmlBody"),
+    textBody: formData.get("textBody"),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  }
+
+  const wellFormedHtmlErrors = checkWellFormedHtml(parsed.data.htmlBody);
+  if (wellFormedHtmlErrors.length > 0) {
+    return { ok: false, fieldErrors: { htmlBody: wellFormedHtmlErrors } };
+  }
+
+  const { errors, warnings } = checkEmailCompatibility(parsed.data.htmlBody);
+  if (errors.length > 0) {
+    return { ok: false, fieldErrors: { htmlBody: errors } };
+  }
+
+  const subject = parsed.data.subject;
+  const htmlBody = prettyPrintHtml(parsed.data.htmlBody);
+  const textBody = parsed.data.textBody;
 
   const existing = await prisma.emailTemplate.findFirst({
     where: { key, programId },
@@ -106,13 +209,22 @@ export async function saveEmailTemplate(
   if (existing) {
     await prisma.emailTemplate.update({
       where: { id: existing.id },
-      data: { subject, htmlBody, textBody },
+      data: { subject, htmlBody, textBody, compatibilityWarnings: warnings },
     });
   } else {
     await prisma.emailTemplate.create({
-      data: { key, programId, subject, htmlBody, textBody },
+      data: {
+        key,
+        programId,
+        subject,
+        htmlBody,
+        textBody,
+        compatibilityWarnings: warnings,
+      },
     });
   }
+
+  return { ok: true };
 }
 
 export async function resetEmailTemplate(
@@ -125,7 +237,7 @@ export async function resetEmailTemplate(
 export async function sendEmailTemplatePreview(
   programId: number | null,
   key: EmailKey,
-  admin: { email: string; firstName: string; lastName: string },
+  admin: UserContact,
 ) {
   const org = await getOrg();
   const emailTemplate = await getEmailTemplate(programId, key);
@@ -135,6 +247,7 @@ export async function sendEmailTemplatePreview(
 
   let programName = "Example Program";
   let locale = "en-US";
+
   const attachments: {
     ContentType: string;
     Filename: string;
@@ -142,6 +255,7 @@ export async function sendEmailTemplatePreview(
   }[] = [];
 
   if (programId === null) {
+    // @todo add an organisational default template with sample content and use it here
     const blankPdf = await generateBlankA4Pdf();
     attachments.push({
       ContentType: "application/pdf",
@@ -224,5 +338,6 @@ export async function sendEmailTemplatePreview(
     });
   });
 
+  // @todo refactor for better return values
   return { ok: true };
 }

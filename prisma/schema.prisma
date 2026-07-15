@@ -217,15 +217,16 @@ model Typeface {
 }
 
 model EmailTemplate {
-  id        Int      @id @default(autoincrement())
-  key       String
-  subject   String
-  htmlBody  String
-  textBody  String
-  program   Program? @relation(fields: [programId], references: [id], onDelete: Cascade)
-  programId Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                     Int      @id @default(autoincrement())
+  key                    String
+  subject                String
+  htmlBody               String
+  textBody               String
+  compatibilityWarnings  String[] @default([])
+  program                Program? @relation(fields: [programId], references: [id], onDelete: Cascade)
+  programId              Int?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   @@index([programId, key])
   @@map("email_templates")

@@ -1,5 +1,5 @@
 import type { Route } from "./+types/org.program.$programId.emails.$key";
-import { redirect } from "react-router";
+import { data, redirect, useActionData } from "react-router";
 
 import { EmailTemplateForm } from "~/components/email-template-form";
 
@@ -26,7 +26,10 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw new Response(null, { status: 404, statusText: "Not Found" });
   }
 
-  await saveEmailTemplate(programId, params.key, await request.formData());
+  const result = await saveEmailTemplate(programId, params.key, await request.formData());
+  if (!result.ok) {
+    return data(result, { status: 400 });
+  }
 
   return redirect(`/org/program/${programId}/emails/${params.key}`);
 }
@@ -37,6 +40,7 @@ export default function ProgramEmailKeyPage({
 }: Route.ComponentProps) {
   const { key, template, isCustomized, variables } = loaderData;
   const basePath = `/org/program/${params.programId}/emails`;
+  const actionData = useActionData<typeof action>();
 
   return (
     <EmailTemplateForm
@@ -48,6 +52,7 @@ export default function ProgramEmailKeyPage({
       defaultDescription="Showing the organisation default. Save to create a program-specific override."
       sendPreviewAction={`${basePath}/${key}/send-preview`}
       resetAction={`${basePath}/${key}/reset`}
+      errors={actionData?.ok === false ? actionData.fieldErrors : undefined}
     />
   );
 }

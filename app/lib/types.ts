@@ -122,3 +122,20 @@ export type UserAuthenticated = Prisma.UserGetPayload<{
 		photo: true;
 	};
 }>;
+
+export type UserContact = Prisma.UserGetPayload<{
+	select: {
+		email: true;
+		firstName: true;
+		lastName: true;
+	};
+}>;
+
+export type EmailTemplateContent = Prisma.EmailTemplateGetPayload<{
+	select: {
+		subject: true;
+		htmlBody: true;
+		textBody: true;
+		compatibilityWarnings: true;
+	};
+}>;
