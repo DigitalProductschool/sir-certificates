@@ -1,6 +1,5 @@
 import type { Batch, Certificate, Template } from "~/generated/prisma/client";
 
-import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeFile, readFile, unlink, copyFile } from "node:fs/promises";
@@ -16,6 +15,7 @@ import QRCode from "qrcode";
 
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
+import { getSampleBatch, getSampleCertificate } from "./sample-data";
 import { replaceVariables } from "./text-utils";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 
@@ -195,28 +195,18 @@ export async function generateTemplateSample(template: Template) {
   // Modify page
   const page = pdf.getPages()[0];
 
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-
   const mockBatch: Batch = {
+    ...getSampleBatch(),
     id: 1,
     programId: 1,
-    name: "BatchName",
-    startDate: yesterday,
-    endDate: new Date(),
     updatedAt: new Date(),
   };
 
   const mockCertificate: Certificate = {
+    ...getSampleCertificate(),
     id: 1,
     batchId: 1,
     templateId: template.id,
-    firstName: "FirstName",
-    lastName: "LastName",
-    teamName: "TeamName",
-    uuid: randomUUID(),
-    email: "mock-user@dpschool.io",
-    updatedAt: new Date(),
     publishedAt: new Date(),
     notifiedAt: null,
     mjResponse: {},

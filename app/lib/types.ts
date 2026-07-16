@@ -130,12 +130,3 @@ export type UserContact = Prisma.UserGetPayload<{
 		lastName: true;
 	};
 }>;
-
-export type EmailTemplateContent = Prisma.EmailTemplateGetPayload<{
-	select: {
-		subject: true;
-		htmlBody: true;
-		textBody: true;
-		compatibilityWarnings: true;
-	};
-}>;

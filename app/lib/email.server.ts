@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import Mailjet, {
   type SendEmailV3_1,
   type LibraryResponse,
@@ -17,16 +16,19 @@ import {
   EMAIL_KEY_VARIABLES,
   type EmailKey,
 } from "./email-defaults";
+import { renderEmailTemplate } from "./email-render";
 import { getOrg } from "./organisation.server";
 import { generateBlankA4Pdf, readPreviewOfTemplate } from "./pdf.server";
 import { prisma } from "./prisma.server";
-import { emailTemplateFieldsSchema } from "./schemas";
 import {
-  checkWellFormedHtml,
-  prettyPrintHtml,
-  replaceVariables,
-} from "./text-utils";
-import type { CertificateView, CertificateViewBatch, UserContact } from "./types";
+  getSampleBatch,
+  getSampleCertificate,
+  getSampleEmailLinks,
+  getSampleProgram,
+} from "./sample-data";
+import { emailTemplateFieldsSchema } from "./schemas";
+import { checkWellFormedHtml, prettyPrintHtml } from "./text-utils";
+import type { UserContact } from "./types";
 import type { EmailTemplate } from "~/generated/prisma/client";
 
 // Configure common email clients, we want to support
@@ -38,13 +40,6 @@ const MAJOR_EMAIL_CLIENTS: Parameters<typeof caniemail>[0]["clients"] = [
   "thunderbird.*",
   "web-de.*",
 ];
-
-export type EmailLinks = {
-  programName: string;
-  certUrl: string;
-  loginUrl: string;
-  signAction: "in" | "up";
-};
 
 const mailjet = new Mailjet({
   apiKey: process.env.MJ_APIKEY_PUBLIC,
@@ -62,28 +57,30 @@ async function mailjetSend(
 
 export { mailjetSend };
 
-export async function getEmailTemplate(
-  programId: number | null,
-  key: EmailKey,
-): Promise<
+export type ResolvedEmailTemplate = { isCustomized: boolean } & (
   | EmailTemplate
   | (Pick<EmailTemplate, "subject" | "htmlBody" | "textBody"> & {
       id: null;
       programId: null;
       compatibilityWarnings: string[];
     })
-> {
-  if (programId !== null) {
-    const programTemplate = await prisma.emailTemplate.findFirst({
-      where: { programId, key },
-    });
-    if (programTemplate) return programTemplate;
-  }
+);
 
-  const orgTemplate = await prisma.emailTemplate.findFirst({
-    where: { programId: null, key },
+export async function getEmailTemplate(
+  key: EmailKey,
+  programId: number | null = null,
+): Promise<ResolvedEmailTemplate> {
+  const override = await prisma.emailTemplate.findFirst({
+    where: { key, programId },
   });
-  if (orgTemplate) return orgTemplate;
+  if (override) return { ...override, isCustomized: true };
+
+  if (programId !== null) {
+    const orgTemplate = await prisma.emailTemplate.findFirst({
+      where: { key, programId: null },
+    });
+    if (orgTemplate) return { ...orgTemplate, isCustomized: false };
+  }
 
   return {
     ...EMAIL_DEFAULTS[key],
@@ -91,46 +88,39 @@ export async function getEmailTemplate(
     id: null,
     programId: null,
     compatibilityWarnings: [] as string[],
-  };
-}
-
-export function renderEmailTemplate(
-  template: Pick<EmailTemplate, "subject" | "htmlBody" | "textBody">,
-  cert: CertificateView,
-  batch: CertificateViewBatch,
-  links: EmailLinks,
-  locale?: string,
-) {
-  function render(text: string) {
-    return replaceVariables(text, locale ?? "en-US", cert, batch)
-      .replaceAll("{program.name}", links.programName)
-      .replaceAll("{cert.url}", links.certUrl)
-      .replaceAll("{cert.loginUrl}", links.loginUrl)
-      .replaceAll("{cert.signAction}", links.signAction);
-  }
-
-  return {
-    subject: render(template.subject),
-    htmlBody: render(template.htmlBody),
-    textBody: render(template.textBody),
+    isCustomized: false,
   };
 }
 
 export async function loadEmailTemplateEditor(
-  programId: number | null,
   key: EmailKey,
+  programId: number | null = null,
 ) {
-  const [override, template] = await Promise.all([
-    prisma.emailTemplate.findFirst({ where: { key, programId } }),
-    getEmailTemplate(programId, key),
-  ]);
+  const template = await getEmailTemplate(key, programId);
 
-  // @todo refactor to consistent return type across (load, get, ...) default, org, program
   return {
     key,
     template,
-    isCustomized: !!override,
     variables: EMAIL_KEY_VARIABLES[key],
+  };
+}
+
+export async function loadEmailTemplatePreview(
+  key: EmailKey,
+  programId: number | null = null,
+) {
+  const [template, sampleProgram] = await Promise.all([
+    getEmailTemplate(key, programId),
+    getSampleProgram(programId),
+  ]);
+
+  return {
+    key,
+    template,
+    sampleCert: getSampleCertificate(),
+    sampleBatch: getSampleBatch(),
+    links: getSampleEmailLinks(sampleProgram.name),
+    locale: sampleProgram.locale,
   };
 }
 
@@ -169,9 +159,9 @@ function checkEmailCompatibility(html: string): {
 }
 
 export async function saveEmailTemplate(
-  programId: number | null,
   key: EmailKey,
   formData: FormData,
+  programId: number | null = null,
 ): Promise<
   | { ok: true }
   | { ok: false; fieldErrors: Record<string, string[] | undefined> }
@@ -228,25 +218,20 @@ export async function saveEmailTemplate(
 }
 
 export async function resetEmailTemplate(
-  programId: number | null,
   key: EmailKey,
+  programId: number | null = null,
 ) {
   await prisma.emailTemplate.deleteMany({ where: { key, programId } });
 }
 
 export async function sendEmailTemplatePreview(
-  programId: number | null,
   key: EmailKey,
   admin: UserContact,
+  programId: number | null = null,
 ) {
   const org = await getOrg();
-  const emailTemplate = await getEmailTemplate(programId, key);
-
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  let programName = "Example Program";
-  let locale = "en-US";
+  const emailTemplate = await getEmailTemplate(key, programId);
+  const sampleProgram = await getSampleProgram(programId);
 
   const attachments: {
     ContentType: string;
@@ -262,54 +247,23 @@ export async function sendEmailTemplatePreview(
       Filename: "certificate-preview.pdf",
       Base64Content: blankPdf.toString("base64"),
     });
-  } else {
-    const program = await prisma.program.findUnique({
-      where: { id: programId },
-      include: { templates: { take: 1, orderBy: { id: "asc" } } },
-    });
-
-    if (!program) {
-      throw new Response(null, { status: 404, statusText: "Not Found" });
-    }
-
-    programName = program.name;
-    const firstTemplate = program.templates[0];
-    locale = firstTemplate?.locale ?? "en-US";
-
-    if (firstTemplate) {
-      const previewImage = await readPreviewOfTemplate(firstTemplate);
-      if (previewImage) {
-        attachments.push({
-          ContentType: "image/png",
-          Filename: "certificate-preview.png",
-          Base64Content: previewImage.toString("base64"),
-        });
-      }
+  } else if (sampleProgram.firstTemplate) {
+    const previewImage = await readPreviewOfTemplate(sampleProgram.firstTemplate);
+    if (previewImage) {
+      attachments.push({
+        ContentType: "image/png",
+        Filename: "certificate-preview.png",
+        Base64Content: previewImage.toString("base64"),
+      });
     }
   }
 
   const rendered = renderEmailTemplate(
     emailTemplate,
-    {
-      uuid: randomUUID(),
-      firstName: "FirstName",
-      lastName: "LastName",
-      email: admin.email,
-      teamName: "TeamName",
-      updatedAt: new Date(),
-    },
-    {
-      name: "BatchName",
-      startDate: yesterday,
-      endDate: new Date(),
-    },
-    {
-      programName,
-      certUrl: "https://example.com/view/sample",
-      loginUrl: "https://example.com/user/sign/in",
-      signAction: "in",
-    },
-    locale,
+    getSampleCertificate(),
+    getSampleBatch(),
+    getSampleEmailLinks(sampleProgram.name),
+    sampleProgram.locale,
   );
 
   await mailjetSend({

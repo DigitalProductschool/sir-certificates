@@ -13,7 +13,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw new Response(null, { status: 404, statusText: "Not Found" });
   }
 
-  return sendEmailTemplatePreview(programId, params.key, admin);
+  return sendEmailTemplatePreview(params.key, admin, programId);
 }
 
 export async function loader() {

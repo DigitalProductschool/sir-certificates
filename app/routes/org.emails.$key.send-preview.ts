@@ -18,7 +18,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     select: { email: true, firstName: true, lastName: true },
   });
 
-  return sendEmailTemplatePreview(null, params.key, admin);
+  return sendEmailTemplatePreview(params.key, admin);
 }
 
 export async function loader() {
