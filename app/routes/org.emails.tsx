@@ -48,7 +48,7 @@ export default function OrgEmailsPage({ loaderData }: Route.ComponentProps) {
             <NavLink
               key={t.key}
               to={`/org/emails/${t.key}`}
-              className="flex items-start gap-3 rounded-lg border p-4 aria-[current]:border-primary"
+              className="flex items-start gap-3 rounded-lg border p-4 aria-[current]:border-primary bg-white"
               preventScrollReset
             >
               <div className="flex flex-col gap-0.5">

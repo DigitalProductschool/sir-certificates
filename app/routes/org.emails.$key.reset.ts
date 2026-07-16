@@ -14,7 +14,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw new Response(null, { status: 404, statusText: "Not Found" });
   }
 
-  await resetEmailTemplate(null, params.key);
+  await resetEmailTemplate(params.key);
 
   return redirect(`${basePath}/${params.key}`);
 }

@@ -211,6 +211,14 @@ export const sendInvitationEmail = async (
   return true;
 };
 
+export async function getSuperAdmins() {
+  return await prisma.user.findMany({
+    where: { isSuperAdmin: true },
+    select: { firstName: true, lastName: true, email: true },
+    orderBy: { firstName: "asc" },
+  });
+}
+
 export async function saveTransparentPhotoUpload(
   userPhoto: UserPhoto,
   photo: FileUpload,

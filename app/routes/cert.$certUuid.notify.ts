@@ -5,11 +5,8 @@ import slug from "slug";
 import { requireAdmin } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
 import type { EmailKey } from "~/lib/email-defaults";
-import {
-  getEmailTemplate,
-  mailjetSend,
-  renderEmailTemplate,
-} from "~/lib/email.server";
+import { renderEmailTemplate } from "~/lib/email-render";
+import { getEmailTemplate, mailjetSend } from "~/lib/email.server";
 import { getOrg } from "~/lib/organisation.server";
 import { generateCertificate } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
@@ -90,8 +87,8 @@ export async function action({ request, params }: Route.ActionArgs) {
     social && isPublished ? "notification-public" : "notification";
 
   const emailTemplate = await getEmailTemplate(
-    certificate.batch.programId,
     templateKey,
+    certificate.batch.programId,
   );
 
   const rendered = renderEmailTemplate(

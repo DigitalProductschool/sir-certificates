@@ -1,48 +1,36 @@
-import { useState } from "react";
-import { Form, useFetcher } from "react-router";
+import { Form, Link } from "react-router";
 
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { EmailSendPreview } from "~/components/email-send-preview";
+import { EmailRestoreButton } from "~/components/email-restore-button";
 
 import { EMAIL_TEMPLATES, type EmailKey } from "~/lib/email-defaults";
-import type { EmailTemplateContent } from "~/lib/types";
+import type { ResolvedEmailTemplate } from "~/lib/email.server";
 
-export function EmailTemplateForm({
+export function EmailForm({
   emailKey,
   template,
   variables,
-  isCustomized,
   customizedDescription,
   defaultDescription,
   sendPreviewAction,
   resetAction,
   errors,
+  cancelHref,
 }: {
   emailKey: EmailKey;
-  template: EmailTemplateContent;
+  template: ResolvedEmailTemplate;
   variables: string[];
-  isCustomized: boolean;
   customizedDescription: string;
   defaultDescription: string;
   sendPreviewAction: string;
   resetAction: string;
   errors?: Record<string, string[] | undefined>;
+  cancelHref?: string;
 }) {
-  const [confirmingReset, setConfirmingReset] = useState(false);
-  const resetFetcher = useFetcher();
-
   return (
     <div className="flex flex-col gap-4 max-w-3xl">
       <div>
@@ -50,12 +38,12 @@ export function EmailTemplateForm({
           {EMAIL_TEMPLATES[emailKey].label}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          {isCustomized ? customizedDescription : defaultDescription}
+          {template.isCustomized ? customizedDescription : defaultDescription}
         </p>
       </div>
 
       <Form
-        key={`${emailKey}-${isCustomized}-${template.subject}-${template.htmlBody}-${template.textBody}`}
+        key={`${emailKey}-${template.isCustomized}-${template.subject}-${template.htmlBody}-${template.textBody}`}
         method="post"
         className="flex flex-col gap-4"
       >
@@ -160,46 +148,16 @@ export function EmailTemplateForm({
             Save
           </Button>
           <EmailSendPreview action={sendPreviewAction} />
-          {isCustomized && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setConfirmingReset(true)}
-            >
-              Restore default
+          {template.isCustomized && (
+            <EmailRestoreButton resetAction={resetAction} />
+          )}
+          {cancelHref && (
+            <Button asChild variant="ghost" size="sm">
+              <Link to={cancelHref}>Cancel</Link>
             </Button>
           )}
         </div>
       </Form>
-
-      <Dialog open={confirmingReset} onOpenChange={setConfirmingReset}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Restore default template?</DialogTitle>
-            <DialogDescription>
-              Your customisation will be permanently deleted and the default
-              will be used instead.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button
-              onClick={() => {
-                resetFetcher.submit(null, {
-                  method: "post",
-                  action: resetAction,
-                });
-                setConfirmingReset(false);
-              }}
-            >
-              Restore default
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
