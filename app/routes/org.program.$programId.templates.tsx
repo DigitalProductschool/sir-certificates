@@ -3,7 +3,7 @@ import type { Template } from "~/generated/prisma/client";
 import { useEffect } from "react";
 import { Link, Outlet, useNavigate } from "react-router";
 
-import { Settings } from "lucide-react";
+import { ArrowUpRight, Settings } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 
@@ -132,6 +132,18 @@ export default function ProgramTemplatesPage({
         <Button variant="outline" asChild>
           <Link to="create">Add template</Link>
         </Button>
+
+        {params.templateId && (
+          <Button variant="link" asChild>
+            <Link
+              to={`/view/sample/${params.templateId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Preview certificate page <ArrowUpRight />
+            </Link>
+          </Button>
+        )}
       </div>
 
       {program.templates.length === 0 && (

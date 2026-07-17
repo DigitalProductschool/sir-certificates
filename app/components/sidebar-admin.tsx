@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Link, NavLink, useLocation, useParams } from "react-router";
 import {
   BadgeCheck,
+  BookOpenText,
   BookType,
   ChevronsUpDown,
   FileBadge,
@@ -11,8 +12,8 @@ import {
   Home,
   LayoutGrid,
   LogOut,
+  Mails,
   Plus,
-  Settings,
   Share2,
   SquareUser,
   UsersIcon,
@@ -174,8 +175,49 @@ export function SidebarAdmin({
       <SidebarContent>
         {activeProgram && (
           <>
-            <SidebarGroup>
+            <SidebarGroup className="">
               <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton tooltip="Batches and Certificates" asChild>
+                    <NavLink
+                      to={`/org/program/${activeProgram?.id}/batch/${
+                        activeBatchId ? activeBatchId + "/certificates" : ""
+                      }`}
+                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
+                    >
+                      <FileBadge />
+                      <span>Certificates</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton tooltip="PDF Templates" asChild>
+                    <NavLink
+                      to={`/org/program/${activeProgram?.id}/templates/`}
+                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
+                    >
+                      <FilePen className="w-6 h-6" size={24} />
+                      <span>Templates</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+
+            <SidebarGroup className="grow">
+              <SidebarGroupLabel>Program Settings</SidebarGroupLabel>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton tooltip="Program Description" asChild>
+                    <NavLink
+                      to={`/org/program/${activeProgram?.id}/settings`}
+                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
+                    >
+                      <BookOpenText />
+                      <span>Description</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton tooltip="Program Managers" asChild>
                     <NavLink
@@ -183,18 +225,18 @@ export function SidebarAdmin({
                       className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
                     >
                       <UsersIcon />
-                      <span>Program Managers</span>
+                      <span>Managers</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Program Settings" asChild>
+                  <SidebarMenuButton tooltip="Program Email Templates" asChild>
                     <NavLink
-                      to={`/org/program/${activeProgram?.id}/settings`}
+                      to={`/org/program/${activeProgram.id}/emails/notification`}
                       className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
                     >
-                      <Settings />
-                      <span>Settings</span>
+                      <Mails />
+                      <span>Emails</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -211,65 +253,6 @@ export function SidebarAdmin({
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroup>
-
-            <SidebarGroup className="grow">
-              <SidebarGroupLabel>Certificates</SidebarGroupLabel>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Batches and Certificates" asChild>
-                    <NavLink
-                      to={`/org/program/${activeProgram?.id}/batch/${
-                        activeBatchId ? activeBatchId + "/certificates" : ""
-                      }`}
-                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
-                    >
-                      <FileBadge />
-                      <span>Batches</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {/*<SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Import Participants">
-                    <NavLink
-                      to={
-                        activeBatchId
-                          ? `/org/program/${activeProgram?.id}/batch/${activeBatchId}/import`
-                          : `/org/program/${activeProgram?.id}/batch/create`
-                      }
-                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
-                    >
-                      <FileUp />
-                      <span>Import</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>*/}
-                <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="PDF Templates" asChild>
-                    <NavLink
-                      to={`/org/program/${activeProgram?.id}/templates/`}
-                      className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
-                    >
-                      <FilePen className="w-6 h-6" size={24} />
-                      <span>Templates</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroup>
-
-            {/*<SidebarGroup className="grow">
-              <SidebarGroupLabel>Templates</SidebarGroupLabel>
-              <SidebarMenu>
-                <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Email Templates" asChild>
-                <NavLink to={`/org/program/${activeProgram.id}/emails`}>
-                  <Mail />
-                  <span>Email</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroup>*/}
 
             {user?.isSuperAdmin && (
               <SidebarGroup className="mb-1">
@@ -294,6 +277,17 @@ export function SidebarAdmin({
                       >
                         <UsersIcon />
                         <span>User</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton tooltip="Default Email Templates" asChild>
+                      <NavLink
+                        to={`/org/emails/notification`}
+                        className="aria-[current]:bg-sidebar-accent aria-[current]:font-bold"
+                      >
+                        <Mails />
+                        <span>Emails</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

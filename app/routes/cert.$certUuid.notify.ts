@@ -4,10 +4,12 @@ import slug from "slug";
 
 import { requireAdmin } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
-import { mailjetSend } from "~/lib/email.server";
-import { getOrg } from "~/lib/organisation.server";
+import type { EmailKey } from "~/lib/email-defaults";
+import { prepareLinkReplacements } from "~/lib/email-render";
+import { sendTemplatedEmail } from "~/lib/email.server";
 import { generateCertificate } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
+import { prepareCertificateReplacements } from "~/lib/text-utils";
 
 // @todo refactor to route org.program.$programId.batch.batchId.certificates.$certId.notify.ts
 
@@ -34,8 +36,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       statusText: "Not Found",
     });
   }
-
-  const org = await getOrg();
 
   const social = await prisma.socialPreview.findUnique({
     where: {
@@ -81,47 +81,37 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   const isPublished = certificate.publishedAt !== null;
 
-  const mailText =
-    social && isPublished
-      ? `Dear ${certificate.firstName},\n\nYour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready for you.\n\n\nDownload your certificate from this link:\n${certUrl}\n\n\nShare your certificate on social media with your personal link:\n1. Sign up to our certificate tool with this email address at the link above\n2. Insert your photo into the social media preview\n3. Share it across your platforms\n\n\nCongratulations!`
-      : `Dear ${certificate.firstName},\n\nYour certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.\n\nAll the best!`;
+  const templateKey: EmailKey =
+    social && isPublished ? "notification-public" : "notification";
 
-  const mailHTML =
-    social && isPublished
-      ? `<p>Dear ${certificate.firstName},</p><p>Your certificate for ${
-          certificate.batch.program.name
-        } – ${
-          certificate.batch.name
-        } is ready for you.</p><p>Download your certificate from this link:<br/><a href="${certUrl}" rel="notrack">${certUrl}</a></p><p>Share your certificate on social media with your personal link:<ol><li><a href="${loginUrl}" rel="notrack">Sign ${
-          participant ? "in" : "up"
-        }</a> to our certificate tool with this email address at the link above</li><li>Insert your photo into the social media preview</li><li>Share it across your platforms</li></ol></p><p>Congratulations!</p><br/>`
-      : `<p>Dear ${certificate.firstName},</p><p>Your certificate for ${certificate.batch.program.name} – ${certificate.batch.name} is ready and the document attached to this email.</p><p>All the best!</p>`;
+  const replacements = {
+    ...prepareCertificateReplacements(
+      certificate,
+      certificate.batch,
+      certificate.template.locale,
+    ),
+    ...prepareLinkReplacements({
+      programName: certificate.batch.program.name,
+      certUrl,
+      loginUrl,
+      signAction: participant ? "in" : "up",
+    }),
+  };
 
-  // @todo sender email, domain and links need to be configurable
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response: any = await mailjetSend({
-    // SandboxMode: true,
-    Messages: [
-      {
-        // @ts-expect-error CustomId is missing from the Message type
-        CustomId: certificate.uuid,
-        From: {
-          Email: org.senderEmail ?? "email-not-configured@example.com",
-          Name: org.senderName ?? "Please configure in organisation settings",
-        },
-        To: [
-          {
-            Email: certificate.email,
-            Name: `${certificate.firstName} ${certificate.lastName}`,
-          },
-        ],
-        Subject: `Your certificate from ${certificate.batch.program.name} is ready`,
-        TextPart: mailText,
-        HTMLPart: mailHTML,
-        Attachments: attachments,
-      },
-    ],
-  }).catch((error) => {
+  const response: any = await sendTemplatedEmail(
+    templateKey,
+    {
+      email: certificate.email,
+      name: `${certificate.firstName} ${certificate.lastName}`,
+    },
+    replacements,
+    {
+      programId: certificate.batch.programId,
+      attachments,
+      customId: certificate.uuid,
+    },
+  ).catch((error) => {
     throw new Response(error.message, {
       status: 500,
       statusText: error.statusCode,
