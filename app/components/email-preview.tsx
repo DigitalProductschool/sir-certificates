@@ -1,22 +1,15 @@
-import { ChevronDown } from "lucide-react";
 import { Link } from "react-router";
 
 import { Button } from "~/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
 import { EmailSendPreview } from "~/components/email-send-preview";
 import { EmailRestoreButton } from "~/components/email-restore-button";
 
-import { EMAIL_TEMPLATES, type EmailKey } from "~/lib/email-defaults";
+import { type EmailKey } from "~/lib/email-defaults";
 import { renderEmailTemplate, type EmailLinks } from "~/lib/email-render";
 import type { ResolvedEmailTemplate } from "~/lib/email.server";
 import type { CertificateView, CertificateViewBatch } from "~/lib/types";
 
 export function EmailPreview({
-  emailKey,
   template,
   sampleCert,
   sampleBatch,
@@ -24,8 +17,6 @@ export function EmailPreview({
   locale,
   isSuperAdmin,
   superAdmins,
-  customizedDescription,
-  defaultDescription,
   sendPreviewAction,
   resetAction,
   editHref,
@@ -38,8 +29,6 @@ export function EmailPreview({
   locale: string;
   isSuperAdmin: boolean;
   superAdmins: { firstName: string; lastName: string; email: string }[];
-  customizedDescription: string;
-  defaultDescription: string;
   sendPreviewAction: string;
   resetAction: string;
   editHref: string;
@@ -53,29 +42,23 @@ export function EmailPreview({
   );
 
   return (
-    <div className="flex flex-col gap-4 max-w-3xl">
-      <div>
-        <h2 className="text-lg font-semibold">
-          {EMAIL_TEMPLATES[emailKey].label}
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          {template.isCustomized ? customizedDescription : defaultDescription}
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-2 max-w-3xl">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+    <div className="flex flex-col pt-2 gap-6 max-w-3xl">
+      <div className="flex flex-col gap-3 max-w-3xl">
+        <div className="flex flex-col gap-1 ">
+          <span className="text-xs font-medium text-muted-foreground">
             Subject
           </span>
-          <p className="text-sm font-medium">{preview.subject}</p>
+          <p className="text-sm font-medium rounded-md border bg-white p-2">
+            {preview.subject}
+          </p>
         </div>
 
+        <span className="text-xs font-medium text-muted-foreground">Body</span>
         <iframe
           sandbox=""
           srcDoc={preview.htmlBody}
           title="Email preview"
-          className="w-full h-[400px] rounded-md border bg-white"
+          className="w-full h-100 rounded-md border bg-white"
         />
 
         {template.compatibilityWarnings.length > 0 && (
@@ -94,17 +77,13 @@ export function EmailPreview({
           </div>
         )}
 
-        <Collapsible>
-          <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            <ChevronDown className="size-3" />
-            Plain-text fallback
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <pre className="mt-1 whitespace-pre-wrap rounded-md border bg-muted p-2 font-mono text-xs leading-relaxed">
-              {preview.textBody}
-            </pre>
-          </CollapsibleContent>
-        </Collapsible>
+        <span className="text-xs font-medium text-muted-foreground">
+          Fallback (plain text)
+        </span>
+
+        <pre className="mt-1 whitespace-pre-wrap rounded-md border bg-muted p-2 font-mono text-xs leading-relaxed">
+          {preview.textBody}
+        </pre>
       </div>
 
       <div className="flex gap-2 items-center">
@@ -113,7 +92,10 @@ export function EmailPreview({
             <Link to={editHref}>Edit template</Link>
           </Button>
         )}
-        <EmailSendPreview action={sendPreviewAction} />
+        <EmailSendPreview
+          action={sendPreviewAction}
+          variant={isSuperAdmin ? "outline" : "default"}
+        />
         {isSuperAdmin && template.isCustomized && (
           <EmailRestoreButton resetAction={resetAction} />
         )}

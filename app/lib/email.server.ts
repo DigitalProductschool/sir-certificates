@@ -37,7 +37,7 @@ const MAJOR_EMAIL_CLIENTS: Parameters<typeof caniemail>[0]["clients"] = [
   "gmail.*",
   "gmx.*",
   "outlook.*",
-  "thunderbird.*",
+  //"thunderbird.*",
   "web-de.*",
 ];
 
@@ -119,7 +119,10 @@ export async function loadEmailTemplatePreview(
     template,
     sampleCert: getSampleCertificate(),
     sampleBatch: getSampleBatch(),
-    links: getSampleEmailLinks(sampleProgram.name),
+    links: getSampleEmailLinks(
+      sampleProgram.name,
+      sampleProgram.firstTemplate?.id ?? null,
+    ),
     locale: sampleProgram.locale,
   };
 }
@@ -262,7 +265,7 @@ export async function sendEmailTemplatePreview(
     emailTemplate,
     getSampleCertificate(),
     getSampleBatch(),
-    getSampleEmailLinks(sampleProgram.name),
+    getSampleEmailLinks(sampleProgram.name, sampleProgram.firstTemplate?.id ?? null),
     sampleProgram.locale,
   );
 

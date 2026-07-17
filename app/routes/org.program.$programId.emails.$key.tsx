@@ -47,8 +47,6 @@ export default function ProgramEmailKeyPage({
       locale={locale}
       isSuperAdmin={isSuperAdmin}
       superAdmins={superAdmins}
-      customizedDescription="This program uses a custom template."
-      defaultDescription="Showing the organisation default. Save to create a program-specific override."
       sendPreviewAction={`${basePath}/${key}/send-preview`}
       resetAction={`${basePath}/${key}/reset`}
       editHref={`${basePath}/${key}/edit`}

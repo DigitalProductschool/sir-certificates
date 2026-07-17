@@ -1,8 +1,8 @@
 import type { Route } from "./+types/org.program.$programId.settings";
 import { type ChangeEvent, useRef } from "react";
-import { Form, useFetcher, useRouteLoaderData } from "react-router";
+import { Form, Link, useFetcher, useRouteLoaderData } from "react-router";
 
-import { ImageUp, Trash2Icon } from "lucide-react";
+import { ArrowUpRight, ImageUp, Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -17,6 +17,24 @@ export function meta() {
 }
 
 const allowedUpdateFields = ["name", "achievement", "about", "website"];
+
+export async function loader({ request, params }: Route.LoaderArgs) {
+  await requireAdminWithProgram(request, Number(params.programId));
+
+  const firstTemplate = await prisma.template.findFirst({
+    where: {
+      programId: Number(params.programId),
+    },
+    orderBy: {
+      name: "asc",
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  return { firstTemplate };
+}
 
 export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
@@ -42,7 +60,8 @@ export async function action({ request, params }: Route.ActionArgs) {
   return { program };
 }
 
-export default function ProgramSettings() {
+export default function ProgramSettings({ loaderData }: Route.ComponentProps) {
+  const { firstTemplate } = loaderData;
   // @todo typesafe use of useRouteLoaderData
   const { program } = useRouteLoaderData("routes/org.program.$programId");
   const fetcherIcon = useFetcher({ key: "program-icon" });
@@ -180,6 +199,29 @@ export default function ProgramSettings() {
             </div>
           </div>
         </section>
+
+        {firstTemplate && (
+          <section className="flex flex-col gap-2 items-start">
+            <Label>Preview</Label>
+        <p className="text-sm text-muted-foreground max-w-[500px]">
+          Check how the texts will be shown in the public certificate page.
+        </p>
+
+            <Button
+              variant="outline"
+              asChild
+              className="pl-0"
+            >
+              <Link
+                to={`/view/sample/${firstTemplate.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Preview certificate page <ArrowUpRight />
+              </Link>
+            </Button>
+          </section>
+        )}
       </div>
 
       <section className="flex flex-col gap-2 my-16">
