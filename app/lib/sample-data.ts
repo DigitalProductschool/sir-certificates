@@ -37,6 +37,24 @@ export function getSampleEmailLinks(
   };
 }
 
+export function getSampleAccountVariables(
+  orgName: string,
+): Record<string, string> {
+  return {
+    "user.firstName": "FirstName",
+    "user.lastName": "LastName",
+    "user.fullName": "FirstName LastName",
+    "org.name": orgName,
+    "verify.url": `${domain}/user/verify/sample/sample`,
+    "reset.url": `${domain}/user/reset-password/sample/sample`,
+    "invite.firstName": "FirstName",
+    "invite.lastName": "LastName",
+    "invite.fullName": "FirstName LastName",
+    "invite.acceptUrl": `${domain}/user/accept-invite/sample/sample`,
+    "invite.senderName": "SenderFirstName SenderLastName",
+  };
+}
+
 export async function getSampleProgram(programId: number | null): Promise<{
   name: string;
   locale: string;

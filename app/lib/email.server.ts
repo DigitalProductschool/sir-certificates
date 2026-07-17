@@ -14,20 +14,26 @@ import { z } from "zod";
 import {
   EMAIL_DEFAULTS,
   EMAIL_KEY_VARIABLES,
+  EMAIL_TEMPLATES,
   type EmailKey,
 } from "./email-defaults";
-import { renderEmailTemplate } from "./email-render";
+import { prepareLinkReplacements, renderEmailTemplate } from "./email-render";
 import { getOrg } from "./organisation.server";
 import { generateBlankA4Pdf, readPreviewOfTemplate } from "./pdf.server";
 import { prisma } from "./prisma.server";
 import {
+  getSampleAccountVariables,
   getSampleBatch,
   getSampleCertificate,
   getSampleEmailLinks,
   getSampleProgram,
 } from "./sample-data";
 import { emailTemplateFieldsSchema } from "./schemas";
-import { checkWellFormedHtml, prettyPrintHtml } from "./text-utils";
+import {
+  checkWellFormedHtml,
+  prepareCertificateReplacements,
+  prettyPrintHtml,
+} from "./text-utils";
 import type { UserContact } from "./types";
 import type { EmailTemplate } from "~/generated/prisma/client";
 
@@ -66,10 +72,18 @@ export type ResolvedEmailTemplate = { isCustomized: boolean } & (
     })
 );
 
+function assertOverrideAllowed(key: EmailKey, programId: number | null) {
+  if (programId !== null && EMAIL_TEMPLATES[key].orgOnly) {
+    throw new Error(`Email template "${key}" cannot be scoped to a program`);
+  }
+}
+
 export async function getEmailTemplate(
   key: EmailKey,
   programId: number | null = null,
 ): Promise<ResolvedEmailTemplate> {
+  assertOverrideAllowed(key, programId);
+
   const override = await prisma.emailTemplate.findFirst({
     where: { key, programId },
   });
@@ -92,6 +106,43 @@ export async function getEmailTemplate(
   };
 }
 
+export async function sendTemplatedEmail(
+  key: EmailKey,
+  to: { email: string; name: string },
+  replacements: Record<string, string>,
+  opts: {
+    programId?: number | null;
+    attachments?: SendEmailV3_1.Attachment[];
+    customId?: string;
+  } = {},
+): Promise<LibraryResponse<SendEmailV3_1.Response>> {
+  const [org, template] = await Promise.all([
+    getOrg(),
+    getEmailTemplate(key, opts.programId ?? null),
+  ]);
+
+  const rendered = renderEmailTemplate(template, replacements);
+
+  const message: SendEmailV3_1.Message = {
+    From: {
+      Email: org.senderEmail ?? "email-not-configured@example.com",
+      Name: org.senderName ?? "Please configure in organisation settings",
+    },
+    To: [{ Email: to.email, Name: to.name }],
+    Subject: rendered.subject,
+    TextPart: rendered.textBody,
+    HTMLPart: rendered.htmlBody,
+  };
+
+  if (opts.attachments) message.Attachments = opts.attachments;
+  if (opts.customId) {
+    // @ts-expect-error CustomId is missing from the Message type
+    message.CustomId = opts.customId;
+  }
+
+  return mailjetSend({ Messages: [message] });
+}
+
 export async function loadEmailTemplateEditor(
   key: EmailKey,
   programId: number | null = null,
@@ -105,26 +156,36 @@ export async function loadEmailTemplateEditor(
   };
 }
 
+function prepareSampleReplacements(
+  sampleProgram: Awaited<ReturnType<typeof getSampleProgram>>,
+  orgName: string,
+): Record<string, string> {
+  return {
+    ...prepareCertificateReplacements(
+      getSampleCertificate(),
+      getSampleBatch(),
+      sampleProgram.locale,
+    ),
+    ...prepareLinkReplacements(
+      getSampleEmailLinks(sampleProgram.name, sampleProgram.firstTemplate?.id ?? null),
+    ),
+    ...getSampleAccountVariables(orgName),
+  };
+}
+
 export async function loadEmailTemplatePreview(
   key: EmailKey,
   programId: number | null = null,
 ) {
-  const [template, sampleProgram] = await Promise.all([
+  const [template, sampleProgram, org] = await Promise.all([
     getEmailTemplate(key, programId),
     getSampleProgram(programId),
+    getOrg(),
   ]);
 
-  return {
-    key,
-    template,
-    sampleCert: getSampleCertificate(),
-    sampleBatch: getSampleBatch(),
-    links: getSampleEmailLinks(
-      sampleProgram.name,
-      sampleProgram.firstTemplate?.id ?? null,
-    ),
-    locale: sampleProgram.locale,
-  };
+  const replacements = prepareSampleReplacements(sampleProgram, org.name);
+
+  return { key, template, replacements };
 }
 
 function summarizeIssueGroups(
@@ -170,6 +231,8 @@ export async function saveEmailTemplate(
   | { ok: false; fieldErrors: Record<string, string[] | undefined> }
 > {
   // @todo refactor for better return values
+
+  assertOverrideAllowed(key, programId);
 
   const parsed = emailTemplateFieldsSchema.safeParse({
     subject: formData.get("subject"),
@@ -224,6 +287,7 @@ export async function resetEmailTemplate(
   key: EmailKey,
   programId: number | null = null,
 ) {
+  assertOverrideAllowed(key, programId);
   await prisma.emailTemplate.deleteMany({ where: { key, programId } });
 }
 
@@ -263,10 +327,7 @@ export async function sendEmailTemplatePreview(
 
   const rendered = renderEmailTemplate(
     emailTemplate,
-    getSampleCertificate(),
-    getSampleBatch(),
-    getSampleEmailLinks(sampleProgram.name, sampleProgram.firstTemplate?.id ?? null),
-    sampleProgram.locale,
+    prepareSampleReplacements(sampleProgram, org.name),
   );
 
   await mailjetSend({

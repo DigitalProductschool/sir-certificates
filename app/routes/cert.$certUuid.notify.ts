@@ -5,11 +5,11 @@ import slug from "slug";
 import { requireAdmin } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
 import type { EmailKey } from "~/lib/email-defaults";
-import { renderEmailTemplate } from "~/lib/email-render";
-import { getEmailTemplate, mailjetSend } from "~/lib/email.server";
-import { getOrg } from "~/lib/organisation.server";
+import { prepareLinkReplacements } from "~/lib/email-render";
+import { sendTemplatedEmail } from "~/lib/email.server";
 import { generateCertificate } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
+import { prepareCertificateReplacements } from "~/lib/text-utils";
 
 // @todo refactor to route org.program.$programId.batch.batchId.certificates.$certId.notify.ts
 
@@ -36,8 +36,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       statusText: "Not Found",
     });
   }
-
-  const org = await getOrg();
 
   const social = await prisma.socialPreview.findUnique({
     where: {
@@ -86,48 +84,34 @@ export async function action({ request, params }: Route.ActionArgs) {
   const templateKey: EmailKey =
     social && isPublished ? "notification-public" : "notification";
 
-  const emailTemplate = await getEmailTemplate(
-    templateKey,
-    certificate.batch.programId,
-  );
-
-  const rendered = renderEmailTemplate(
-    emailTemplate,
-    certificate,
-    certificate.batch,
-    {
+  const replacements = {
+    ...prepareCertificateReplacements(
+      certificate,
+      certificate.batch,
+      certificate.template.locale,
+    ),
+    ...prepareLinkReplacements({
       programName: certificate.batch.program.name,
       certUrl,
       loginUrl,
       signAction: participant ? "in" : "up",
-    },
-    certificate.template.locale,
-  );
+    }),
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response: any = await mailjetSend({
-    // SandboxMode: true,
-    Messages: [
-      {
-        // @ts-expect-error CustomId is missing from the Message type
-        CustomId: certificate.uuid,
-        From: {
-          Email: org.senderEmail ?? "email-not-configured@example.com",
-          Name: org.senderName ?? "Please configure in organisation settings",
-        },
-        To: [
-          {
-            Email: certificate.email,
-            Name: `${certificate.firstName} ${certificate.lastName}`,
-          },
-        ],
-        Subject: rendered.subject,
-        TextPart: rendered.textBody,
-        HTMLPart: rendered.htmlBody,
-        Attachments: attachments,
-      },
-    ],
-  }).catch((error) => {
+  const response: any = await sendTemplatedEmail(
+    templateKey,
+    {
+      email: certificate.email,
+      name: `${certificate.firstName} ${certificate.lastName}`,
+    },
+    replacements,
+    {
+      programId: certificate.batch.programId,
+      attachments,
+      customId: certificate.uuid,
+    },
+  ).catch((error) => {
     throw new Response(error.message, {
       status: 500,
       statusText: error.statusCode,

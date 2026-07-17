@@ -5,16 +5,12 @@ import { EmailSendPreview } from "~/components/email-send-preview";
 import { EmailRestoreButton } from "~/components/email-restore-button";
 
 import { type EmailKey } from "~/lib/email-defaults";
-import { renderEmailTemplate, type EmailLinks } from "~/lib/email-render";
+import { renderEmailTemplate } from "~/lib/email-render";
 import type { ResolvedEmailTemplate } from "~/lib/email.server";
-import type { CertificateView, CertificateViewBatch } from "~/lib/types";
 
 export function EmailPreview({
   template,
-  sampleCert,
-  sampleBatch,
-  links,
-  locale,
+  replacements,
   isSuperAdmin,
   superAdmins,
   sendPreviewAction,
@@ -23,35 +19,24 @@ export function EmailPreview({
 }: {
   emailKey: EmailKey;
   template: ResolvedEmailTemplate;
-  sampleCert: CertificateView;
-  sampleBatch: CertificateViewBatch;
-  links: EmailLinks;
-  locale: string;
+  replacements: Record<string, string>;
   isSuperAdmin: boolean;
   superAdmins: { firstName: string; lastName: string; email: string }[];
   sendPreviewAction: string;
   resetAction: string;
   editHref: string;
 }) {
-  const preview = renderEmailTemplate(
-    template,
-    sampleCert,
-    sampleBatch,
-    links,
-    locale,
-  );
+  const preview = renderEmailTemplate(template, replacements);
 
   return (
     <div className="flex flex-col pt-2 gap-6 max-w-3xl">
       <div className="flex flex-col gap-3 max-w-3xl">
-        <div className="flex flex-col gap-1 ">
-          <span className="text-xs font-medium text-muted-foreground">
-            Subject
-          </span>
-          <p className="text-sm font-medium rounded-md border bg-white p-2">
-            {preview.subject}
-          </p>
-        </div>
+        <span className="text-xs font-medium text-muted-foreground">
+          Subject
+        </span>
+        <p className="text-sm font-medium rounded-md border bg-white p-2">
+          {preview.subject}
+        </p>
 
         <span className="text-xs font-medium text-muted-foreground">Body</span>
         <iframe
@@ -81,7 +66,7 @@ export function EmailPreview({
           Fallback (plain text)
         </span>
 
-        <pre className="mt-1 whitespace-pre-wrap rounded-md border bg-muted p-2 font-mono text-xs leading-relaxed">
+        <pre className="whitespace-pre-wrap rounded-md border bg-muted p-2 font-mono text-xs leading-relaxed">
           {preview.textBody}
         </pre>
       </div>

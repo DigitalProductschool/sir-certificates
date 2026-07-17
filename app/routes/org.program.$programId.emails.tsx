@@ -22,10 +22,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   });
   const customizedKeys = new Set(programTemplates.map((t) => t.key));
 
-  const templates = (Object.keys(EMAIL_TEMPLATES) as EmailKey[]).map((key) => ({
-    key,
-    isCustomized: customizedKeys.has(key),
-  }));
+  const templates = (Object.keys(EMAIL_TEMPLATES) as EmailKey[])
+    .filter((key) => !EMAIL_TEMPLATES[key].orgOnly)
+    .map((key) => ({
+      key,
+      isCustomized: customizedKeys.has(key),
+    }));
 
   return { templates };
 }

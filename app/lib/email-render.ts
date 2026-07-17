@@ -1,5 +1,4 @@
-import { replaceVariables } from "./text-utils";
-import type { CertificateView, CertificateViewBatch } from "./types";
+import { applyReplacements } from "./text-utils";
 import type { EmailTemplate } from "~/generated/prisma/client";
 
 export type EmailLinks = {
@@ -9,24 +8,22 @@ export type EmailLinks = {
   signAction: "in" | "up";
 };
 
+export function prepareLinkReplacements(links: EmailLinks): Record<string, string> {
+  return {
+    "program.name": links.programName,
+    "cert.url": links.certUrl,
+    "cert.loginUrl": links.loginUrl,
+    "cert.signAction": links.signAction,
+  };
+}
+
 export function renderEmailTemplate(
   template: Pick<EmailTemplate, "subject" | "htmlBody" | "textBody">,
-  cert: CertificateView,
-  batch: CertificateViewBatch,
-  links: EmailLinks,
-  locale?: string,
+  replacements: Record<string, string>,
 ) {
-  function render(text: string) {
-    return replaceVariables(text, locale ?? "en-US", cert, batch)
-      .replaceAll("{program.name}", links.programName)
-      .replaceAll("{cert.url}", links.certUrl)
-      .replaceAll("{cert.loginUrl}", links.loginUrl)
-      .replaceAll("{cert.signAction}", links.signAction);
-  }
-
   return {
-    subject: render(template.subject),
-    htmlBody: render(template.htmlBody),
-    textBody: render(template.textBody),
+    subject: applyReplacements(template.subject, replacements),
+    htmlBody: applyReplacements(template.htmlBody, replacements),
+    textBody: applyReplacements(template.textBody, replacements),
   };
 }
