@@ -2,14 +2,22 @@ import { Parser as HtmlParser } from "htmlparser2";
 
 import type { CertificateView, CertificateViewBatch } from "./types";
 
-export function replaceVariables(
+export function applyReplacements(
 	text: string,
-	locale: string = "de-DE",
+	replacements: Record<string, string>,
+): string {
+	let result = text || "";
+	for (const [key, value] of Object.entries(replacements)) {
+		result = result.replaceAll(`{${key}}`, value);
+	}
+	return result;
+}
+
+export function prepareCertificateReplacements(
 	certificate: CertificateView,
 	batch: CertificateViewBatch,
-) {
-	let replacements = text || "";
-
+	locale: string,
+): Record<string, string> {
 	// @todo refactor date formats to be configurable via template settings
 	const startDate = batch.startDate.toLocaleString(locale, {
 		year: "numeric",
@@ -43,64 +51,37 @@ export function replaceVariables(
 		month: "long",
 	});
 
-	// Certificate replacements
-	replacements = replacements.replaceAll(
-		"{certificate.fullName}",
-		`${certificate.firstName || ""} ${certificate.lastName || ""}`,
-	);
-	replacements = replacements.replaceAll(
-		"{certificate.fullNameCaps}",
-		`${certificate.firstName.toUpperCase() || ""} ${
+	return {
+		"certificate.fullName": `${certificate.firstName || ""} ${certificate.lastName || ""}`,
+		"certificate.fullNameCaps": `${certificate.firstName.toUpperCase() || ""} ${
 			certificate.lastName?.toUpperCase() || ""
 		}`,
-	);
-	replacements = replacements.replaceAll(
-		"{certificate.firstName}",
-		certificate.firstName || "",
-	);
-	replacements = replacements.replaceAll(
-		"{certificate.firstNameCaps}",
-		certificate.firstName.toUpperCase() || "",
-	);
-	replacements = replacements.replaceAll(
-		"{certificate.lastName}",
-		certificate.lastName || "",
-	);
-	replacements = replacements.replaceAll(
-		"{certificate.lastNameCaps}",
-		certificate.lastName?.toUpperCase() || "",
-	);
-	replacements = replacements.replaceAll(
-		"{certificate.teamName}",
-		certificate.teamName || "",
-	);
-	replacements = replacements.replaceAll(
-		"{certificate.id}",
-		certificate.uuid || "",
-	);
+		"certificate.firstName": certificate.firstName || "",
+		"certificate.firstNameCaps": certificate.firstName.toUpperCase() || "",
+		"certificate.lastName": certificate.lastName || "",
+		"certificate.lastNameCaps": certificate.lastName?.toUpperCase() || "",
+		"certificate.teamName": certificate.teamName || "",
+		"certificate.id": certificate.uuid || "",
+		"batch.name": batch.name || "",
+		"batch.startDate": startDate,
+		"batch.endDate": endDate,
+		"batch.signatureDate": signatureDate,
+		"batch.signatureDateLong": signatureDateLong,
+		"datetime.currentDate": currentDate,
+		"datetime.currentMonth": currentMonth,
+	};
+}
 
-	// Batch replacements
-	replacements = replacements.replaceAll("{batch.name}", batch.name || "");
-	replacements = replacements.replaceAll("{batch.startDate}", startDate);
-	replacements = replacements.replaceAll("{batch.endDate}", endDate);
-	replacements = replacements.replaceAll(
-		"{batch.signatureDate}",
-		signatureDate,
+export function replaceVariables(
+	text: string,
+	locale: string = "de-DE",
+	certificate: CertificateView,
+	batch: CertificateViewBatch,
+) {
+	return applyReplacements(
+		text,
+		prepareCertificateReplacements(certificate, batch, locale),
 	);
-	replacements = replacements.replaceAll(
-		"{batch.signatureDateLong}",
-		signatureDateLong,
-	);
-	replacements = replacements.replaceAll(
-		"{datetime.currentDate}",
-		currentDate,
-	);
-	replacements = replacements.replaceAll(
-		"{datetime.currentMonth}",
-		currentMonth,
-	);
-
-	return replacements;
 }
 
 // List of self-closing tags, used to filter validation issues and improve HTML pretty formatting

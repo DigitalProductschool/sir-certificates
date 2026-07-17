@@ -8,7 +8,7 @@ import { parseWithZod } from "@conform-to/zod/v4";
 
 import { GoogleStrategy } from "./auth.google.server";
 import { domain } from "./config.server";
-import { mailjetSend } from "./email.server";
+import { sendTemplatedEmail } from "./email.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 import { requireAccessToProgram } from "./program.server";
 import { createUser, createUserOAuth } from "./user.server";
@@ -337,30 +337,17 @@ export async function sendPasswordResetLink(user: User) {
 	if (reset) {
 		const resetUrl = `${domain}/user/reset-password/${user.id}/${reset.resetCode}`;
 
-		// @todo dynamic org name (from settings?)
-		await mailjetSend({
-			Messages: [
-				{
-					From: {
-						Email:
-							org.senderEmail ??
-							"email-not-configured@example.com",
-						Name:
-							org.senderName ??
-							"Please configure in organisation settings",
-					},
-					To: [
-						{
-							Email: user.email,
-							Name: `${user.firstName} ${user.lastName}`,
-						},
-					],
-					Subject: `Reset your password`,
-					TextPart: `Dear ${user.firstName} ${user.lastName},\n\nTo reset your password for ${org.name} Certificates, please click on the following link:\n${resetUrl}\n\nIf you haven't requested this password reset, please ignore or report this email.\n\nThank you!`,
-					HTMLPart: `<p>Dear ${user.firstName} ${user.lastName},</p><p>To reset your password for ${org.name} Certificates, please click on the following link:<br /><a href="${resetUrl}">${resetUrl}</a></p><p>If you haven't requested this password reset, please ignore or report this email.</p><p>Thank you!</p>`,
-				},
-			],
-		}).catch((/*error*/) => {
+		await sendTemplatedEmail(
+			"password-reset",
+			{ email: user.email, name: `${user.firstName} ${user.lastName}` },
+			{
+				"user.firstName": user.firstName,
+				"user.lastName": user.lastName,
+				"user.fullName": `${user.firstName} ${user.lastName}`,
+				"org.name": org.name,
+				"reset.url": resetUrl,
+			},
+		).catch((/*error*/) => {
 			// @todo this should be a service-internal error, not user-facing
 			/* throw new Response(error.message, {
 				status: 500,

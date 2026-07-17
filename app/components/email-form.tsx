@@ -34,7 +34,7 @@ export function EmailForm({
         method="post"
         className="flex flex-col gap-6"
       >
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-3">
           <Label
             htmlFor={`${emailKey}-subject`}
             className="text-xs font-medium text-muted-foreground"
@@ -54,7 +54,7 @@ export function EmailForm({
           ))}
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-3">
           <Label
             htmlFor={`${emailKey}-htmlBody`}
             className="text-xs font-medium text-muted-foreground"
@@ -94,7 +94,7 @@ export function EmailForm({
             )}
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-3">
           <Label
             htmlFor={`${emailKey}-textBody`}
             className="text-xs font-medium text-muted-foreground"

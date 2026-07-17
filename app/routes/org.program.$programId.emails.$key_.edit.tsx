@@ -4,13 +4,13 @@ import { data, redirect, useActionData } from "react-router";
 import { EmailForm } from "~/components/email-form";
 
 import { requireSuperAdmin } from "~/lib/auth.server";
-import { isValidEmailKey } from "~/lib/email-defaults";
+import { EMAIL_TEMPLATES, isValidEmailKey } from "~/lib/email-defaults";
 import { loadEmailTemplateEditor, saveEmailTemplate } from "~/lib/email.server";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   await requireSuperAdmin(request);
 
-  if (!isValidEmailKey(params.key)) {
+  if (!isValidEmailKey(params.key) || EMAIL_TEMPLATES[params.key].orgOnly) {
     throw new Response(null, { status: 404, statusText: "Not Found" });
   }
 
@@ -20,7 +20,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 export async function action({ request, params }: Route.ActionArgs) {
   await requireSuperAdmin(request);
 
-  if (!isValidEmailKey(params.key)) {
+  if (!isValidEmailKey(params.key) || EMAIL_TEMPLATES[params.key].orgOnly) {
     throw new Response(null, { status: 404, statusText: "Not Found" });
   }
 

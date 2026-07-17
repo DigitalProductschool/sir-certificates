@@ -19,17 +19,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export default function OrgEmailKeyPage({ loaderData }: Route.ComponentProps) {
-  const { key, template, sampleCert, sampleBatch, links, locale } =
-    loaderData;
+  const { key, template, replacements } = loaderData;
 
   return (
     <EmailPreview
       emailKey={key}
       template={template}
-      sampleCert={sampleCert}
-      sampleBatch={sampleBatch}
-      links={links}
-      locale={locale}
+      replacements={replacements}
       isSuperAdmin={true}
       superAdmins={[]}
       sendPreviewAction={`${basePath}/${key}/send-preview`}
