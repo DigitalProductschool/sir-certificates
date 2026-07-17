@@ -1,4 +1,4 @@
-import type { Route } from "./+types/org.program.$programId.emails.$key.edit";
+import type { Route } from "./+types/org.program.$programId.emails.$key_.edit";
 import { data, redirect, useActionData } from "react-router";
 
 import { EmailForm } from "~/components/email-form";
@@ -46,8 +46,6 @@ export default function ProgramEmailKeyEditPage({
       emailKey={key}
       template={template}
       variables={variables}
-      customizedDescription="This program uses a custom template."
-      defaultDescription="Showing the organisation default. Save to create a program-specific override."
       sendPreviewAction={`${basePath}/${key}/send-preview`}
       resetAction={`${basePath}/${key}/reset`}
       errors={actionData?.ok === false ? actionData.fieldErrors : undefined}

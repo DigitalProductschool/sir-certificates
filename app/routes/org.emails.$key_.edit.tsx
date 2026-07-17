@@ -1,4 +1,4 @@
-import type { Route } from "./+types/org.emails.$key.edit";
+import type { Route } from "./+types/org.emails.$key_.edit";
 import { data, redirect, useActionData } from "react-router";
 
 import { EmailForm } from "~/components/email-form";
@@ -45,8 +45,6 @@ export default function OrgEmailEditPage({
       emailKey={key}
       template={template}
       variables={variables}
-      customizedDescription="This organisation uses a custom template."
-      defaultDescription="Showing the built-in default. Save to create an organisation-wide override."
       sendPreviewAction={`${basePath}/${key}/send-preview`}
       resetAction={`${basePath}/${key}/reset`}
       errors={actionData?.ok === false ? actionData.fieldErrors : undefined}

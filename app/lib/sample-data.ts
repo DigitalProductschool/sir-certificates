@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { domain } from "./config.server";
 import type { EmailLinks } from "./email-render";
 import { prisma } from "./prisma.server";
 import type { CertificateView, CertificateViewBatch } from "./types";
@@ -24,11 +25,14 @@ export function getSampleBatch(): CertificateViewBatch {
   return { name: "BatchName", startDate, endDate: new Date() };
 }
 
-export function getSampleEmailLinks(programName: string): EmailLinks {
+export function getSampleEmailLinks(
+  programName: string,
+  templateId: number | null,
+): EmailLinks {
   return {
     programName,
-    certUrl: "https://example.com/view/sample",
-    loginUrl: "https://example.com/user/sign/in",
+    certUrl: templateId ? `${domain}/view/sample/${templateId}` : `${domain}`,
+    loginUrl: `${domain}/user/sign/in`,
     signAction: "in",
   };
 }

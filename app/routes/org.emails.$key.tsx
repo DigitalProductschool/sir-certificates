@@ -32,8 +32,6 @@ export default function OrgEmailKeyPage({ loaderData }: Route.ComponentProps) {
       locale={locale}
       isSuperAdmin={true}
       superAdmins={[]}
-      customizedDescription="This organisation uses a custom template."
-      defaultDescription="Showing the built-in default. Save to create an organisation-wide override."
       sendPreviewAction={`${basePath}/${key}/send-preview`}
       resetAction={`${basePath}/${key}/reset`}
       editHref={`${basePath}/${key}/edit`}

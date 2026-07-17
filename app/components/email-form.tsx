@@ -7,15 +7,13 @@ import { Textarea } from "~/components/ui/textarea";
 import { EmailSendPreview } from "~/components/email-send-preview";
 import { EmailRestoreButton } from "~/components/email-restore-button";
 
-import { EMAIL_TEMPLATES, type EmailKey } from "~/lib/email-defaults";
+import { type EmailKey } from "~/lib/email-defaults";
 import type { ResolvedEmailTemplate } from "~/lib/email.server";
 
 export function EmailForm({
   emailKey,
   template,
   variables,
-  customizedDescription,
-  defaultDescription,
   sendPreviewAction,
   resetAction,
   errors,
@@ -24,33 +22,22 @@ export function EmailForm({
   emailKey: EmailKey;
   template: ResolvedEmailTemplate;
   variables: string[];
-  customizedDescription: string;
-  defaultDescription: string;
   sendPreviewAction: string;
   resetAction: string;
   errors?: Record<string, string[] | undefined>;
   cancelHref?: string;
 }) {
   return (
-    <div className="flex flex-col gap-4 max-w-3xl">
-      <div>
-        <h2 className="text-lg font-semibold">
-          {EMAIL_TEMPLATES[emailKey].label}
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          {template.isCustomized ? customizedDescription : defaultDescription}
-        </p>
-      </div>
-
+    <div className="flex flex-col pt-2 gap-6 max-w-3xl">
       <Form
         key={`${emailKey}-${template.isCustomized}-${template.subject}-${template.htmlBody}-${template.textBody}`}
         method="post"
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-6"
       >
         <div className="flex flex-col gap-1">
           <Label
             htmlFor={`${emailKey}-subject`}
-            className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+            className="text-xs font-medium text-muted-foreground"
           >
             Subject
           </Label>
@@ -70,7 +57,7 @@ export function EmailForm({
         <div className="flex flex-col gap-1">
           <Label
             htmlFor={`${emailKey}-htmlBody`}
-            className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+            className="text-xs font-medium text-muted-foreground"
           >
             HTML Body
           </Label>
@@ -83,7 +70,7 @@ export function EmailForm({
             required
           />
           {// @todo show errors with a similar styling to warnings
-            errors?.htmlBody?.map((error) => (
+          errors?.htmlBody?.map((error) => (
             <p key={error} className="text-xs text-destructive">
               {error}
             </p>
@@ -110,7 +97,7 @@ export function EmailForm({
         <div className="flex flex-col gap-1">
           <Label
             htmlFor={`${emailKey}-textBody`}
-            className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+            className="text-xs font-medium text-muted-foreground"
           >
             Plain Text Body
           </Label>
@@ -156,7 +143,7 @@ export function EmailForm({
               <Link to={cancelHref}>Cancel</Link>
             </Button>
           )}
-        </div>
+        </div>        
       </Form>
     </div>
   );
