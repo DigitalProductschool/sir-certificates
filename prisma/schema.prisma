@@ -235,11 +235,16 @@ model EmailTemplate {
 model SocialPreview {
   id            Int       @id @default(autoincrement())
 
+  ogTitle       String?
+  ogDescription String?
+
   /// [SocialPreviewLayout]
   layout        Json      @default("{}")
 
   contentType   String    @db.VarChar(64)
-  updatedAt     DateTime  @updatedAt    
+  imageWidth    Int?
+  imageHeight   Int?
+  updatedAt     DateTime  @updatedAt
   program       Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
   programId     Int       @unique
 

@@ -17,6 +17,7 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { domain } from "~/lib/config.server";
 import { requireUserId, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { defaultOgDescription, defaultOgTitle } from "~/lib/social-defaults";
 import { replaceVariables } from "~/lib/text-utils";
 import { ErrorPublic } from "~/components/error-public";
 
@@ -135,20 +136,23 @@ export default function ViewCertificateShare({
           <Card className="max-w-[650px]">
             <CardHeader>
               <CardTitle className="text-xl">
-                {certificate.firstName} {certificate.lastName} is certified by{" "}
-                {certificate.batch.program.name}
+                {replaceVariables(
+                  social?.ogTitle || defaultOgTitle,
+                  certificate.template.locale,
+                  certificate,
+                  certificate.batch,
+                  certificate.batch.program,
+                )}
               </CardTitle>
               <CardDescription>
                 <Markdown>
-                  {
-                    /* @todo add variable replacements and Markdown render */
-                    replaceVariables(
-                      certificate.batch.program.achievement ?? "",
-                      certificate.template.locale,
-                      certificate,
-                      certificate.batch,
-                    ) ?? ""
-                  }
+                  {replaceVariables(
+                    social?.ogDescription || defaultOgDescription,
+                    certificate.template.locale,
+                    certificate,
+                    certificate.batch,
+                    certificate.batch.program,
+                  )}
                 </Markdown>
               </CardDescription>
             </CardHeader>

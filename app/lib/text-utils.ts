@@ -1,6 +1,6 @@
 import { Parser as HtmlParser } from "htmlparser2";
 
-import type { CertificateView, CertificateViewBatch } from "./types";
+import type { CertificateView, CertificateViewBatch, ProgramView } from "./types";
 
 export function applyReplacements(
 	text: string,
@@ -72,16 +72,28 @@ export function prepareCertificateReplacements(
 	};
 }
 
+export function prepareProgramReplacements(
+	program: ProgramView,
+): Record<string, string> {
+	return {
+		"program.name": program.name || "",
+		"program.about": program.about || "",
+		"program.achievement": program.achievement || "",
+		"program.website": program.website || "",
+	};
+}
+
 export function replaceVariables(
 	text: string,
 	locale: string = "de-DE",
 	certificate: CertificateView,
 	batch: CertificateViewBatch,
+	program?: ProgramView,
 ) {
-	return applyReplacements(
-		text,
-		prepareCertificateReplacements(certificate, batch, locale),
-	);
+	return applyReplacements(text, {
+		...prepareCertificateReplacements(certificate, batch, locale),
+		...(program ? prepareProgramReplacements(program) : {}),
+	});
 }
 
 // List of self-closing tags, used to filter validation issues and improve HTML pretty formatting
