@@ -51,7 +51,9 @@ export async function saveSocialBackgroundUpload(
   return openLazyFile(filepath);
 }
 
-export async function readBackgroundImage(social: SocialPreview) {
+export async function readBackgroundImage(
+  social: Pick<SocialPreview, "id" | "contentType">,
+) {
   let extension: "jpg" | "png" | "unkown";
   switch (social.contentType) {
     case "image/png":
@@ -67,6 +69,22 @@ export async function readBackgroundImage(social: SocialPreview) {
   return await readFileIfExists(
     `${socialDir}/${social.id}.background.${extension}`,
   );
+}
+
+export async function readBackgroundImageDimensions(
+  social: Pick<SocialPreview, "id" | "contentType">,
+) {
+  const background = await readBackgroundImage(social);
+  if (!background) {
+    return null;
+  }
+
+  const { width, height } = await sharp(background).metadata();
+  if (!width || !height) {
+    return null;
+  }
+
+  return { width, height };
 }
 
 export async function readCompositeImage(

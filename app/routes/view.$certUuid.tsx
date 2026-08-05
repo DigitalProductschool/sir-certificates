@@ -15,72 +15,23 @@ import { getUser } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/variables";
-import { getPublicOrg } from "~/lib/organisation.server";
+import { defaultOgDescription, defaultOgTitle } from "~/lib/social-defaults";
 
-// @todo use React 19 <meta> tags in Page component instead of this
 // @todo replace domain config
 // @todo create a CertificateSelected type and use it here
 export function meta({ data }: Route.MetaArgs) {
-  return data
-    ? [
-        {
-          title: `${data?.certificate.firstName} ${data?.certificate.lastName} is certified by ${data?.certificate.batch.program.name}`,
-        },
-        {
-          name: "description",
-          content: data?.certificate
-            ? replaceVariables(
-                data?.certificate.batch.program.achievement ?? "",
-                data?.certificate,
-                data?.certificate.batch,
-                data?.certificate.template.locale,
-              )
-            : "",
-        },
-        {
-          property: "og:title",
-          content: `${data?.certificate.firstName} ${data?.certificate.lastName} is certified by ${data?.certificate.batch.program.name}`,
-        },
-        {
-          property: "og:description",
-          content: data?.certificate
-            ? replaceVariables(
-                data?.certificate.batch.program.achievement ?? "",
-                data?.certificate,
-                data?.certificate.batch,
-                data?.certificate.template.locale,
-              )
-            : "",
-        },
-        {
-          property: "og:image",
-          content: `${data?.domain}/cert/${data?.certificate.uuid}/social-preview.png?t=${data?.certificate.updatedAt.getTime()}`,
-        },
-        {
-          property: "og:url",
-          content: `${data?.domain}/view/${data?.certificate.uuid}`,
-        },
-        {
-          property: "og:type",
-          content: "website",
-        },
-        {
-          name: "author",
-          content: data?.org.name,
-        },
-      ]
-    : [
-        {
-          title: "Error",
-        },
-      ];
+  // Return [] rather than nothing so this route doesn't inherit the parent
+  // ("Certificates") title — the component renders its own <title>/<meta>
+  // tags (React 19) once data is available.
+  if (!data) {
+    return [{ title: "Error" }];
+  }
+  return [];
 }
 
 // @todo select relevant individual fields for certificate, batch and program
 export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await getUser(request);
-
-  const org = await getPublicOrg();
 
   const certificate = await prisma.certificate
     .findUnique({
@@ -109,6 +60,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                 about: true,
                 achievement: true,
                 website: true,
+                socialPreview: {
+                  select: {
+                    ogTitle: true,
+                    ogDescription: true,
+                    imageWidth: true,
+                    imageHeight: true,
+                  },
+                },
               },
             },
           },
@@ -142,11 +101,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   // Remove certificate email to prevent exposure // @todo Improve type safety for this
   certificate.email = "";
-  return { certificate, userIsOwner, org, domain };
+  return { certificate, userIsOwner, domain };
 }
 
 export default function ViewCertificate({ loaderData }: Route.ComponentProps) {
-  const { certificate, userIsOwner } = loaderData;
+  const { certificate, userIsOwner, domain } = loaderData;
   const { org, user } = useRouteLoaderData("routes/view");
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -162,147 +121,197 @@ export default function ViewCertificate({ loaderData }: Route.ComponentProps) {
     }
   }, [paramSignup, paramSignIn, setSearchParams]);
 
+  const program = certificate.batch.program;
+  const imageWidth = program.socialPreview?.imageWidth;
+  const imageHeight = program.socialPreview?.imageHeight;
+
+  const ogTitle = replaceVariables(
+    program.socialPreview?.ogTitle || defaultOgTitle,
+    certificate,
+    certificate.batch,
+    certificate.template.locale,
+    program,
+  );
+  const ogDescription = replaceVariables(
+    program.socialPreview?.ogDescription || defaultOgDescription,
+    certificate,
+    certificate.batch,
+    certificate.template.locale,
+    program,
+  );
+
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 min-h-screen">
-      <div className="col-start-1 row-start-1 flex flex-col px-2 sm:px-4 py-3">
-        <header className="flex items-center h-14 gap-4 border-b pb-2.5 sm:pb-0 sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
-          {user ? (
-            <SidebarTrigger className="-ml-1" />
-          ) : (
-            <span className="w-5"></span>
-          )}
-          <div className="text-sm grow flex flex-col sm:flex-row">
-            <b>{certificate.batch.program.name}</b>
-            <div className="hidden sm:block px-2">&mdash;</div>
-            {certificate.batch.name}
-          </div>
-          {!user && (
-            <Button variant={signUpMail ? "default" : "outline"} asChild>
-              {signUpMail ? (
-                <Link to={`/user/sign/up?email=${signUpMail}`}>Sign up</Link>
-              ) : (
-                <Link
-                  to={`/user/sign/in${
-                    signInMail ? "?email=".concat(signInMail) : ""
-                  }`}
-                >
-                  Sign in
-                </Link>
-              )}
-            </Button>
-          )}
-        </header>
+    <>
+      <title>{ogTitle}</title>
+      <meta name="description" content={ogDescription} />
+      <meta property="og:title" content={ogTitle} />
+      <meta property="og:description" content={ogDescription} />
+      {/* Omit og:image entirely when there's no preview to serve, rather than
+      pointing at a URL that 404s and leaves LinkedIn with a broken card. */}
+      {imageWidth && imageHeight && (
+        <>
+          <meta
+            property="og:image"
+            content={`${domain}/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt.getTime()}`}
+          />
+          <meta property="og:image:width" content={`${imageWidth}`} />
+          <meta property="og:image:height" content={`${imageHeight}`} />
+          <meta property="og:image:type" content="image/png" />
+        </>
+      )}
+      <meta property="og:url" content={`${domain}/view/${certificate.uuid}`} />
+      <meta property="og:type" content="website" />
+      <meta name="author" content={org?.name} />
 
-        <section className="flex flex-col p-8 gap-4 max-w-[80ch]">
-          <h1 className="text-5xl font-bold mb-4">
-            {certificate.firstName} {certificate.lastName}
-          </h1>
-
-          {certificate.batch.program.achievement && (
-            <Markdown>
-              {replaceVariables(
-                certificate.batch.program.achievement,
-                certificate,
-                certificate.batch,
-                certificate.template.locale,
-              )}
-            </Markdown>
-          )}
-
-          <div className="flex flex-col sm:flex-row mt-4 gap-4">
-            <Button asChild>
-              <Link
-                to={`/cert/${certificate.uuid}/download.pdf`}
-                className="grow sm:grow-0"
-                reloadDocument
-              >
-                <Download />
-                Download Certificate
-              </Link>
-            </Button>
-            {userIsOwner && (
-              <Button asChild>
-                <Link to={`/view/${certificate.uuid}/share`}>
-                  <Share />
-                  Share on Social Media
-                </Link>
+      <div className="grid grid-cols-1 xl:grid-cols-2 min-h-screen">
+        <div className="col-start-1 row-start-1 flex flex-col px-2 sm:px-4 py-3">
+          <header className="flex items-center h-14 gap-4 border-b pb-2.5 sm:pb-0 sm:static sm:h-auto sm:border-0 sm:bg-transparent ">
+            {user ? (
+              <SidebarTrigger className="-ml-1" />
+            ) : (
+              <span className="w-5"></span>
+            )}
+            <div className="text-sm grow flex flex-col sm:flex-row">
+              <b>{certificate.batch.program.name}</b>
+              <div className="hidden sm:block px-2">&mdash;</div>
+              {certificate.batch.name}
+            </div>
+            {!user && (
+              <Button variant={signUpMail ? "default" : "outline"} asChild>
+                {signUpMail ? (
+                  <Link to={`/user/sign/up?email=${signUpMail}`}>Sign up</Link>
+                ) : (
+                  <Link
+                    to={`/user/sign/in${
+                      signInMail ? "?email=".concat(signInMail) : ""
+                    }`}
+                  >
+                    Sign in
+                  </Link>
+                )}
               </Button>
             )}
-            {!user && (signUpMail || signInMail) && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button asChild>
-                    <Link
-                      to={
-                        signUpMail
-                          ? `/user/sign/up?email=${signUpMail}`
-                          : `/user/sign/in${
-                              signInMail ? "?email=".concat(signInMail) : ""
-                            }`
-                      }
-                    >
-                      <Share />
-                      Share on Social Media
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  Sign {signInMail ? "in" : "up"} to share a personalized
-                  preview with your photo
-                </TooltipContent>
-              </Tooltip>
+          </header>
+
+          <section className="flex flex-col p-8 gap-4 max-w-[80ch]">
+            <h1 className="text-5xl font-bold mb-4">
+              {certificate.firstName} {certificate.lastName}
+            </h1>
+
+            {certificate.batch.program.achievement && (
+              <Markdown>
+                {replaceVariables(
+                  certificate.batch.program.achievement,
+                  certificate,
+                  certificate.batch,
+                  certificate.template.locale,
+                )}
+              </Markdown>
+            )}
+
+            <div className="flex flex-col sm:flex-row mt-4 gap-4">
+              <Button asChild>
+                <Link
+                  to={`/cert/${certificate.uuid}/download.pdf`}
+                  className="grow sm:grow-0"
+                  reloadDocument
+                >
+                  <Download />
+                  Download Certificate
+                </Link>
+              </Button>
+              {userIsOwner && (
+                <Button asChild>
+                  <Link to={`/view/${certificate.uuid}/share`}>
+                    <Share />
+                    Share on Social Media
+                  </Link>
+                </Button>
+              )}
+              {!user && (signUpMail || signInMail) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button asChild>
+                      <Link
+                        to={
+                          signUpMail
+                            ? `/user/sign/up?email=${signUpMail}`
+                            : `/user/sign/in${
+                                signInMail ? "?email=".concat(signInMail) : ""
+                              }`
+                        }
+                      >
+                        <Share />
+                        Share on Social Media
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    Sign {signInMail ? "in" : "up"} to share a personalized
+                    preview with your photo
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </section>
+        </div>
+        <div className="col-start-1 row-start-3 xl:row-start-2 flex flex-col p-12 gap-4 justify-end max-w-[80ch]">
+          {certificate.batch.program.about && (
+            <>
+              <h3 className="font-bold">
+                About {certificate.batch.program.name}
+              </h3>
+              <Markdown>{certificate.batch.program.about}</Markdown>
+            </>
+          )}
+
+          {
+            /* @todo improve word breaks with <wbr> in links */
+            certificate.batch.program.website && (
+              <a
+                href={certificate.batch.program.website}
+                className="self-start inline-flex underline underline-offset-2 break-all"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ArrowRight className="mr-2" />
+                {certificate.batch.program.website}
+              </a>
+            )
+          }
+
+          <div className="text-xs mt-8">
+            {org?.name}&emsp;&middot;&emsp;
+            {org?.imprintUrl && (
+              <a
+                href={org.imprintUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Imprint
+              </a>
+            )}
+            &emsp;&middot;&emsp;
+            {org?.privacyUrl && (
+              <a
+                href={org.privacyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Privacy
+              </a>
             )}
           </div>
-        </section>
-      </div>
-      <div className="col-start-1 row-start-3 xl:row-start-2 flex flex-col p-12 gap-4 justify-end max-w-[80ch]">
-        {certificate.batch.program.about && (
-          <>
-            <h3 className="font-bold">
-              About {certificate.batch.program.name}
-            </h3>
-            <Markdown>{certificate.batch.program.about}</Markdown>
-          </>
-        )}
-
-        {
-          /* @todo improve word breaks with <wbr> in links */
-          certificate.batch.program.website && (
-            <a
-              href={certificate.batch.program.website}
-              className="self-start inline-flex underline underline-offset-2 break-all"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ArrowRight className="mr-2" />
-              {certificate.batch.program.website}
-            </a>
-          )
-        }
-
-        <div className="text-xs mt-8">
-          {org?.name}&emsp;&middot;&emsp;
-          {org?.imprintUrl && (
-            <a href={org.imprintUrl} target="_blank" rel="noopener noreferrer">
-              Imprint
-            </a>
-          )}
-          &emsp;&middot;&emsp;
-          {org?.privacyUrl && (
-            <a href={org.privacyUrl} target="_blank" rel="noopener noreferrer">
-              Privacy
-            </a>
-          )}
+        </div>
+        <div className="col-start-1 row-start-2 xl:col-start-2 xl:row-span-2 xl:row-start-1 px-12 pt-4 pb-12">
+          <img
+            className="drop-shadow-xl h-full max-h-[calc(100vh-64px)] object-contain"
+            src={`/cert/${certificate.uuid}/preview.png?t=${certificate.updatedAt}`}
+            alt="Preview of the certificate"
+          />
         </div>
       </div>
-      <div className="col-start-1 row-start-2 xl:col-start-2 xl:row-span-2 xl:row-start-1 px-12 pt-4 pb-12">
-        <img
-          className="drop-shadow-xl h-full max-h-[calc(100vh-64px)] object-contain"
-          src={`/cert/${certificate.uuid}/preview.png?t=${certificate.updatedAt}`}
-          alt="Preview of the certificate"
-        />
-      </div>
-    </div>
+    </>
   );
 }
 

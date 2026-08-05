@@ -1,4 +1,4 @@
-import type { CertificateView, CertificateViewBatch } from "./types";
+import type { CertificateView, CertificateViewBatch, ProgramView } from "./types";
 import type { EmailKey } from "./email-templates";
 
 export function applyReplacements(
@@ -110,16 +110,28 @@ export function prepareCertificateReplacements(
 	};
 }
 
+export function prepareProgramReplacements(
+	program: ProgramView,
+): Record<string, string> {
+	return {
+		"program.name": program.name || "",
+		"program.about": program.about || "",
+		"program.achievement": program.achievement || "",
+		"program.website": program.website || "",
+	};
+}
+
 export function replaceVariables(
 	text: string,
 	certificate: CertificateView,
 	batch: CertificateViewBatch,
 	locale: string = "de-DE",
+	program?: ProgramView,
 ) {
-	return applyReplacements(
-		text,
-		prepareCertificateReplacements(certificate, batch, locale),
-	);
+	return applyReplacements(text, {
+		...prepareCertificateReplacements(certificate, batch, locale),
+		...(program ? prepareProgramReplacements(program) : {}),
+	});
 }
 
 export const EMAIL_KEY_VARIABLE_GROUPS: Record<EmailKey, VariableGroup[]> = {
