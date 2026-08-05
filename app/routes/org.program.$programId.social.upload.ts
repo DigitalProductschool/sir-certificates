@@ -10,6 +10,7 @@ import {
   addPhotoToPreview,
   addTemplateAndPhotoToPreview,
   defaultLayout,
+  readBackgroundImageDimensions,
 } from "~/lib/social.server";
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -66,7 +67,21 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
 
       // Save background image to disk
-      return (await saveSocialBackgroundUpload(social, fileUpload)).name;
+      const savedFile = await saveSocialBackgroundUpload(social, fileUpload);
+
+      // Cache the image's pixel dimensions so certificate pages (crawled by
+      // LinkedIn etc.) can emit og:image:width/height without reading the
+      // file from disk on every request.
+      const dimensions = await readBackgroundImageDimensions(social);
+      social = await prisma.socialPreview.update({
+        where: { id: social.id },
+        data: {
+          imageWidth: dimensions?.width ?? null,
+          imageHeight: dimensions?.height ?? null,
+        },
+      });
+
+      return savedFile.name;
     }
   };
 

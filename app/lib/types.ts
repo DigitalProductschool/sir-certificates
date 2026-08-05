@@ -90,6 +90,10 @@ export type CertificateViewBatch = Prisma.BatchGetPayload<{
 	};
 }>;
 
+export type ProgramView = Prisma.ProgramGetPayload<{
+	select: { name: true; about: true; achievement: true; website: true };
+}>;
+
 export type ProgramWithBatches = Prisma.ProgramGetPayload<{
 	include: { batches: true };
 }>;

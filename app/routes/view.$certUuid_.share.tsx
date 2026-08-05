@@ -18,6 +18,7 @@ import { domain } from "~/lib/config.server";
 import { requireUserId, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/variables";
+import { defaultOgDescription, defaultOgTitle } from "~/lib/social-defaults";
 import { ErrorPublic } from "~/components/error-public";
 
 export function meta() {
@@ -135,20 +136,23 @@ export default function ViewCertificateShare({
           <Card className="max-w-[650px]">
             <CardHeader>
               <CardTitle className="text-xl">
-                {certificate.firstName} {certificate.lastName} is certified by{" "}
-                {certificate.batch.program.name}
+                {replaceVariables(
+                  social?.ogTitle || defaultOgTitle,
+                  certificate,
+                  certificate.batch,
+                  certificate.template.locale,
+                  certificate.batch.program,
+                )}
               </CardTitle>
               <CardDescription>
                 <Markdown>
-                  {
-                    /* @todo add variable replacements and Markdown render */
-                    replaceVariables(
-                      certificate.batch.program.achievement ?? "",
-                      certificate,
-                      certificate.batch,
-                      certificate.template.locale,
-                    ) ?? ""
-                  }
+                  {replaceVariables(
+                    social?.ogDescription || defaultOgDescription,
+                    certificate,
+                    certificate.batch,
+                    certificate.template.locale,
+                    certificate.batch.program,
+                  )}
                 </Markdown>
               </CardDescription>
             </CardHeader>
