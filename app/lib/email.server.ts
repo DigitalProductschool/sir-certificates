@@ -68,7 +68,8 @@ export type ResolvedEmailTemplate = { isCustomized: boolean } & (
   | (Pick<EmailTemplate, "subject" | "htmlBody" | "textBody"> & {
       id: null;
       programId: null;
-      compatibilityWarnings: string[];
+      errors: string[];
+      warnings: string[];
     })
 );
 
@@ -101,7 +102,8 @@ export async function getEmailTemplate(
     htmlBody: prettyPrintHtml(EMAIL_DEFAULTS[key].htmlBody),
     id: null,
     programId: null,
-    compatibilityWarnings: [] as string[],
+    errors: [] as string[],
+    warnings: [] as string[],
     isCustomized: false,
   };
 }
@@ -245,14 +247,10 @@ export async function saveEmailTemplate(
   }
 
   const wellFormedHtmlErrors = checkWellFormedHtml(parsed.data.htmlBody);
-  if (wellFormedHtmlErrors.length > 0) {
-    return { ok: false, fieldErrors: { htmlBody: wellFormedHtmlErrors } };
-  }
-
-  const { errors, warnings } = checkEmailCompatibility(parsed.data.htmlBody);
-  if (errors.length > 0) {
-    return { ok: false, fieldErrors: { htmlBody: errors } };
-  }
+  const { errors: compatibilityErrors, warnings } = checkEmailCompatibility(
+    parsed.data.htmlBody,
+  );
+  const errors = [...wellFormedHtmlErrors, ...compatibilityErrors];
 
   const subject = parsed.data.subject;
   const htmlBody = prettyPrintHtml(parsed.data.htmlBody);
@@ -265,18 +263,11 @@ export async function saveEmailTemplate(
   if (existing) {
     await prisma.emailTemplate.update({
       where: { id: existing.id },
-      data: { subject, htmlBody, textBody, compatibilityWarnings: warnings },
+      data: { subject, htmlBody, textBody, errors, warnings },
     });
   } else {
     await prisma.emailTemplate.create({
-      data: {
-        key,
-        programId,
-        subject,
-        htmlBody,
-        textBody,
-        compatibilityWarnings: warnings,
-      },
+      data: { key, programId, subject, htmlBody, textBody, errors, warnings },
     });
   }
 

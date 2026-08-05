@@ -69,29 +69,38 @@ export function EmailForm({
             className="font-mono text-xs leading-relaxed"
             required
           />
-          {// @todo show errors with a similar styling to warnings
-          errors?.htmlBody?.map((error) => (
+          {errors?.htmlBody?.map((error) => (
             <p key={error} className="text-xs text-destructive">
               {error}
             </p>
           ))}
-          {!errors?.htmlBody &&
-            template.compatibilityWarnings &&
-            template.compatibilityWarnings.length > 0 && (
-              <div className="flex flex-col gap-0.5 mt-1 rounded-md border border-amber-300 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-950">
-                <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
-                  Email client compatibility warnings
+          {!errors?.htmlBody && template.errors.length > 0 && (
+            <div className="flex flex-col gap-0.5 mt-1 rounded-md border border-red-300 bg-red-50 p-2 dark:border-red-800 dark:bg-red-950">
+              <p className="text-xs font-medium text-red-800 dark:text-red-300">
+                HTML errors
+              </p>
+              {template.errors.map((error) => (
+                <p key={error} className="text-xs text-red-700 dark:text-red-400">
+                  {error}
                 </p>
-                {template.compatibilityWarnings.map((warning) => (
-                  <p
-                    key={warning}
-                    className="text-xs text-amber-700 dark:text-amber-400"
-                  >
-                    {warning}
-                  </p>
-                ))}
-              </div>
-            )}
+              ))}
+            </div>
+          )}
+          {!errors?.htmlBody && template.warnings.length > 0 && (
+            <div className="flex flex-col gap-0.5 mt-1 rounded-md border border-amber-300 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-950">
+              <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                Email client compatibility warnings
+              </p>
+              {template.warnings.map((warning) => (
+                <p
+                  key={warning}
+                  className="text-xs text-amber-700 dark:text-amber-400"
+                >
+                  {warning}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-3">
