@@ -107,9 +107,9 @@ export async function renderCertificatePDF(
     const lines = text.lines.map((line: PrismaJson.TextSegment) => {
       const replacements = replaceVariables(
         line.text,
-        template.locale,
         certificate,
         batch,
+        template.locale,
       );
       return { text: replacements, font: fontMap.get(line.font)! };
     });
@@ -217,9 +217,9 @@ export async function generateTemplateSample(template: Template) {
     const lines = text.lines.map((line: PrismaJson.TextSegment) => {
       const replacements = replaceVariables(
         line.text,
-        template.locale,
         mockCertificate,
         mockBatch,
+        template.locale,
       );
 
       return {
