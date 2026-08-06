@@ -37,14 +37,14 @@ export async function action({ request, params }: Route.ActionArgs) {
 export default function OrgEmailEditPage({
   loaderData,
 }: Route.ComponentProps) {
-  const { key, template, variables } = loaderData;
+  const { key, template, variableGroups } = loaderData;
   const actionData = useActionData<typeof action>();
 
   return (
     <EmailForm
       emailKey={key}
       template={template}
-      variables={variables}
+      variableGroups={variableGroups}
       sendPreviewAction={`${basePath}/${key}/send-preview`}
       resetAction={`${basePath}/${key}/reset`}
       errors={actionData?.ok === false ? actionData.fieldErrors : undefined}

@@ -13,6 +13,45 @@ export function applyReplacements(
 	return result;
 }
 
+export type VariableDef = { placeholder: string; label: string };
+export type VariableGroup = { group: string; variables: VariableDef[] };
+
+// Grouped, labeled catalog of the placeholders prepareCertificateReplacements
+// substitutes — the single source of truth for both the certificate layout
+// editor's "Add variable" menu and the certificate-related email templates.
+export const CERTIFICATE_VARIABLE_GROUPS: VariableGroup[] = [
+	{
+		group: "Certificate",
+		variables: [
+			{ placeholder: "certificate.fullName", label: "Full Name" },
+			{ placeholder: "certificate.firstName", label: "First Name" },
+			{ placeholder: "certificate.lastName", label: "Last Name" },
+			{ placeholder: "certificate.teamName", label: "Team Name" },
+			{ placeholder: "certificate.id", label: "Unique ID" },
+			{ placeholder: "certificate.fullNameCaps", label: "FULL NAME" },
+			{ placeholder: "certificate.firstNameCaps", label: "FIRST NAME" },
+			{ placeholder: "certificate.lastNameCaps", label: "LAST NAME" },
+		],
+	},
+	{
+		group: "Batch",
+		variables: [
+			{ placeholder: "batch.name", label: "Name" },
+			{ placeholder: "batch.startDate", label: "Start date" },
+			{ placeholder: "batch.endDate", label: "End date" },
+			{ placeholder: "batch.signatureDate", label: "Signature date" },
+			{ placeholder: "batch.signatureDateLong", label: "Signature date (long)" },
+		],
+	},
+	{
+		group: "Date",
+		variables: [
+			{ placeholder: "datetime.currentDate", label: "Current date" },
+			{ placeholder: "datetime.currentMonth", label: "Current month" },
+		],
+	},
+];
+
 export function prepareCertificateReplacements(
 	certificate: CertificateView,
 	batch: CertificateViewBatch,

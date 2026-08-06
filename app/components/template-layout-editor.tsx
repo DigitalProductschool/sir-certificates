@@ -7,7 +7,6 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-  Braces,
   PlusIcon,
   Trash2,
   TextInitial,
@@ -16,18 +15,6 @@ import {
 import { FontSizeIcon, LineHeightIcon } from "@radix-ui/react-icons";
 
 import { Button } from "~/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
 import { InputTiny } from "~/components/ui/input-tiny";
 import {
@@ -49,6 +36,9 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
+import { VariableMenu } from "~/components/variable-menu";
+import { useVariableInsertion } from "~/hooks/use-variable-insertion";
+import { CERTIFICATE_VARIABLE_GROUPS } from "~/lib/text-utils";
 import { generateRandomId, hexToRgbArray, rgbToHex } from "~/lib/utils";
 
 function Toolbar({
@@ -230,13 +220,8 @@ function TextRow({
   onChangeSegment: (changedSegment: PrismaJson.TextSegment) => void;
   onDelete: () => void;
 }) {
-  const addVariable = (variable: string) => {
-    onChangeSegment({
-      id: segmentId,
-      text: settings.text + variable,
-      font: settings.font,
-    });
-  };
+  const { fieldRef, trackingProps, insertAtCursor, restoreFocus } =
+    useVariableInsertion<HTMLInputElement>();
 
   return (
     <tr>
@@ -244,6 +229,7 @@ function TextRow({
         <Input
           id={`${segmentId}-text`}
           key={`${segmentId}-text`}
+          ref={fieldRef}
           value={settings.text}
           className="grow"
           onChange={(event) =>
@@ -253,116 +239,21 @@ function TextRow({
               font: settings.font,
             })
           }
+          {...trackingProps}
         />
       </td>
       <td>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="my-button">
-              <Braces />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuLabel>Add variable</DropdownMenuLabel>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Batch</DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{batch.name}")}
-                  >
-                    Name
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{batch.startDate}")}
-                  >
-                    Start date
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{batch.endDate}")}
-                  >
-                    End date
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{batch.signatureDate}")}
-                  >
-                    Signature date
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{batch.signatureDateLong}")}
-                  >
-                    Signature date (long)
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Certificate</DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{certificate.fullName}")}
-                  >
-                    Full Name
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{certificate.firstName}")}
-                  >
-                    First Name
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{certificate.lastName}")}
-                  >
-                    Last Name
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{certificate.teamName}")}
-                  >
-                    Team Name
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{certificate.id}")}
-                  >
-                    Unique ID
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{certificate.fullNameCaps}")}
-                  >
-                    FULL NAME
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{certificate.firstNameCaps}")}
-                  >
-                    FIRST NAME
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{certificate.firstNameCaps}")}
-                  >
-                    LAST NAME
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Date</DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{datetime.currentDate}")}
-                  >
-                    Current date
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addVariable("{datetime.currentMonth}")}
-                  >
-                    Current month
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <VariableMenu
+          groups={CERTIFICATE_VARIABLE_GROUPS}
+          onInsert={(placeholder) =>
+            onChangeSegment({
+              id: segmentId,
+              text: insertAtCursor(settings.text, `{${placeholder}}`),
+              font: settings.font,
+            })
+          }
+          onClose={restoreFocus}
+        />
       </td>
       <td className="px-1">
         <Select
