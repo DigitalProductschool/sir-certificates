@@ -61,8 +61,6 @@ async function mailjetSend(
   return mailjet.post("send", { version: "v3.1" }).request(mailConfig);
 }
 
-export { mailjetSend };
-
 export type ResolvedEmailTemplate = { isCustomized: boolean } & (
   | EmailTemplate
   | (Pick<EmailTemplate, "subject" | "htmlBody" | "textBody"> & {
@@ -291,11 +289,7 @@ export async function sendEmailTemplatePreview(
   const emailTemplate = await getEmailTemplate(key, programId);
   const sampleProgram = await getSampleProgram(programId);
 
-  const attachments: {
-    ContentType: string;
-    Filename: string;
-    Base64Content: string;
-  }[] = [];
+  const attachments: SendEmailV3_1.Attachment[] = [];
 
   if (programId === null) {
     // @todo add an organisational default template with sample content and use it here
