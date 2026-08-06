@@ -74,9 +74,9 @@ export function prepareCertificateReplacements(
 
 export function replaceVariables(
 	text: string,
-	locale: string = "de-DE",
 	certificate: CertificateView,
 	batch: CertificateViewBatch,
+	locale: string = "de-DE",
 ) {
 	return applyReplacements(
 		text,

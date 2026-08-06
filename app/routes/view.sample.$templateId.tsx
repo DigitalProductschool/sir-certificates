@@ -87,9 +87,9 @@ export default function ViewSampleCertificate({
             <Markdown>
               {replaceVariables(
                 template.program.achievement,
-                template.locale,
                 certificate,
                 batch,
+                template.locale,
               )}
             </Markdown>
           )}

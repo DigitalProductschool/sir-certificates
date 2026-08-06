@@ -144,9 +144,9 @@ export default function ViewCertificateShare({
                     /* @todo add variable replacements and Markdown render */
                     replaceVariables(
                       certificate.batch.program.achievement ?? "",
-                      certificate.template.locale,
                       certificate,
                       certificate.batch,
+                      certificate.template.locale,
                     ) ?? ""
                   }
                 </Markdown>

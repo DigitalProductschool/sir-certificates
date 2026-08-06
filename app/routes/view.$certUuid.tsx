@@ -31,9 +31,9 @@ export function meta({ data }: Route.MetaArgs) {
           content: data?.certificate
             ? replaceVariables(
                 data?.certificate.batch.program.achievement ?? "",
-                data?.certificate.template.locale,
                 data?.certificate,
                 data?.certificate.batch,
+                data?.certificate.template.locale,
               )
             : "",
         },
@@ -46,9 +46,9 @@ export function meta({ data }: Route.MetaArgs) {
           content: data?.certificate
             ? replaceVariables(
                 data?.certificate.batch.program.achievement ?? "",
-                data?.certificate.template.locale,
                 data?.certificate,
                 data?.certificate.batch,
+                data?.certificate.template.locale,
               )
             : "",
         },
@@ -202,9 +202,9 @@ export default function ViewCertificate({ loaderData }: Route.ComponentProps) {
             <Markdown>
               {replaceVariables(
                 certificate.batch.program.achievement,
-                certificate.template.locale,
                 certificate,
                 certificate.batch,
+                certificate.template.locale,
               )}
             </Markdown>
           )}
