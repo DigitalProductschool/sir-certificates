@@ -14,7 +14,7 @@ import { z } from "zod";
 import {
   checkUnknownVariables,
   EMAIL_DEFAULTS,
-  EMAIL_KEY_VARIABLES,
+  EMAIL_KEY_VARIABLE_GROUPS,
   EMAIL_TEMPLATES,
   type EmailKey,
 } from "./email-defaults";
@@ -154,7 +154,7 @@ export async function loadEmailTemplateEditor(
   return {
     key,
     template,
-    variables: EMAIL_KEY_VARIABLES[key],
+    variableGroups: EMAIL_KEY_VARIABLE_GROUPS[key],
   };
 }
 

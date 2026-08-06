@@ -1,3 +1,8 @@
+import {
+  CERTIFICATE_VARIABLE_GROUPS,
+  type VariableGroup,
+} from "./text-utils";
+
 export const EMAIL_TEMPLATES = {
   "notification": {
     label: "Certificate only",
@@ -36,70 +41,90 @@ export function isValidEmailKey(key: string | undefined): key is EmailKey {
   return !!key && key in EMAIL_TEMPLATES;
 }
 
-export const EMAIL_KEY_VARIABLES: Record<EmailKey, string[]> = {
+export const EMAIL_KEY_VARIABLE_GROUPS: Record<EmailKey, VariableGroup[]> = {
   "notification": [
-    "{certificate.firstName}",
-    "{certificate.lastName}",
-    "{certificate.fullName}",
-    "{certificate.fullNameCaps}",
-    "{certificate.teamName}",
-    "{certificate.id}",
-    "{batch.name}",
-    "{batch.startDate}",
-    "{batch.endDate}",
-    "{batch.signatureDate}",
-    "{batch.signatureDateLong}",
-    "{datetime.currentDate}",
-    "{datetime.currentMonth}",
-    "{program.name}",
-    "{cert.url}",
+    ...CERTIFICATE_VARIABLE_GROUPS,
+    {
+      group: "Program & links",
+      variables: [
+        { placeholder: "program.name", label: "Program name" },
+        { placeholder: "cert.url", label: "Certificate link" },
+      ],
+    },
   ],
   "notification-public": [
-    "{certificate.firstName}",
-    "{certificate.lastName}",
-    "{certificate.fullName}",
-    "{certificate.fullNameCaps}",
-    "{certificate.teamName}",
-    "{certificate.id}",
-    "{batch.name}",
-    "{batch.startDate}",
-    "{batch.endDate}",
-    "{batch.signatureDate}",
-    "{batch.signatureDateLong}",
-    "{datetime.currentDate}",
-    "{datetime.currentMonth}",
-    "{program.name}",
-    "{cert.url}",
-    "{cert.loginUrl}",
-    "{cert.signAction}",
+    ...CERTIFICATE_VARIABLE_GROUPS,
+    {
+      group: "Program & links",
+      variables: [
+        { placeholder: "program.name", label: "Program name" },
+        { placeholder: "cert.url", label: "Certificate link" },
+        { placeholder: "cert.loginUrl", label: "Sign in link" },
+        { placeholder: "cert.signAction", label: "Sign action (in/up)" },
+      ],
+    },
   ],
   "verify-email": [
-    "{user.firstName}",
-    "{user.lastName}",
-    "{user.fullName}",
-    "{org.name}",
-    "{verify.url}",
+    {
+      group: "User",
+      variables: [
+        { placeholder: "user.firstName", label: "First name" },
+        { placeholder: "user.lastName", label: "Last name" },
+        { placeholder: "user.fullName", label: "Full name" },
+      ],
+    },
+    {
+      group: "Organisation & links",
+      variables: [
+        { placeholder: "org.name", label: "Organisation name" },
+        { placeholder: "verify.url", label: "Verification link" },
+      ],
+    },
   ],
   "password-reset": [
-    "{user.firstName}",
-    "{user.lastName}",
-    "{user.fullName}",
-    "{org.name}",
-    "{reset.url}",
+    {
+      group: "User",
+      variables: [
+        { placeholder: "user.firstName", label: "First name" },
+        { placeholder: "user.lastName", label: "Last name" },
+        { placeholder: "user.fullName", label: "Full name" },
+      ],
+    },
+    {
+      group: "Organisation & links",
+      variables: [
+        { placeholder: "org.name", label: "Organisation name" },
+        { placeholder: "reset.url", label: "Reset link" },
+      ],
+    },
   ],
   "invite": [
-    "{invite.firstName}",
-    "{invite.lastName}",
-    "{invite.fullName}",
-    "{org.name}",
-    "{invite.acceptUrl}",
-    "{invite.senderName}",
+    {
+      group: "Invite",
+      variables: [
+        { placeholder: "invite.firstName", label: "First name" },
+        { placeholder: "invite.lastName", label: "Last name" },
+        { placeholder: "invite.fullName", label: "Full name" },
+        { placeholder: "invite.senderName", label: "Sender name" },
+      ],
+    },
+    {
+      group: "Organisation & links",
+      variables: [
+        { placeholder: "org.name", label: "Organisation name" },
+        { placeholder: "invite.acceptUrl", label: "Accept link" },
+      ],
+    },
   ],
 };
 
-// Flags `{variable}` placeholders that aren't in EMAIL_KEY_VARIABLES for this template key.
+// Flags `{variable}` placeholders that aren't in EMAIL_KEY_VARIABLE_GROUPS for this template key.
 export function checkUnknownVariables(key: EmailKey, texts: string[]): string[] {
-  const known = new Set(EMAIL_KEY_VARIABLES[key]);
+  const known = new Set(
+    EMAIL_KEY_VARIABLE_GROUPS[key].flatMap((g) =>
+      g.variables.map((v) => `{${v.placeholder}}`),
+    ),
+  );
   const unknown = new Set<string>();
 
   for (const text of texts) {

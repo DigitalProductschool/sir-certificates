@@ -37,7 +37,7 @@ export default function ProgramEmailKeyEditPage({
   loaderData,
   params,
 }: Route.ComponentProps) {
-  const { key, template, variables } = loaderData;
+  const { key, template, variableGroups } = loaderData;
   const basePath = `/org/program/${params.programId}/emails`;
   const actionData = useActionData<typeof action>();
 
@@ -45,7 +45,7 @@ export default function ProgramEmailKeyEditPage({
     <EmailForm
       emailKey={key}
       template={template}
-      variables={variables}
+      variableGroups={variableGroups}
       sendPreviewAction={`${basePath}/${key}/send-preview`}
       resetAction={`${basePath}/${key}/reset`}
       errors={actionData?.ok === false ? actionData.fieldErrors : undefined}

@@ -6,14 +6,17 @@ import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { EmailSendPreview } from "~/components/email-send-preview";
 import { EmailRestoreButton } from "~/components/email-restore-button";
+import { VariableMenu } from "~/components/variable-menu";
 
+import { useVariableInsertion } from "~/hooks/use-variable-insertion";
 import { type EmailKey } from "~/lib/email-defaults";
 import type { ResolvedEmailTemplate } from "~/lib/email.server";
+import type { VariableGroup } from "~/lib/text-utils";
 
 export function EmailForm({
   emailKey,
   template,
-  variables,
+  variableGroups,
   sendPreviewAction,
   resetAction,
   errors,
@@ -21,13 +24,32 @@ export function EmailForm({
 }: {
   emailKey: EmailKey;
   template: ResolvedEmailTemplate;
-  variables: string[];
+  variableGroups: VariableGroup[];
   sendPreviewAction: string;
   resetAction: string;
   errors?: Record<string, string[] | undefined>;
   cancelHref?: string;
 }) {
   const formId = `${emailKey}-form`;
+
+  const {
+    fieldRef: subjectFieldRef,
+    trackingProps: subjectTrackingProps,
+    insertAtCursor: insertAtSubjectCursor,
+    restoreFocus: restoreSubjectFocus,
+  } = useVariableInsertion<HTMLInputElement>();
+  const {
+    fieldRef: htmlBodyFieldRef,
+    trackingProps: htmlBodyTrackingProps,
+    insertAtCursor: insertAtHtmlBodyCursor,
+    restoreFocus: restoreHtmlBodyFocus,
+  } = useVariableInsertion<HTMLTextAreaElement>();
+  const {
+    fieldRef: textBodyFieldRef,
+    trackingProps: textBodyTrackingProps,
+    insertAtCursor: insertAtTextBodyCursor,
+    restoreFocus: restoreTextBodyFocus,
+  } = useVariableInsertion<HTMLTextAreaElement>();
 
   return (
     <div className="flex flex-col pt-2 gap-6 max-w-3xl">
@@ -38,17 +60,30 @@ export function EmailForm({
         className="flex flex-col gap-6"
       >
         <div className="flex flex-col gap-3">
-          <Label
-            htmlFor={`${emailKey}-subject`}
-            className="text-xs font-medium text-muted-foreground"
-          >
-            Subject
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor={`${emailKey}-subject`}
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Subject
+            </Label>
+            <VariableMenu
+              groups={variableGroups}
+              triggerSize="icon-sm"
+              onInsert={(placeholder) => {
+                const el = subjectFieldRef.current;
+                if (el) insertAtSubjectCursor(el.value, `{${placeholder}}`);
+              }}
+              onClose={restoreSubjectFocus}
+            />
+          </div>
           <Input
             id={`${emailKey}-subject`}
             name="subject"
+            ref={subjectFieldRef}
             defaultValue={template.subject}
             required
+            {...subjectTrackingProps}
           />
           {errors?.subject?.map((error) => (
             <p key={error} className="text-xs text-destructive">
@@ -58,19 +93,32 @@ export function EmailForm({
         </div>
 
         <div className="flex flex-col gap-3">
-          <Label
-            htmlFor={`${emailKey}-htmlBody`}
-            className="text-xs font-medium text-muted-foreground"
-          >
-            HTML Body
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor={`${emailKey}-htmlBody`}
+              className="text-xs font-medium text-muted-foreground"
+            >
+              HTML Body
+            </Label>
+            <VariableMenu
+              groups={variableGroups}
+              triggerSize="icon-sm"
+              onInsert={(placeholder) => {
+                const el = htmlBodyFieldRef.current;
+                if (el) insertAtHtmlBodyCursor(el.value, `{${placeholder}}`);
+              }}
+              onClose={restoreHtmlBodyFocus}
+            />
+          </div>
           <Textarea
             id={`${emailKey}-htmlBody`}
             name="htmlBody"
+            ref={htmlBodyFieldRef}
             defaultValue={template.htmlBody}
             rows={10}
             className="font-mono text-xs leading-relaxed"
             required
+            {...htmlBodyTrackingProps}
           />
           {errors?.htmlBody?.map((error) => (
             <p key={error} className="text-xs text-destructive">
@@ -107,39 +155,38 @@ export function EmailForm({
         </div>
 
         <div className="flex flex-col gap-3">
-          <Label
-            htmlFor={`${emailKey}-textBody`}
-            className="text-xs font-medium text-muted-foreground"
-          >
-            Plain Text Body
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor={`${emailKey}-textBody`}
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Plain Text Body
+            </Label>
+            <VariableMenu
+              groups={variableGroups}
+              triggerSize="icon-sm"
+              onInsert={(placeholder) => {
+                const el = textBodyFieldRef.current;
+                if (el) insertAtTextBodyCursor(el.value, `{${placeholder}}`);
+              }}
+              onClose={restoreTextBodyFocus}
+            />
+          </div>
           <Textarea
             id={`${emailKey}-textBody`}
             name="textBody"
+            ref={textBodyFieldRef}
             defaultValue={template.textBody}
             rows={6}
             className="font-mono text-xs leading-relaxed"
             required
+            {...textBodyTrackingProps}
           />
           {errors?.textBody?.map((error) => (
             <p key={error} className="text-xs text-destructive">
               {error}
             </p>
           ))}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">Available variables</p>
-          <div className="flex flex-wrap gap-2">
-            {variables.map((v) => (
-              <code
-                key={v}
-                className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono"
-              >
-                {v}
-              </code>
-            ))}
-          </div>
         </div>
       </Form>
 
