@@ -45,7 +45,7 @@ export const EMAIL_KEY_VARIABLE_GROUPS: Record<EmailKey, VariableGroup[]> = {
   "notification": [
     ...CERTIFICATE_VARIABLE_GROUPS,
     {
-      group: "Program & links",
+      group: "Program & Links",
       variables: [
         { placeholder: "program.name", label: "Program name" },
         { placeholder: "cert.url", label: "Certificate link" },
@@ -55,7 +55,7 @@ export const EMAIL_KEY_VARIABLE_GROUPS: Record<EmailKey, VariableGroup[]> = {
   "notification-public": [
     ...CERTIFICATE_VARIABLE_GROUPS,
     {
-      group: "Program & links",
+      group: "Program & Links",
       variables: [
         { placeholder: "program.name", label: "Program name" },
         { placeholder: "cert.url", label: "Certificate link" },
@@ -71,13 +71,13 @@ export const EMAIL_KEY_VARIABLE_GROUPS: Record<EmailKey, VariableGroup[]> = {
         { placeholder: "user.firstName", label: "First name" },
         { placeholder: "user.lastName", label: "Last name" },
         { placeholder: "user.fullName", label: "Full name" },
+        { placeholder: "verify.url", label: "Verification link" },
       ],
     },
     {
-      group: "Organisation & links",
+      group: "Organisation",
       variables: [
         { placeholder: "org.name", label: "Organisation name" },
-        { placeholder: "verify.url", label: "Verification link" },
       ],
     },
   ],
@@ -88,13 +88,13 @@ export const EMAIL_KEY_VARIABLE_GROUPS: Record<EmailKey, VariableGroup[]> = {
         { placeholder: "user.firstName", label: "First name" },
         { placeholder: "user.lastName", label: "Last name" },
         { placeholder: "user.fullName", label: "Full name" },
+        { placeholder: "reset.url", label: "Reset link" },
       ],
     },
     {
-      group: "Organisation & links",
+      group: "Organisation",
       variables: [
         { placeholder: "org.name", label: "Organisation name" },
-        { placeholder: "reset.url", label: "Reset link" },
       ],
     },
   ],
@@ -106,13 +106,13 @@ export const EMAIL_KEY_VARIABLE_GROUPS: Record<EmailKey, VariableGroup[]> = {
         { placeholder: "invite.lastName", label: "Last name" },
         { placeholder: "invite.fullName", label: "Full name" },
         { placeholder: "invite.senderName", label: "Sender name" },
+        { placeholder: "invite.acceptUrl", label: "Accept link" },
       ],
     },
     {
-      group: "Organisation & links",
+      group: "Organisation",
       variables: [
         { placeholder: "org.name", label: "Organisation name" },
-        { placeholder: "invite.acceptUrl", label: "Accept link" },
       ],
     },
   ],
