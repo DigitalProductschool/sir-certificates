@@ -41,9 +41,16 @@ export const EMAIL_KEY_VARIABLES: Record<EmailKey, string[]> = {
     "{certificate.firstName}",
     "{certificate.lastName}",
     "{certificate.fullName}",
+    "{certificate.fullNameCaps}",
+    "{certificate.teamName}",
+    "{certificate.id}",
     "{batch.name}",
     "{batch.startDate}",
     "{batch.endDate}",
+    "{batch.signatureDate}",
+    "{batch.signatureDateLong}",
+    "{datetime.currentDate}",
+    "{datetime.currentMonth}",
     "{program.name}",
     "{cert.url}",
   ],
@@ -51,9 +58,16 @@ export const EMAIL_KEY_VARIABLES: Record<EmailKey, string[]> = {
     "{certificate.firstName}",
     "{certificate.lastName}",
     "{certificate.fullName}",
+    "{certificate.fullNameCaps}",
+    "{certificate.teamName}",
+    "{certificate.id}",
     "{batch.name}",
     "{batch.startDate}",
     "{batch.endDate}",
+    "{batch.signatureDate}",
+    "{batch.signatureDateLong}",
+    "{datetime.currentDate}",
+    "{datetime.currentMonth}",
     "{program.name}",
     "{cert.url}",
     "{cert.loginUrl}",
@@ -82,6 +96,22 @@ export const EMAIL_KEY_VARIABLES: Record<EmailKey, string[]> = {
     "{invite.senderName}",
   ],
 };
+
+// Flags `{variable}` placeholders that aren't in EMAIL_KEY_VARIABLES for this template key.
+export function checkUnknownVariables(key: EmailKey, texts: string[]): string[] {
+  const known = new Set(EMAIL_KEY_VARIABLES[key]);
+  const unknown = new Set<string>();
+
+  for (const text of texts) {
+    for (const [placeholder] of text.matchAll(/\{[\w.]+\}/g)) {
+      if (!known.has(placeholder)) unknown.add(placeholder);
+    }
+  }
+
+  return [...unknown].map(
+    (placeholder) => `\`${placeholder}\` is not an available variable for this email`,
+  );
+}
 
 export const EMAIL_DEFAULTS: Record<
   EmailKey,

@@ -12,6 +12,7 @@ import {
 import { z } from "zod";
 
 import {
+  checkUnknownVariables,
   EMAIL_DEFAULTS,
   EMAIL_KEY_VARIABLES,
   EMAIL_TEMPLATES,
@@ -114,6 +115,7 @@ export async function sendTemplatedEmail(
     programId?: number | null;
     attachments?: SendEmailV3_1.Attachment[];
     customId?: string;
+    subjectPrefix?: string;
   } = {},
 ): Promise<LibraryResponse<SendEmailV3_1.Response>> {
   const [org, template] = await Promise.all([
@@ -129,7 +131,7 @@ export async function sendTemplatedEmail(
       Name: org.senderName ?? "Please configure in organisation settings",
     },
     To: [{ Email: to.email, Name: to.name }],
-    Subject: rendered.subject,
+    Subject: `${opts.subjectPrefix ?? ""}${rendered.subject}`,
     TextPart: rendered.textBody,
     HTMLPart: rendered.htmlBody,
   };
@@ -248,7 +250,16 @@ export async function saveEmailTemplate(
   const { errors: compatibilityErrors, warnings } = checkEmailCompatibility(
     parsed.data.htmlBody,
   );
-  const errors = [...wellFormedHtmlErrors, ...compatibilityErrors];
+  const unknownVariableErrors = checkUnknownVariables(key, [
+    parsed.data.subject,
+    parsed.data.htmlBody,
+    parsed.data.textBody,
+  ]);
+  const errors = [
+    ...wellFormedHtmlErrors,
+    ...compatibilityErrors,
+    ...unknownVariableErrors,
+  ];
 
   const subject = parsed.data.subject;
   const htmlBody = prettyPrintHtml(parsed.data.htmlBody);
@@ -285,9 +296,10 @@ export async function sendEmailTemplatePreview(
   admin: UserContact,
   programId: number | null = null,
 ) {
-  const org = await getOrg();
-  const emailTemplate = await getEmailTemplate(key, programId);
-  const sampleProgram = await getSampleProgram(programId);
+  const [org, sampleProgram] = await Promise.all([
+    getOrg(),
+    getSampleProgram(programId),
+  ]);
 
   const attachments: SendEmailV3_1.Attachment[] = [];
 
@@ -310,31 +322,12 @@ export async function sendEmailTemplatePreview(
     }
   }
 
-  const rendered = renderEmailTemplate(
-    emailTemplate,
+  await sendTemplatedEmail(
+    key,
+    { email: admin.email, name: `${admin.firstName} ${admin.lastName}` },
     prepareSampleReplacements(sampleProgram, org.name),
-  );
-
-  await mailjetSend({
-    Messages: [
-      {
-        From: {
-          Email: org.senderEmail ?? "email-not-configured@example.com",
-          Name: org.senderName ?? "Please configure in organisation settings",
-        },
-        To: [
-          {
-            Email: admin.email,
-            Name: `${admin.firstName} ${admin.lastName}`,
-          },
-        ],
-        Subject: `[Preview] ${rendered.subject}`,
-        TextPart: rendered.textBody,
-        HTMLPart: rendered.htmlBody,
-        Attachments: attachments,
-      },
-    ],
-  }).catch((error) => {
+    { programId, attachments, subjectPrefix: "[Preview] " },
+  ).catch((error) => {
     throw new Response(error.message, {
       status: 500,
       statusText: error.statusCode,
