@@ -5,7 +5,7 @@ import { ErrorPublic } from "~/components/error-public";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { getSampleBatch, getSampleCertificate } from "~/lib/sample-data";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
-import { replaceVariables } from "~/lib/text-utils";
+import { replaceVariables } from "~/lib/variables";
 
 export function meta() {
   return [{ title: "Sample certificate preview" }];

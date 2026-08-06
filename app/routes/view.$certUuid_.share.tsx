@@ -17,7 +17,7 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { domain } from "~/lib/config.server";
 import { requireUserId, getUser } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
-import { replaceVariables } from "~/lib/text-utils";
+import { replaceVariables } from "~/lib/variables";
 import { ErrorPublic } from "~/components/error-public";
 
 export function meta() {

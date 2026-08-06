@@ -12,12 +12,10 @@ import {
 import { z } from "zod";
 
 import {
-  checkUnknownVariables,
   EMAIL_DEFAULTS,
-  EMAIL_KEY_VARIABLE_GROUPS,
   EMAIL_TEMPLATES,
   type EmailKey,
-} from "./email-defaults";
+} from "./email-templates";
 import { prepareLinkReplacements, renderEmailTemplate } from "./email-render";
 import { getOrg } from "./organisation.server";
 import { generateBlankA4Pdf, readPreviewOfTemplate } from "./pdf.server";
@@ -30,12 +28,13 @@ import {
   getSampleProgram,
 } from "./sample-data";
 import { emailTemplateFieldsSchema } from "./schemas";
-import {
-  checkWellFormedHtml,
-  prepareCertificateReplacements,
-  prettyPrintHtml,
-} from "./text-utils";
+import { checkWellFormedHtml, prettyPrintHtml } from "./text-utils";
 import type { UserContact } from "./types";
+import {
+  checkUnknownVariables,
+  EMAIL_KEY_VARIABLE_GROUPS,
+  prepareCertificateReplacements,
+} from "./variables";
 import type { EmailTemplate } from "~/generated/prisma/client";
 
 // Configure common email clients, we want to support

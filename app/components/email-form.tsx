@@ -9,9 +9,9 @@ import { EmailRestoreButton } from "~/components/email-restore-button";
 import { VariableMenu } from "~/components/variable-menu";
 
 import { useVariableInsertion } from "~/hooks/use-variable-insertion";
-import { type EmailKey } from "~/lib/email-defaults";
+import { type EmailKey } from "~/lib/email-templates";
 import type { ResolvedEmailTemplate } from "~/lib/email.server";
-import type { VariableGroup } from "~/lib/text-utils";
+import type { VariableGroup } from "~/lib/variables";
 
 export function EmailForm({
   emailKey,

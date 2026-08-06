@@ -2,7 +2,7 @@ import type { Route } from "./+types/org.program.$programId.emails.$key.send-pre
 import { redirect } from "react-router";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
-import { EMAIL_TEMPLATES, isValidEmailKey } from "~/lib/email-defaults";
+import { EMAIL_TEMPLATES, isValidEmailKey } from "~/lib/email-templates";
 import { sendEmailTemplatePreview } from "~/lib/email.server";
 
 export async function action({ request, params }: Route.ActionArgs) {

@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 
-import type { VariableGroup } from "~/lib/text-utils";
+import type { VariableGroup } from "~/lib/variables";
 
 export function VariableMenu({
   groups,

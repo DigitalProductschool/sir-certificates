@@ -3,7 +3,7 @@ import type { Route } from "./+types/org.emails.$key";
 import { EmailPreview } from "~/components/email-preview";
 
 import { requireSuperAdmin } from "~/lib/auth.server";
-import { isValidEmailKey } from "~/lib/email-defaults";
+import { isValidEmailKey } from "~/lib/email-templates";
 import { loadEmailTemplatePreview } from "~/lib/email.server";
 
 const basePath = "/org/emails";

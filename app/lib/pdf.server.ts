@@ -16,7 +16,7 @@ import QRCode from "qrcode";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 import { getSampleBatch, getSampleCertificate } from "./sample-data";
-import { replaceVariables } from "./text-utils";
+import { replaceVariables } from "./variables";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 
 import { openLazyFile, writeFile as lazyWriteFile } from "@remix-run/fs";

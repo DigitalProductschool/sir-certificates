@@ -11,8 +11,8 @@ import {
 } from "~/components/ui/select";
 
 import { requireSuperAdmin } from "~/lib/auth.server";
-import { EMAIL_TEMPLATES } from "~/lib/email-defaults";
-import type { EmailKey } from "~/lib/email-defaults";
+import { EMAIL_TEMPLATES } from "~/lib/email-templates";
+import type { EmailKey } from "~/lib/email-templates";
 import { prisma } from "~/lib/prisma.server";
 
 export function meta() {

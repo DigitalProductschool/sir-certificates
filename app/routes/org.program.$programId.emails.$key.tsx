@@ -3,7 +3,7 @@ import type { Route } from "./+types/org.program.$programId.emails.$key";
 import { EmailPreview } from "~/components/email-preview";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
-import { EMAIL_TEMPLATES, isValidEmailKey } from "~/lib/email-defaults";
+import { EMAIL_TEMPLATES, isValidEmailKey } from "~/lib/email-templates";
 import { loadEmailTemplatePreview } from "~/lib/email.server";
 import { getSuperAdmins } from "~/lib/user.server";
 
