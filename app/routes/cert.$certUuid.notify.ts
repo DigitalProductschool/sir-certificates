@@ -4,12 +4,12 @@ import slug from "slug";
 
 import { requireAdmin } from "~/lib/auth.server";
 import { domain } from "~/lib/config.server";
-import type { EmailKey } from "~/lib/email-defaults";
+import type { EmailKey } from "~/lib/email-templates";
 import { prepareLinkReplacements } from "~/lib/email-render";
 import { sendTemplatedEmail } from "~/lib/email.server";
 import { generateCertificate } from "~/lib/pdf.server";
 import { prisma } from "~/lib/prisma.server";
-import { prepareCertificateReplacements } from "~/lib/text-utils";
+import { prepareCertificateReplacements } from "~/lib/variables";
 
 // @todo refactor to route org.program.$programId.batch.batchId.certificates.$certId.notify.ts
 

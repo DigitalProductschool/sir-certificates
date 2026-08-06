@@ -1,4 +1,4 @@
-import { applyReplacements } from "./text-utils";
+import { applyReplacements } from "./variables";
 import type { EmailTemplate } from "~/generated/prisma/client";
 
 export type EmailLinks = {

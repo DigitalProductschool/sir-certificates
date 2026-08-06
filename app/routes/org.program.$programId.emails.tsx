@@ -4,8 +4,8 @@ import { NavLink, Outlet } from "react-router";
 import { Badge } from "~/components/ui/badge";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
-import { EMAIL_TEMPLATES } from "~/lib/email-defaults";
-import type { EmailKey } from "~/lib/email-defaults";
+import { EMAIL_TEMPLATES } from "~/lib/email-templates";
+import type { EmailKey } from "~/lib/email-templates";
 import { prisma } from "~/lib/prisma.server";
 
 export function meta() {

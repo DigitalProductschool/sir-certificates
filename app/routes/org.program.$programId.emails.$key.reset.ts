@@ -2,7 +2,7 @@ import type { Route } from "./+types/org.program.$programId.emails.$key.reset";
 import { redirect } from "react-router";
 
 import { requireSuperAdmin } from "~/lib/auth.server";
-import { EMAIL_TEMPLATES, isValidEmailKey } from "~/lib/email-defaults";
+import { EMAIL_TEMPLATES, isValidEmailKey } from "~/lib/email-templates";
 import { resetEmailTemplate } from "~/lib/email.server";
 
 export async function action({ request, params }: Route.ActionArgs) {

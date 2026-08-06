@@ -4,7 +4,7 @@ import { data, redirect, useActionData } from "react-router";
 import { EmailForm } from "~/components/email-form";
 
 import { requireSuperAdmin } from "~/lib/auth.server";
-import { EMAIL_TEMPLATES, isValidEmailKey } from "~/lib/email-defaults";
+import { EMAIL_TEMPLATES, isValidEmailKey } from "~/lib/email-templates";
 import { loadEmailTemplateEditor, saveEmailTemplate } from "~/lib/email.server";
 
 export async function loader({ request, params }: Route.LoaderArgs) {

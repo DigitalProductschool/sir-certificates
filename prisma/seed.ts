@@ -6,7 +6,7 @@ import {
   EMAIL_DEFAULTS,
   EMAIL_TEMPLATES,
   type EmailKey,
-} from "../app/lib/email-defaults";
+} from "../app/lib/email-templates";
 
 const connectionString = `${process.env.DATABASE_URL}`;
 const adapter = new PrismaPg({ connectionString });

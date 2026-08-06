@@ -2,7 +2,7 @@ import type { Route } from "./+types/org.emails.$key.reset";
 import { redirect } from "react-router";
 
 import { requireSuperAdmin } from "~/lib/auth.server";
-import { isValidEmailKey } from "~/lib/email-defaults";
+import { isValidEmailKey } from "~/lib/email-templates";
 import { resetEmailTemplate } from "~/lib/email.server";
 
 const basePath = "/org/emails";

@@ -38,7 +38,7 @@ import {
 
 import { VariableMenu } from "~/components/variable-menu";
 import { useVariableInsertion } from "~/hooks/use-variable-insertion";
-import { CERTIFICATE_VARIABLE_GROUPS } from "~/lib/text-utils";
+import { CERTIFICATE_VARIABLE_GROUPS } from "~/lib/variables";
 import { generateRandomId, hexToRgbArray, rgbToHex } from "~/lib/utils";
 
 function Toolbar({

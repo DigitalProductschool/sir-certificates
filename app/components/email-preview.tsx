@@ -4,7 +4,7 @@ import { Button } from "~/components/ui/button";
 import { EmailSendPreview } from "~/components/email-send-preview";
 import { EmailRestoreButton } from "~/components/email-restore-button";
 
-import { type EmailKey } from "~/lib/email-defaults";
+import { type EmailKey } from "~/lib/email-templates";
 import { renderEmailTemplate } from "~/lib/email-render";
 import type { ResolvedEmailTemplate } from "~/lib/email.server";
 
