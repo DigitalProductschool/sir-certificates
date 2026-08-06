@@ -22,14 +22,18 @@ export function EmailRestoreButton({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={() => setConfirming(true)}
+      <fetcher.Form
+        method="post"
+        action={resetAction}
+        onSubmit={(event) => {
+          event.preventDefault();
+          setConfirming(true);
+        }}
       >
-        Restore default
-      </Button>
+        <Button type="submit" variant="ghost" size="sm">
+          Restore default
+        </Button>
+      </fetcher.Form>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent>

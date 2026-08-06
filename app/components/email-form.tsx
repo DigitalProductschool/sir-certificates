@@ -27,9 +27,12 @@ export function EmailForm({
   errors?: Record<string, string[] | undefined>;
   cancelHref?: string;
 }) {
+  const formId = `${emailKey}-form`;
+
   return (
     <div className="flex flex-col pt-2 gap-6 max-w-3xl">
       <Form
+        id={formId}
         key={`${emailKey}-${template.isCustomized}-${template.subject}-${template.htmlBody}-${template.textBody}`}
         method="post"
         className="flex flex-col gap-6"
@@ -138,22 +141,22 @@ export function EmailForm({
             ))}
           </div>
         </div>
-
-        <div className="flex gap-2 items-center">
-          <Button type="submit" variant="default" size="sm">
-            Save
-          </Button>
-          <EmailSendPreview action={sendPreviewAction} />
-          {template.isCustomized && (
-            <EmailRestoreButton resetAction={resetAction} />
-          )}
-          {cancelHref && (
-            <Button asChild variant="ghost" size="sm">
-              <Link to={cancelHref}>Cancel</Link>
-            </Button>
-          )}
-        </div>        
       </Form>
+
+      <div className="flex gap-2 items-center">
+        <Button type="submit" form={formId} variant="default" size="sm">
+          Save
+        </Button>
+        <EmailSendPreview action={sendPreviewAction} variant="outline" />
+        {template.isCustomized && (
+          <EmailRestoreButton resetAction={resetAction} />
+        )}
+        {cancelHref && (
+          <Button asChild variant="ghost" size="sm">
+            <Link to={cancelHref}>Cancel</Link>
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
