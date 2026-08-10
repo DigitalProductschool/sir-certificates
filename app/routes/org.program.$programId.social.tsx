@@ -17,13 +17,15 @@ import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
 import { InputTiny } from "~/components/ui/input-tiny";
 import { FormUpdate } from "~/components/form-update";
+import { VariableMenu } from "~/components/variable-menu";
 
+import { useVariableInsertion } from "~/hooks/use-variable-insertion";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { getSampleBatch, getSampleCertificate } from "~/lib/sample-data";
 import { defaultOgDescription, defaultOgTitle } from "~/lib/social-defaults";
 import { defaultLayout } from "~/lib/social.server";
-import { replaceVariables } from "~/lib/variables";
+import { replaceVariables, SOCIAL_PREVIEW_VARIABLE_GROUPS } from "~/lib/variables";
 
 function calculateCertificateHeight(width: number, top: number) {
   let h = Math.round(width * 1.415);
@@ -95,6 +97,19 @@ export default function ProgramSocialPage({
     social?.ogDescription ?? defaultOgDescription,
   );
 
+  const {
+    fieldRef: ogTitleFieldRef,
+    trackingProps: ogTitleTrackingProps,
+    insertAtCursor: insertAtOgTitleCursor,
+    restoreFocus: restoreOgTitleFocus,
+  } = useVariableInsertion<HTMLInputElement>();
+  const {
+    fieldRef: ogDescriptionFieldRef,
+    trackingProps: ogDescriptionTrackingProps,
+    insertAtCursor: insertAtOgDescriptionCursor,
+    restoreFocus: restoreOgDescriptionFocus,
+  } = useVariableInsertion<HTMLTextAreaElement>();
+
   const handleUploadClick = () => {
     fileRef.current?.click();
   };
@@ -132,26 +147,58 @@ export default function ProgramSocialPage({
             </p>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="ogTitle">OpenGraph title</Label>
+            <div className="flex items-center justify-between max-w-[650px]">
+              <Label htmlFor="ogTitle">OpenGraph title</Label>
+              <VariableMenu
+                groups={SOCIAL_PREVIEW_VARIABLE_GROUPS}
+                triggerSize="icon-sm"
+                onInsert={(placeholder) => {
+                  const el = ogTitleFieldRef.current;
+                  if (el) {
+                    insertAtOgTitleCursor(el.value, `{${placeholder}}`);
+                    el.dispatchEvent(new Event("input", { bubbles: true }));
+                  }
+                }}
+                onClose={restoreOgTitleFocus}
+              />
+            </div>
             <FormUpdate action="update">
               <Input
                 id="ogTitle"
                 name="ogTitle"
+                ref={ogTitleFieldRef}
                 defaultValue={social?.ogTitle ?? defaultOgTitle}
                 className="max-w-[650px]"
                 onChange={(event) => setOgTitle(event.target.value)}
+                {...ogTitleTrackingProps}
               />
             </FormUpdate>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="ogDescription">OpenGraph description</Label>
+            <div className="flex items-center justify-between max-w-[650px]">
+              <Label htmlFor="ogDescription">OpenGraph description</Label>
+              <VariableMenu
+                groups={SOCIAL_PREVIEW_VARIABLE_GROUPS}
+                triggerSize="icon-sm"
+                onInsert={(placeholder) => {
+                  const el = ogDescriptionFieldRef.current;
+                  if (el) {
+                    insertAtOgDescriptionCursor(el.value, `{${placeholder}}`);
+                    el.dispatchEvent(new Event("input", { bubbles: true }));
+                  }
+                }}
+                onClose={restoreOgDescriptionFocus}
+              />
+            </div>
             <FormUpdate action="update">
               <Textarea
                 id="ogDescription"
                 name="ogDescription"
+                ref={ogDescriptionFieldRef}
                 defaultValue={social?.ogDescription ?? defaultOgDescription}
                 className="max-w-[650px]"
                 onChange={(event) => setOgDescription(event.target.value)}
+                {...ogDescriptionTrackingProps}
               />
             </FormUpdate>
           </div>
