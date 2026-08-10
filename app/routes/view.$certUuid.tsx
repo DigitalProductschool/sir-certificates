@@ -17,19 +17,6 @@ import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { replaceVariables } from "~/lib/variables";
 import { defaultOgDescription, defaultOgTitle } from "~/lib/social-defaults";
 
-// @todo replace domain config
-// @todo create a CertificateSelected type and use it here
-export function meta({ data }: Route.MetaArgs) {
-  // Return [] rather than nothing so this route doesn't inherit the parent
-  // ("Certificates") title — the component renders its own <title>/<meta>
-  // tags (React 19) once data is available.
-  if (!data) {
-    return [{ title: "Error" }];
-  }
-  return [];
-}
-
-// @todo select relevant individual fields for certificate, batch and program
 export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await getUser(request);
 

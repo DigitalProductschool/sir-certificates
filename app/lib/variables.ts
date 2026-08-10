@@ -116,7 +116,6 @@ export function prepareProgramReplacements(
 	return {
 		"program.name": program.name || "",
 		"program.about": program.about || "",
-		"program.achievement": program.achievement || "",
 		"program.website": program.website || "",
 	};
 }
