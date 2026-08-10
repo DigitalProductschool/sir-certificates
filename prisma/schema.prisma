@@ -244,7 +244,7 @@ model SocialPreview {
   /// [SocialPreviewLayout]
   layout        Json      @default("{}")
 
-  contentType   String    @db.VarChar(64)
+  contentType   String?   @db.VarChar(64)
   imageWidth    Int?
   imageHeight   Int?
   updatedAt     DateTime  @updatedAt

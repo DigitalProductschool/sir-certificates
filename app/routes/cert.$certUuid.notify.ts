@@ -37,12 +37,6 @@ export async function action({ request, params }: Route.ActionArgs) {
     });
   }
 
-  const social = await prisma.socialPreview.findUnique({
-    where: {
-      programId: certificate.batch.programId,
-    },
-  });
-
   const participant = await prisma.user.findUnique({
     where: {
       email: certificate.email,
@@ -81,8 +75,9 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   const isPublished = certificate.publishedAt !== null;
 
-  const templateKey: EmailKey =
-    social && isPublished ? "notification-public" : "notification";
+  const templateKey: EmailKey = isPublished
+    ? "notification-public"
+    : "notification";
 
   const replacements = {
     ...prepareCertificateReplacements(

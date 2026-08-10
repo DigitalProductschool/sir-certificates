@@ -59,14 +59,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     });
   }
 
-  const social = await prisma.socialPreview.findUnique({
+  const social = await prisma.socialPreview.findUniqueOrThrow({
     where: {
       programId: Number(params.programId),
     },
   });
 
   // If layout was not initialized yet, return the default layout
-  let layout = social?.layout;
+  let layout = social.layout;
   if (!layout || !layout.photo || !layout.certificate) {
     layout = defaultLayout;
   }
@@ -95,9 +95,9 @@ export default function ProgramSocialPage({
     setPrevSocialLayout(socialLayout);
     setLayout(socialLayout);
   }
-  const [ogTitle, setOgTitle] = useState(social?.ogTitle ?? defaultOgTitle);
+  const [ogTitle, setOgTitle] = useState(social.ogTitle ?? defaultOgTitle);
   const [ogDescription, setOgDescription] = useState(
-    social?.ogDescription ?? defaultOgDescription,
+    social.ogDescription ?? defaultOgDescription,
   );
 
   const {
@@ -131,13 +131,6 @@ export default function ProgramSocialPage({
 
   return (
     <div className="h-full flex flex-col justify-center items-start gap-4">
-      {social && (
-        <Form action="delete" method="POST">
-          <Button variant="outline" type="submit">
-            <Trash2 /> Remove Social Preview
-          </Button>
-        </Form>
-      )}
       <div className="grid grid-cols-[auto_auto] gap-8">
         <section className="col-span-2 flex flex-col gap-4">
           <div>
@@ -159,7 +152,7 @@ export default function ProgramSocialPage({
               <Input
                 id="linkedinOrganizationId"
                 name="linkedinOrganizationId"
-                defaultValue={social?.linkedinOrganizationId ?? ""}
+                defaultValue={social.linkedinOrganizationId ?? ""}
                 className="max-w-[650px]"
               />
             </FormUpdate>
@@ -196,7 +189,7 @@ export default function ProgramSocialPage({
                 id="ogTitle"
                 name="ogTitle"
                 ref={ogTitleFieldRef}
-                defaultValue={social?.ogTitle ?? defaultOgTitle}
+                defaultValue={social.ogTitle ?? defaultOgTitle}
                 className="max-w-[650px]"
                 onChange={(event) => setOgTitle(event.target.value)}
                 {...ogTitleTrackingProps}
@@ -224,7 +217,7 @@ export default function ProgramSocialPage({
                 id="ogDescription"
                 name="ogDescription"
                 ref={ogDescriptionFieldRef}
-                defaultValue={social?.ogDescription ?? defaultOgDescription}
+                defaultValue={social.ogDescription ?? defaultOgDescription}
                 className="max-w-[650px]"
                 onChange={(event) => setOgDescription(event.target.value)}
                 {...ogDescriptionTrackingProps}
@@ -257,7 +250,7 @@ export default function ProgramSocialPage({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {!social ? (
+              {!social.contentType ? (
                 <div className="w-full max-w-[600px] aspect-[1.91/1] flex border border-dashed border-slate-500 justify-center items-center bg-muted p-8">
                   Please upload the background layer for the social media
                   preview. Image formats PNG and JPEG are supported. Image size
@@ -275,34 +268,42 @@ export default function ProgramSocialPage({
             </CardContent>
           </Card>
         </section>
-        <section className="flex flex-col gap-6 pt-12">
-          <fetcherImage.Form
-            method="POST"
-            action="upload"
-            encType="multipart/form-data"
-          >
-            <input
-              type="file"
-              name="backgroundImage"
-              accept="image/png, image/jpeg"
-              ref={fileRef}
-              hidden
-              onChange={handleFileChanged}
-            />
-            <Button
-              type="button"
-              onClick={handleUploadClick}
-              disabled={fetcherImage.state !== "idle"}
+        <section className="flex flex-col gap-4 pt-12">
+          <div className="flex flex-col gap-2">
+            <fetcherImage.Form
+              method="POST"
+              action="upload"
+              encType="multipart/form-data"
             >
-              <ImageUp />
-              {social ? "Replace" : "Upload"} background image
-            </Button>
-            <p className="text-xs text-muted-foreground mt-1 text-center">
-              {" "}
-              1200x630 pixel, PNG or JPEG
-            </p>
-          </fetcherImage.Form>
-          {social &&
+              <input
+                type="file"
+                name="backgroundImage"
+                accept="image/png, image/jpeg"
+                ref={fileRef}
+                hidden
+                onChange={handleFileChanged}
+              />
+              <Button
+                type="button"
+                onClick={handleUploadClick}
+                disabled={fetcherImage.state !== "idle"}
+              >
+                <ImageUp />
+                {social.contentType ? "Replace" : "Upload"} background image
+              </Button>
+            </fetcherImage.Form>
+            {social.contentType && (
+              <Form action="delete" method="POST">
+                <Button variant="outline" type="submit">
+                  <Trash2 /> Remove background image
+                </Button>
+              </Form>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground -mt-3 text-center">
+            1200x630 pixel, PNG or JPEG
+          </p>
+          {social.contentType &&
             (social.imageWidth == null || social.imageHeight == null) && (
               <Badge
                 variant="outline"

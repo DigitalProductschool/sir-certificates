@@ -2,21 +2,17 @@ import type { Route } from "./+types/view.$certUuid_.share";
 import { useState } from "react";
 import { Link, useLocation, useRouteLoaderData } from "react-router";
 import Markdown from "markdown-to-jsx/react";
-import {
-  ClipboardCopy,
-  ClipboardCheck,
-  SquareUserRound,
-} from "lucide-react";
+import { ClipboardCopy, ClipboardCheck, SquareUserRound } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { domain } from "~/lib/config.server";
 import { requireUserId, getUser } from "~/lib/auth.server";
@@ -68,7 +64,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     });
   }
 
-  const social = await prisma.socialPreview.findUnique({
+  const social = await prisma.socialPreview.findUniqueOrThrow({
     where: {
       programId: certificate.batch.program.id,
     },
@@ -88,10 +84,12 @@ export default function ViewCertificateShare({
 
   const certificateUrl = `${domain}/view/${certificate.uuid}`;
 
+  const hasImage = Boolean(social.imageWidth && social.imageHeight);
+
   const linkedInAddParams = new URLSearchParams({
     startTask: "CERTIFICATION_NAME",
     name: certificate.batch.program.name,
-    ...(social?.linkedinOrganizationId
+    ...(social.linkedinOrganizationId
       ? { organizationId: social.linkedinOrganizationId }
       : { organizationName: org?.name ?? "" }),
     issueYear: String(certificate.publishedAt!.getFullYear()),
@@ -134,27 +132,29 @@ export default function ViewCertificateShare({
             LinkedIn or other social media.
           </p>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-            <Button asChild>
-              <Link to="/user/photo" state={{ fromPath: pathname }}>
-                <SquareUserRound />
-                {user.photo ? "Change" : "Add"} photo
-              </Link>
-            </Button>
-            {!user.photo && (
-              <img
-                src="/assets/scribble-add-photo.svg"
-                alt="Add yourself to the preview here"
-                className="ml-[75px] w-[60%] sm:w-[40%]"
-              />
-            )}
-          </div>
+          {hasImage && (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <Button asChild>
+                <Link to="/user/photo" state={{ fromPath: pathname }}>
+                  <SquareUserRound />
+                  {user.photo ? "Change" : "Add"} photo
+                </Link>
+              </Button>
+              {!user.photo && (
+                <img
+                  src="/assets/scribble-add-photo.svg"
+                  alt="Add yourself to the preview here"
+                  className="ml-[75px] w-[60%] sm:w-[40%]"
+                />
+              )}
+            </div>
+          )}
 
           <Card className="max-w-[650px]">
             <CardHeader>
               <CardTitle className="text-xl">
                 {replaceVariables(
-                  social?.ogTitle || defaultOgTitle,
+                  social.ogTitle || defaultOgTitle,
                   certificate,
                   certificate.batch,
                   certificate.template.locale,
@@ -164,7 +164,7 @@ export default function ViewCertificateShare({
               <CardDescription>
                 <Markdown>
                   {replaceVariables(
-                    social?.ogDescription || defaultOgDescription,
+                    social.ogDescription || defaultOgDescription,
                     certificate,
                     certificate.batch,
                     certificate.template.locale,
@@ -173,39 +173,44 @@ export default function ViewCertificateShare({
                 </Markdown>
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {!social ? (
-                <div className="w-full max-w-[600px] aspect-[1.91/1] flex border border-dashed border-slate-500 justify-center items-center bg-muted"></div>
-              ) : user.photo ? (
-                <img
-                  src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}`}
-                  className="w-full max-w-[600px] aspect-[1.91/1]"
-                  alt="Social media preview for shared certificates"
-                />
-              ) : (
-                <div className="grid grid-cols-1 grid-rows-1 w-full max-w-[600px]">
+            {hasImage && (
+              <CardContent>
+                {user.photo ? (
                   <img
                     src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}`}
-                    className="w-full aspect-[1.91/1] col-start-1 row-start-1"
+                    className="w-full max-w-[600px] aspect-[1.91/1]"
                     alt="Social media preview for shared certificates"
                   />
-                  <Link
-                    to="/user/photo"
-                    className="col-start-1 row-start-1 opacity-0 hover:opacity-100"
-                    state={{ fromPath: pathname }}
-                  >
+                ) : (
+                  <div className="grid grid-cols-1 grid-rows-1 w-full max-w-[600px]">
                     <img
-                      src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}&withPlaceholder=1`}
-                      className="w-full aspect-[1.91/1]"
-                      alt="Social media preview for shared certificates with a placeholder where you could appear"
+                      src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}`}
+                      className="w-full aspect-[1.91/1] col-start-1 row-start-1"
+                      alt="Social media preview for shared certificates"
                     />
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter></CardFooter>
+                    <Link
+                      to="/user/photo"
+                      className="col-start-1 row-start-1 opacity-0 hover:opacity-100"
+                      state={{ fromPath: pathname }}
+                    >
+                      <img
+                        src={`/cert/${certificate.uuid}/social-preview.png?t=${certificate.updatedAt}&withPlaceholder=1`}
+                        className="w-full aspect-[1.91/1]"
+                        alt="Social media preview for shared certificates with a placeholder where you could appear"
+                      />
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            )}
           </Card>
-                      <Input defaultValue={certificateUrl} className="max-w-[650px]" readOnly />
+          <br />
+          <Label>Website of your certificate</Label>
+          <Input
+            defaultValue={certificateUrl}
+            className="max-w-[650px]"
+            readOnly
+          />
 
           <div className="flex flex-col sm:flex-row gap-2 max-w-[650px] mb-8">
             <Button onClick={handleCopy} className="sm:w-40 sm:justify-start">
@@ -233,7 +238,11 @@ export default function ViewCertificateShare({
               </a>
             </Button>
             <Button asChild variant="outline">
-              <a href={linkedInAddUrl} target="_blank" rel="noopener noreferrer">
+              <a
+                href={linkedInAddUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Add to LinkedIn profile
               </a>
             </Button>

@@ -11,27 +11,34 @@ import { prisma } from "~/lib/prisma.server";
 export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
-  // Clean up existing background image
-  const existingSocial = await prisma.socialPreview.findFirst({
+  // Only clear the background image and its cached dimensions — OG text,
+  // layout, and the LinkedIn organisation id are kept intact.
+  const social = await prisma.socialPreview.findUnique({
     where: {
       programId: Number(params.programId),
     },
   });
-  if (existingSocial) {
+
+  if (social?.contentType) {
     try {
-      await deleteSocialBackground(existingSocial);
-    } catch (error) {
-      // If the file was not on disk, we ignore that and proceed with deleting the record
+      await deleteSocialBackground(social);
+    } catch {
+      // If the file was not on disk, we ignore that and proceed with clearing the record
     }
     try {
-      await deleteSocialComposites(existingSocial.id);
-    } catch (error) {
-      // If the file was not on disk, we ignore that and proceed with deleting the record
+      await deleteSocialComposites(social.id);
+    } catch {
+      // If the file was not on disk, we ignore that and proceed with clearing the record
     }
 
-    await prisma.socialPreview.delete({
+    await prisma.socialPreview.update({
       where: {
-        id: existingSocial.id,
+        id: social.id,
+      },
+      data: {
+        contentType: null,
+        imageWidth: null,
+        imageHeight: null,
       },
     });
   }

@@ -16,6 +16,7 @@ import { Label } from "~/components/ui/label";
 
 import { requireAdmin } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { defaultLayout } from "~/lib/social.server";
 
 export function meta() {
   const title = `Add Program`;
@@ -36,6 +37,11 @@ export async function action({ request }: Route.ActionArgs) {
       admins: {
         connect: {
           id: adminId,
+        },
+      },
+      socialPreview: {
+        create: {
+          layout: defaultLayout,
         },
       },
     },
