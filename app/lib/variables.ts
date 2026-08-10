@@ -110,6 +110,19 @@ export function prepareCertificateReplacements(
 	};
 }
 
+// Certificate variables plus the program-level placeholders resolved by
+// prepareProgramReplacements — used by the OpenGraph title/description editor.
+export const SOCIAL_PREVIEW_VARIABLE_GROUPS: VariableGroup[] = [
+	...CERTIFICATE_VARIABLE_GROUPS,
+	{
+		group: "Program",
+		variables: [
+			{ placeholder: "program.name", label: "Name" },
+			{ placeholder: "program.website", label: "Website" },
+		],
+	},
+];
+
 export function prepareProgramReplacements(
 	program: ProgramView,
 ): Record<string, string> {
