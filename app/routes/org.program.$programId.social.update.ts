@@ -9,20 +9,32 @@ import {
   readBackgroundImageDimensions,
 } from "~/lib/social.server";
 
-const allowedOgFields = ["ogTitle", "ogDescription"] as const;
+const allowedTextFields = [
+  "ogTitle",
+  "ogDescription",
+  "linkedinOrganizationId",
+] as const;
 
 export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   const formData = await request.formData();
 
-  // OpenGraph title/description are each submitted from their own
-  // single-field form, so branch on whether this submission is one of them.
-  if (formData.has("ogTitle") || formData.has("ogDescription")) {
+  // These single-field forms are each submitted independently, so branch on
+  // whether this submission is one of them.
+  if (
+    formData.has("ogTitle") ||
+    formData.has("ogDescription") ||
+    formData.has("linkedinOrganizationId")
+  ) {
     const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
-    const update: { ogTitle?: string; ogDescription?: string } = {};
-    allowedOgFields.forEach((field) => {
+    const update: {
+      ogTitle?: string;
+      ogDescription?: string;
+      linkedinOrganizationId?: string;
+    } = {};
+    allowedTextFields.forEach((field) => {
       if (inputs[field] !== undefined) {
         update[field] = inputs[field].trim();
       }
