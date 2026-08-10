@@ -41,18 +41,11 @@ export async function action({ request, params }: Route.ActionArgs) {
     });
 
     const social = await prisma.socialPreview
-      .upsert({
+      .update({
         where: {
           programId: Number(params.programId),
         },
-        update,
-        create: {
-          ...update,
-          contentType: "",
-          program: {
-            connect: { id: Number(params.programId) },
-          },
-        },
+        data: update,
       })
       .catch((error) => {
         console.error(error);
@@ -86,21 +79,14 @@ export async function action({ request, params }: Route.ActionArgs) {
     });
   }
 
-  // Create or update SocialPreview
+  // Update SocialPreview layout
   let social = await prisma.socialPreview
-    .upsert({
+    .update({
       where: {
         programId: Number(params.programId),
       },
-      update: {
+      data: {
         layout: layoutJSON,
-      },
-      create: {
-        layout: layoutJSON,
-        contentType: "",
-        program: {
-          connect: { id: Number(params.programId) },
-        },
       },
     })
     .catch((error) => {

@@ -37,7 +37,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 			return new Response(backgroundBuffer, {
 				status: 200,
 				headers: {
-					"Content-Type": social.contentType,
+					"Content-Type": social.contentType ?? "application/octet-stream",
 				},
 			});
 		} else {

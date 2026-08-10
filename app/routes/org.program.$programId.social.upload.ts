@@ -9,7 +9,6 @@ import {
   deleteSocialBackground,
   addPhotoToPreview,
   addTemplateAndPhotoToPreview,
-  defaultLayout,
   readBackgroundImageDimensions,
 } from "~/lib/social.server";
 
@@ -25,30 +24,23 @@ export async function action({ request, params }: Route.ActionArgs) {
       (fileUpload.type === "image/png" || fileUpload.type === "image/jpeg")
     ) {
       // Clean up existing background image
-      const existingSocial = await prisma.socialPreview.findFirst({
+      const existingSocial = await prisma.socialPreview.findUniqueOrThrow({
         where: {
           programId,
         },
       });
-      if (existingSocial) {
+      if (existingSocial.contentType) {
         await deleteSocialBackground(existingSocial);
       }
 
-      // Create or update SocialPreview
+      // Update SocialPreview with the new background image
       social = await prisma.socialPreview
-        .upsert({
+        .update({
           where: {
             programId,
           },
-          update: {
+          data: {
             contentType: fileUpload.type,
-          },
-          create: {
-            contentType: fileUpload.type,
-            layout: defaultLayout,
-            program: {
-              connect: { id: programId },
-            },
           },
         })
         .catch((error) => {

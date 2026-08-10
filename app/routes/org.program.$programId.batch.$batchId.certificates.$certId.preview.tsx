@@ -183,7 +183,7 @@ export default function CertificatePage({
             alt="Preview of the certificate"
           />
 
-          {socialPreview && (
+          {socialPreview?.imageWidth && socialPreview?.imageHeight && (
             <div className="flex flex-col gap-1">
               <span className="text-sm font-semibold text-muted-foreground">
                 Social Media Preview

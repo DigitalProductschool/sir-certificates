@@ -77,8 +77,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const programs = await prisma.program.findMany({
     where: {
-      socialPreview: {
-        isNot: null,
+      batches: {
+        some: {
+          certificates: {
+            some: {
+              publishedAt: {
+                not: null,
+              },
+            },
+          },
+        },
       },
     },
     orderBy: {
