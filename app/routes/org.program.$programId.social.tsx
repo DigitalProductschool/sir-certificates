@@ -25,7 +25,10 @@ import { prisma } from "~/lib/prisma.server";
 import { getSampleBatch, getSampleCertificate } from "~/lib/sample-data";
 import { defaultOgDescription, defaultOgTitle } from "~/lib/social-defaults";
 import { defaultLayout } from "~/lib/social.server";
-import { replaceVariables, SOCIAL_PREVIEW_VARIABLE_GROUPS } from "~/lib/variables";
+import {
+  replaceVariables,
+  SOCIAL_PREVIEW_VARIABLE_GROUPS,
+} from "~/lib/variables";
 
 function calculateCertificateHeight(width: number, top: number) {
   let h = Math.round(width * 1.415);
@@ -135,7 +138,33 @@ export default function ProgramSocialPage({
           </Button>
         </Form>
       )}
-      <div className="grid grid-cols-[auto_auto] gap-4">
+      <div className="grid grid-cols-[auto_auto] gap-8">
+        <section className="col-span-2 flex flex-col gap-4">
+          <div>
+            <h2 className="text-lg font-semibold">LinkedIn</h2>
+            <p className="text-sm text-muted-foreground mt-1 max-w-[650px]">
+              Certificate owners can add this achievement to their LinkedIn
+              profile. If this program&apos;s certificates are issued under a
+              LinkedIn Company Page, enter its numeric ID below — find it in the
+              page&apos;s admin URL (
+              <code>linkedin.com/company/&lt;id&gt;/admin</code>
+              ). Leave blank to show your organisation&apos;s name instead.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="linkedinOrganizationId">
+              LinkedIn Organization Page ID
+            </Label>
+            <FormUpdate action="update">
+              <Input
+                id="linkedinOrganizationId"
+                name="linkedinOrganizationId"
+                defaultValue={social?.linkedinOrganizationId ?? ""}
+                className="max-w-[650px]"
+              />
+            </FormUpdate>
+          </div>
+        </section>
         <section className="col-span-2 flex flex-col gap-4">
           <div>
             <h2 className="text-lg font-semibold">OpenGraph Metadata</h2>
@@ -203,46 +232,50 @@ export default function ProgramSocialPage({
             </FormUpdate>
           </div>
         </section>
-        <Card className="max-w-[650px]">
-          <CardHeader>
-            <CardTitle className="text-xl">
-              {replaceVariables(
-                ogTitle,
-                sampleCertificate,
-                sampleBatch,
-                "en-US",
-                program,
+
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-semibold">Preview Image</h2>
+          <Card className="max-w-[650px]">
+            <CardHeader>
+              <CardTitle className="text-xl">
+                {replaceVariables(
+                  ogTitle,
+                  sampleCertificate,
+                  sampleBatch,
+                  "en-US",
+                  program,
+                )}
+              </CardTitle>
+              <CardDescription>
+                {replaceVariables(
+                  ogDescription,
+                  sampleCertificate,
+                  sampleBatch,
+                  "en-US",
+                  program,
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!social ? (
+                <div className="w-full max-w-[600px] aspect-[1.91/1] flex border border-dashed border-slate-500 justify-center items-center bg-muted p-8">
+                  Please upload the background layer for the social media
+                  preview. Image formats PNG and JPEG are supported. Image size
+                  should be 1200 x 630 pixels.
+                </div>
+              ) : (
+                <img
+                  src={`social/preview.png?t=${social.updatedAt}${
+                    previewWithPhoto ? "&withPhoto=1" : ""
+                  }`}
+                  className="w-full max-w-[600px] aspect-[1.91/1]"
+                  alt="Social media preview for shared certificates"
+                />
               )}
-            </CardTitle>
-            <CardDescription>
-              {replaceVariables(
-                ogDescription,
-                sampleCertificate,
-                sampleBatch,
-                "en-US",
-                program,
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!social ? (
-              <div className="w-full max-w-[600px] aspect-[1.91/1] flex border border-dashed border-slate-500 justify-center items-center bg-muted p-8">
-                Please upload the background layer for the social media preview.
-                Image formats PNG and JPEG are supported. Image size should be
-                1200 x 630 pixels.
-              </div>
-            ) : (
-              <img
-                src={`social/preview.png?t=${social.updatedAt}${
-                  previewWithPhoto ? "&withPhoto=1" : ""
-                }`}
-                className="w-full max-w-[600px] aspect-[1.91/1]"
-                alt="Social media preview for shared certificates"
-              />
-            )}
-          </CardContent>
-        </Card>
-        <section className="flex flex-col gap-6 pt-4">
+            </CardContent>
+          </Card>
+        </section>
+        <section className="flex flex-col gap-6 pt-12">
           <fetcherImage.Form
             method="POST"
             action="upload"

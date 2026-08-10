@@ -2,7 +2,11 @@ import type { Route } from "./+types/view.$certUuid_.share";
 import { useState } from "react";
 import { Link, useLocation, useRouteLoaderData } from "react-router";
 import Markdown from "markdown-to-jsx/react";
-import { ClipboardCopy, ClipboardCheck, SquareUserRound } from "lucide-react";
+import {
+  ClipboardCopy,
+  ClipboardCheck,
+  SquareUserRound,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -78,11 +82,24 @@ export default function ViewCertificateShare({
 }: Route.ComponentProps) {
   const { certificate, social, domain } = loaderData;
   // @todo figure out if useRouteLoaderData can by typed
-  const { user } = useRouteLoaderData("routes/view");
+  const { user, org } = useRouteLoaderData("routes/view");
   const { pathname } = useLocation();
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
   const certificateUrl = `${domain}/view/${certificate.uuid}`;
+
+  const linkedInAddParams = new URLSearchParams({
+    startTask: "CERTIFICATION_NAME",
+    name: certificate.batch.program.name,
+    ...(social?.linkedinOrganizationId
+      ? { organizationId: social.linkedinOrganizationId }
+      : { organizationName: org?.name ?? "" }),
+    issueYear: String(certificate.publishedAt!.getFullYear()),
+    issueMonth: String(certificate.publishedAt!.getMonth() + 1),
+    certUrl: certificateUrl,
+    certId: certificate.uuid,
+  });
+  const linkedInAddUrl = `https://www.linkedin.com/profile/add?${linkedInAddParams}`;
 
   const handleCopy = async () => {
     try {
@@ -188,8 +205,9 @@ export default function ViewCertificateShare({
             </CardContent>
             <CardFooter></CardFooter>
           </Card>
+                      <Input defaultValue={certificateUrl} className="max-w-[650px]" readOnly />
+
           <div className="flex flex-col sm:flex-row gap-2 max-w-[650px] mb-8">
-            <Input defaultValue={certificateUrl} readOnly />
             <Button onClick={handleCopy} className="sm:w-40 sm:justify-start">
               {copiedToClipboard ? (
                 <>
@@ -212,6 +230,11 @@ export default function ViewCertificateShare({
                 rel="noopener noreferrer"
               >
                 Post on LinkedIn
+              </a>
+            </Button>
+            <Button asChild variant="outline">
+              <a href={linkedInAddUrl} target="_blank" rel="noopener noreferrer">
+                Add to LinkedIn profile
               </a>
             </Button>
           </div>

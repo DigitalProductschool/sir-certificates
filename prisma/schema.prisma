@@ -239,6 +239,8 @@ model SocialPreview {
   ogTitle       String?
   ogDescription String?
 
+  linkedinOrganizationId String? @db.VarChar(32)
+
   /// [SocialPreviewLayout]
   layout        Json      @default("{}")
 
