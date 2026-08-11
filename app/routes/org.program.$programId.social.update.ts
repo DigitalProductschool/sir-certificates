@@ -46,7 +46,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     ) {
       throw new Response(null, {
         status: 400,
-        statusText: "LinkedIn Organization Page ID must be numeric",
+        statusText: "LinkedIn Organisation Page ID must be numeric",
       });
     }
 
