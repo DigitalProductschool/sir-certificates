@@ -237,7 +237,7 @@ export default function ViewCertificateShare({
                 Post on LinkedIn
               </a>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild>
               <a
                 href={linkedInAddUrl}
                 target="_blank"
