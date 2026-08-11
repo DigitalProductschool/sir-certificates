@@ -146,7 +146,7 @@ export default function ProgramSocialPage({
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="linkedinOrganizationId">
-              LinkedIn Organization Page ID
+              LinkedIn Organisation Page ID
             </Label>
             <FormUpdate action="update">
               <Input
