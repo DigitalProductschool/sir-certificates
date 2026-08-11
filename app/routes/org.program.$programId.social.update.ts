@@ -40,6 +40,16 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
     });
 
+    if (
+      update.linkedinOrganizationId &&
+      !/^\d+$/.test(update.linkedinOrganizationId)
+    ) {
+      throw new Response(null, {
+        status: 400,
+        statusText: "LinkedIn Organization Page ID must be numeric",
+      });
+    }
+
     const social = await prisma.socialPreview
       .update({
         where: {

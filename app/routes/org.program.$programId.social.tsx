@@ -154,6 +154,9 @@ export default function ProgramSocialPage({
                 name="linkedinOrganizationId"
                 defaultValue={social.linkedinOrganizationId ?? ""}
                 className="max-w-[650px]"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                title="Only the numeric page ID, e.g. 12345678"
               />
             </FormUpdate>
           </div>
