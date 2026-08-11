@@ -128,7 +128,6 @@ export function prepareProgramReplacements(
 ): Record<string, string> {
 	return {
 		"program.name": program.name || "",
-		"program.about": program.about || "",
 		"program.website": program.website || "",
 	};
 }
