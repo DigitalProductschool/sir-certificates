@@ -280,17 +280,25 @@ async function composeImages(
       ? layout?.certificate?.withPhoto || defaultLayout.certificate.withPhoto
       : layout?.certificate?.noPhoto || defaultLayout.certificate.noPhoto;
 
+    // Calculate preview size from actual dimensions and aspect ratio
+    const { width: naturalWidth, height: naturalHeight } =
+      await sharp(certificate).metadata();
+    const scaledHeight = Math.round(
+      ((naturalHeight || certPos.h) / (naturalWidth || certPos.w)) * certPos.w,
+    );
+    const displayHeight = Math.min(scaledHeight, certPos.h);
+
     const shadowBlur = 10;
     const shadowMargin = 20;
 
     const dropShadow = Buffer.from(
       `<svg width="${certPos.w + shadowMargin * 2}" height="${
-        certPos.h + shadowMargin
+        displayHeight + shadowMargin
       }">
             <rect x="${shadowMargin}" y="${shadowMargin}" width="${
               certPos.w
             }" height="${
-              certPos.h + shadowMargin
+              displayHeight + shadowMargin
             }" rx="5" fill="black" filter="drop-shadow(0px 0px ${shadowBlur}px rgb(0 0 0 / 0.25))" />
         </svg>`,
     );
@@ -302,9 +310,8 @@ async function composeImages(
     });
 
     const scaledCertificate = await sharp(certificate)
-      .resize(certPos.w, certPos.h, {
-        position: "left top",
-      })
+      .resize({ width: certPos.w, height: scaledHeight, fit: "fill" })
+      .extract({ left: 0, top: 0, width: certPos.w, height: displayHeight })
       .toBuffer();
 
     imageComposition.push({
