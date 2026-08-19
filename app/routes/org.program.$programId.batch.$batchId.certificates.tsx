@@ -71,7 +71,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     },
   });
 
-  return { certificates, templates };
+  const batch = await prisma.batch.findUnique({
+    where: {
+      id: Number(params.batchId),
+    },
+  });
+
+  return { certificates, templates, batch };
 }
 
 export default function BatchCertificatesPage({
@@ -81,7 +87,7 @@ export default function BatchCertificatesPage({
   const navigate = useNavigate();
   const location = useLocation();
   const { programId } = params;
-  const { certificates, templates } = loaderData;
+  const { certificates, templates, batch } = loaderData;
   const certId = params.certId && Number(params.certId);
 
   const currentPath = location.pathname.replace(/\/$/, ""); // remove trailing slash from path during SSR
@@ -300,8 +306,8 @@ export default function BatchCertificatesPage({
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        {certificatesNeedingRefresh.size} certificates need to be
-                        refreshed
+                        {certificatesNeedingRefresh.size} certificates need to
+                        be refreshed
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -483,6 +489,9 @@ export default function BatchCertificatesPage({
           })}
         </div>
       )}
+      <div className="text-xs text-muted-foreground pl-4">
+        {certificates.length} certificates in {batch?.name || "this batch"}
+      </div>
       <Outlet />
     </div>
   );
