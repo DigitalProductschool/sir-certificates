@@ -11,6 +11,7 @@ import {
 import { requireAdmin } from "~/lib/auth.server";
 import { getProgramsByAdmin } from "~/lib/program.server";
 import { prisma } from "~/lib/prisma.server";
+import { getOrg } from "~/lib/organisation.server";
 
 export function meta() {
   return [{ title: "Programs" }];
@@ -18,6 +19,7 @@ export function meta() {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const adminId = await requireAdmin(request);
+  const org = await getOrg();  
   const programs = await getProgramsByAdmin(adminId);
   const batches = await prisma.batch.findMany({
     where: {
@@ -34,11 +36,17 @@ export async function loader({ request }: Route.LoaderArgs) {
     },
   });
 
-  return { programs, batches };
+  return { programs, batches, org };
 }
 
 export default function OrgIndex({ loaderData }: Route.ComponentProps) {
-  const { programs, batches } = loaderData;
+  const { programs, batches, org } = loaderData;
+
+  const allCertificates = batches.reduce(
+    (sum: number, b: { _count: { certificates: number } }) =>
+      sum + b._count.certificates,
+    0,
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 items-stretch gap-4 md:gap-8">
@@ -128,6 +136,7 @@ export default function OrgIndex({ loaderData }: Route.ComponentProps) {
           </Card>
         );
       })}
+      <div className="col-span-1 lg:col-span-2 xl:col-span-3 text-center text-xs text-muted-foreground">{allCertificates} certificates from {org.name}</div>
     </div>
   );
 }
