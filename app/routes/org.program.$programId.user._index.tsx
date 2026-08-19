@@ -56,6 +56,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     },
   });
   const invitations = await prisma.userInvitation.findMany({
+    where: {
+      adminOfPrograms: { has: programId },
+    },
     select: {
       id: true,
       firstName: true,
