@@ -10,7 +10,19 @@ import importPlugin from "eslint-plugin-import";
 import tseslint from "typescript-eslint";
 
 export default [
-  { ignores: ["!**/.server", "!**/.client"] },
+  {
+    ignores: [
+      "build/",
+      ".cache/",
+      ".react-router/",
+      "app/generated/",
+      "prisma/generated/",
+      "_project/",
+      "_previous_dps_certificates/",
+      "!**/.server",
+      "!**/.client",
+    ],
+  },
 
   // eslint:recommended
   js.configs.recommended,
