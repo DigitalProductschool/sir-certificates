@@ -14,8 +14,8 @@ FROM base AS deps
 
 WORKDIR /app-certificates
 
-ADD package.json ./
-RUN npm install --include=dev
+ADD package.json package-lock.json ./
+RUN npm ci --include=dev
 
 # Setup production node_modules
 FROM base AS production-deps
@@ -23,8 +23,8 @@ FROM base AS production-deps
 WORKDIR /app-certificates
 
 COPY --from=deps /app-certificates/node_modules /app-certificates/node_modules
-ADD package.json ./
-#RUN npm prune --omit=dev
+ADD package.json package-lock.json ./
+RUN npm prune --omit=dev
 
 # Build the app
 FROM base AS build
@@ -53,5 +53,4 @@ COPY --from=build /app-certificates/prisma /app-certificates/prisma
 COPY --from=build /app-certificates/package.json /app-certificates/package.json
 COPY --from=build /app-certificates/prisma.config.ts /app-certificates/prisma.config.ts
 
-RUN npx prisma generate
 CMD [ "npm", "run", "start" ]
