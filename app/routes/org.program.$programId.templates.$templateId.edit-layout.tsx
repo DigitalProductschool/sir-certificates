@@ -1,10 +1,12 @@
 import type { Route } from "./+types/org.program.$programId.templates.$templateId.edit-layout";
 import type { ErrorResponse } from "react-router";
+import type { Template } from "~/generated/prisma/client";
 import { useEffect, useState } from "react";
 import { parseFormData, type FileUpload } from "@remix-run/form-data-parser";
 import {
   Form,
   useParams,
+  useSearchParams,
   useNavigate,
   useNavigation,
   useRouteError,
@@ -17,8 +19,8 @@ import {
   generateTemplateSample,
   generatePreviewOfTemplate,
   sampleQR,
-  saveTemplateUpload,
-  readTemplateBackground,
+  readBackgroundUpload,
+  saveTemplateBackground,
 } from "~/lib/pdf.server";
 import { resetTemplateBackground } from "~/lib/template.server";
 
@@ -65,29 +67,36 @@ export async function action({ request, params }: Route.ActionArgs) {
       throw new Response(null, { status: 404, statusText: "Not Found" });
     }
 
+    let background = undefined as
+      | Pick<Template, "pageWidth" | "pageHeight" | "backgroundBytes">
+      | undefined;
+
+    // Invalid PDFs are rejected before anything is written to disk
     const uploadHandler = async (fileUpload: FileUpload) => {
       if (
         fileUpload.fieldName === "pdf" &&
         fileUpload.type === "application/pdf"
       ) {
-        return (await saveTemplateUpload(existing, fileUpload)).name;
+        const { buffer, ...size } = await readBackgroundUpload(fileUpload);
+        await saveTemplateBackground(existing.id, buffer);
+        background = size;
+        return `${existing.id}.pdf`;
       }
     };
 
     // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@remix-run/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
-    const uploadData = await parseFormData(
+    await parseFormData(
       request,
       { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
       uploadHandler,
     );
-    if (!uploadData.get("pdf")) {
+    if (!background) {
       throw new Response(null, {
         status: 400,
         statusText: "Missing uploaded PDF file",
       });
     }
 
-    const background = await readTemplateBackground(existing);
     const template = await prisma.template
       .update({ where: { id: templateId, programId }, data: background })
       .catch((error) => {
@@ -241,6 +250,19 @@ function TemplateEditor({
   const [pasteSuccess, setPasteSuccess] = useState(false);
   const [backgroundOnly, setBackgroundOnly] = useState(false);
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Set by the create template route when the chosen PDF was invalid
+  const pdfRejected = searchParams.get("pdf") === "rejected";
+  useEffect(() => {
+    if (!pdfRejected) return;
+    toast({
+      title: "🔴 Could not read uploaded PDF",
+      description:
+        "The selected file is not a valid PDF. The template was created with a blank background.",
+    });
+    setSearchParams({}, { replace: true });
+  }, [pdfRejected, toast, setSearchParams]);
 
   const clipboardCopy = async () => {
     const fullLayout = {

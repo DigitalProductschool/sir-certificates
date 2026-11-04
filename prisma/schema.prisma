@@ -202,6 +202,7 @@ model Template {
 
   // Page size in whole points. backgroundBytes is the byte size of the uploaded
   // background PDF; null means a blank page generated on the fly.
+  // The defaults must match defaultPageSize in app/lib/page-sizes.ts (A4 portrait).
   pageWidth       Int     @default(595)
   pageHeight      Int     @default(842)
   backgroundBytes Int?

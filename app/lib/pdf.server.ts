@@ -19,10 +19,10 @@ import { getSampleBatch, getSampleCertificate } from "./sample-data";
 import { replaceVariables } from "./variables";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 
-import { openLazyFile, writeFile as lazyWriteFile } from "@remix-run/fs";
 import type { CertificatesWithBatch } from "./types";
 import { domain } from "./config.server";
 import { generateRandomId } from "./utils";
+import { defaultPageSize } from "./page-sizes";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -96,19 +96,11 @@ export async function loadTemplateBackground(
   return pdf;
 }
 
-// The background as downloadable file: the original upload, or a generated blank page
+// The uploaded background PDF as stored (blank backgrounds have no file)
 export async function readTemplateBackgroundFile(
-  template: Pick<
-    Template,
-    "id" | "pageWidth" | "pageHeight" | "backgroundBytes"
-  >,
+  template: Pick<Template, "id">,
 ) {
-  if (template.backgroundBytes !== null) {
-    return await readFile(`${templateDir}/${template.id}.pdf`);
-  }
-  // TODO we don't need to make a blank page downloadable
-  const pdf = await loadTemplateBackground(template);
-  return Buffer.from(await pdf.save());
+  return await readFile(`${templateDir}/${template.id}.pdf`);
 }
 
 // @todo dry up the code for generateCertificate and generateCertificateTemplate
@@ -287,7 +279,7 @@ export async function generateTemplateSample(template: Template) {
 
 export async function generateBlankA4Pdf() {
   const pdf = await PDFDocument.create();
-  pdf.addPage([595.28, 841.89]); // A4 in points
+  pdf.addPage([defaultPageSize.width, defaultPageSize.height]);
   return Buffer.from(await pdf.save());
 }
 
@@ -549,39 +541,35 @@ export async function readPreviewOfTemplate(template: Template) {
   return readFileIfExists(previewFilePath);
 }
 
-export async function saveTemplateUpload(
-  template: Template,
-  templatePDF: FileUpload,
+// Validates an uploaded background PDF in memory (nothing is written to disk)
+// and returns its content with the size and byte size in the form stored on
+// the template. Throws a 400 response for files that are not valid PDFs.
+export async function readBackgroundUpload(fileUpload: FileUpload) {
+  const buffer = Buffer.from(await fileUpload.arrayBuffer());
+  try {
+    const pdf = await PDFDocument.load(buffer);
+    const { width, height } = pdf.getPages()[0].getSize();
+    return {
+      buffer,
+      pageWidth: Math.round(width),
+      pageHeight: Math.round(height),
+      backgroundBytes: buffer.byteLength,
+    };
+  } catch {
+    throw new Response("The uploaded file is not a valid PDF", { status: 400 });
+  }
+}
+
+export async function saveTemplateBackground(
+  templateId: number,
+  buffer: Buffer,
 ) {
   const folderCreated = await ensureFolderExists(templateDir);
   if (!folderCreated) {
     throw new Error("Could not create templates storage folder");
   }
 
-  const filepath = `${templateDir}/${template.id}.pdf`;
-  await lazyWriteFile(filepath, templatePDF);
-  return openLazyFile(filepath);
-}
-
-// Reads size and byte size of an uploaded background PDF (stored by
-// saveTemplateUpload) in the form stored on the template. Rejects and removes
-// files that are not valid PDFs.
-// TODO, this should be handled as part of the upload, invalid PDFs should not be stored on disk
-export async function readTemplateBackground(template: Pick<Template, "id">) {
-  const filepath = `${templateDir}/${template.id}.pdf`;
-  const buffer = await readFile(filepath);
-  try {
-    const pdf = await PDFDocument.load(buffer);
-    const { width, height } = pdf.getPages()[0].getSize();
-    return {
-      pageWidth: Math.round(width),
-      pageHeight: Math.round(height),
-      backgroundBytes: buffer.byteLength,
-    };
-  } catch {
-    await unlink(filepath).catch(() => {});
-    throw new Response("The uploaded file is not a valid PDF", { status: 400 });
-  }
+  await writeFile(`${templateDir}/${templateId}.pdf`, buffer);
 }
 
 export async function duplicateTemplate(

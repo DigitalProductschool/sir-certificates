@@ -38,8 +38,8 @@ import {
   generatePreviewOfTemplate,
   sampleLayout,
   sampleQR,
-  saveTemplateUpload,
-  readTemplateBackground,
+  readBackgroundUpload,
+  saveTemplateBackground,
 } from "~/lib/pdf.server";
 import { locales, defaultLocale } from "~/lib/template-locales";
 
@@ -47,6 +47,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
   let template = undefined as Template | void;
+  let pdfRejected = false;
 
   const qrcode = { ...sampleQR };
   qrcode.show = true;
@@ -66,14 +67,29 @@ export async function action({ request, params }: Route.ActionArgs) {
       fileUpload.fieldName === "pdf" &&
       fileUpload.type === "application/pdf"
     ) {
+      // An invalid PDF is skipped (nothing is written to disk) and the
+      // template is created with a blank background instead
+      const upload = await readBackgroundUpload(fileUpload).catch(
+        (error: unknown) => {
+          if (error instanceof Response) {
+            pdfRejected = true;
+            return null;
+          }
+          throw error;
+        },
+      );
+      if (!upload) return;
+
+      const { buffer, ...size } = upload;
       template = await prisma.template
-        .create({ data: templateData })
+        .create({ data: { ...templateData, ...size } })
         .catch((error) => {
           throwErrorResponse(error, "Could not create template record");
         });
 
       if (template) {
-        return (await saveTemplateUpload(template, fileUpload)).name;
+        await saveTemplateBackground(template.id, buffer);
+        return `${template.id}.pdf`;
       }
     }
   };
@@ -91,10 +107,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   // Without an uploaded PDF the template starts with a blank A4 portrait page
   // (the schema defaults), nothing is written to disk.
-  let background = {};
-  if (template) {
-    background = await readTemplateBackground(template);
-  } else {
+  if (!template) {
     template = await prisma.template
       .create({ data: templateData })
       .catch((error) => {
@@ -110,7 +123,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       data: {
         name: templateName,
         locale: templateLocale,
-        ...background,
       },
     })
     .catch((error) => {
@@ -119,9 +131,9 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (template) {
     await generateTemplateSample(template);
-    await generatePreviewOfTemplate(template);
+    await generatePreviewOfTemplate(template, false);
     return redirect(
-      `/org/program/${params.programId}/templates/${template.id}/edit-layout`,
+      `/org/program/${params.programId}/templates/${template.id}/edit-layout${pdfRejected ? "?pdf=rejected" : ""}`,
     );
   }
 
