@@ -34,6 +34,25 @@ export async function deleteTemplatePDF(templateId: number) {
 	});
 }
 
+// Removes the uploaded background PDF and falls back to a blank A4 portrait page
+export async function resetTemplateBackground(
+	templateId: number,
+	programId: number,
+) {
+	await unlink(`${templateDir}/${templateId}.pdf`).catch((error) => {
+		console.error(
+			`Encountered the following error when trying to delete the template background PDF in storage for ID ${templateId}:`,
+		);
+		console.error(error);
+	});
+
+	return await prisma.template.update({
+		where: { id: templateId, programId },
+		// TODO, A4 page size should come from a single source of truth
+		data: { backgroundBytes: null, pageWidth: 595, pageHeight: 842 },
+	});
+}
+
 export async function deleteTemplate(templateId: number, programId: number) {
 	const deletedTemplate = await prisma.template
 		.delete({

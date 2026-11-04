@@ -26,7 +26,6 @@ import { generateRandomId } from "./utils";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
-const dir = resolve(__dirname, "../../storage");
 const certDir = resolve(__dirname, "../../storage/certificates");
 const previewDir = resolve(__dirname, "../../storage/previews");
 const templateDir = resolve(__dirname, "../../storage/templates");
@@ -47,8 +46,6 @@ type SegmentOptions = {
   align?: "left" | "center" | "right";
   opticalMargin?: boolean; // default: true for right-aligned, false otherwise
 };
-
-const A4PageWidth = 595;
 
 async function assembleTypefacesFromLayout(
   pdf: PDFDocument,
@@ -82,6 +79,38 @@ async function assembleTypefacesFromLayout(
   return fontMap;
 }
 
+// Loads the uploaded background PDF, or creates a blank page of the template's
+// size if no PDF has been uploaded (nothing blank is stored on disk).
+export async function loadTemplateBackground(
+  template: Pick<
+    Template,
+    "id" | "pageWidth" | "pageHeight" | "backgroundBytes"
+  >,
+) {
+  if (template.backgroundBytes !== null) {
+    const templateBuffer = await readFile(`${templateDir}/${template.id}.pdf`);
+    return await PDFDocument.load(templateBuffer);
+  }
+  const pdf = await PDFDocument.create();
+  pdf.addPage([template.pageWidth, template.pageHeight]);
+  return pdf;
+}
+
+// The background as downloadable file: the original upload, or a generated blank page
+export async function readTemplateBackgroundFile(
+  template: Pick<
+    Template,
+    "id" | "pageWidth" | "pageHeight" | "backgroundBytes"
+  >,
+) {
+  if (template.backgroundBytes !== null) {
+    return await readFile(`${templateDir}/${template.id}.pdf`);
+  }
+  // TODO we don't need to make a blank page downloadable
+  const pdf = await loadTemplateBackground(template);
+  return Buffer.from(await pdf.save());
+}
+
 // @todo dry up the code for generateCertificate and generateCertificateTemplate
 
 export async function renderCertificatePDF(
@@ -90,10 +119,7 @@ export async function renderCertificatePDF(
   template: Template,
   forceQR = false,
 ) {
-  // Get PDF template // @todo simplify by loading from path string?
-  const templatePath = `${dir}/templates/${certificate.templateId}.pdf`;
-  const templateBuffer = await readFile(templatePath);
-  const pdf = await PDFDocument.load(templateBuffer);
+  const pdf = await loadTemplateBackground(template);
 
   // Load custom fonts
   pdf.registerFontkit(fontkit);
@@ -180,10 +206,7 @@ export async function generateTemplateSample(template: Template) {
     throw new Error("Could not create certificate storage folder");
   }
 
-  // Get PDF template
-  const templatePath = `${templateDir}/${template.id}.pdf`;
-  const templateBuffer = await readFile(templatePath);
-  const pdf = await PDFDocument.load(templateBuffer);
+  const pdf = await loadTemplateBackground(template);
 
   // Load custom fonts
   pdf.registerFontkit(fontkit);
@@ -275,7 +298,7 @@ export function drawTextBlock(
 ) {
   const size = options.size ?? 12;
   const color = options.color;
-  const maxWidth = options.maxWidth ?? A4PageWidth;
+  const maxWidth = options.maxWidth ?? page.getWidth();
   const align = options.align ?? "left";
   const opticalMargin =
     options.opticalMargin ?? (align === "right" ? true : false);
@@ -482,6 +505,15 @@ export async function generatePreviewOfTemplate(
   return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
 }
 
+// Renders the background layer only (no texts or QR code). Not stored on disk.
+export async function generateTemplateBackgroundPreview(template: Template) {
+  const pdf = await loadTemplateBackground(template);
+  const document = await pdfPreview(await pdf.save(), { scale: 2 });
+  for await (const page of document) {
+    return page;
+  }
+}
+
 export async function generatePdfPreview(
   pdfFilePath: string,
   previewFilePath: string,
@@ -531,14 +563,37 @@ export async function saveTemplateUpload(
   return openLazyFile(filepath);
 }
 
+// Reads size and byte size of an uploaded background PDF (stored by
+// saveTemplateUpload) in the form stored on the template. Rejects and removes
+// files that are not valid PDFs.
+// TODO, this should be handled as part of the upload, invalid PDFs should not be stored on disk
+export async function readTemplateBackground(template: Pick<Template, "id">) {
+  const filepath = `${templateDir}/${template.id}.pdf`;
+  const buffer = await readFile(filepath);
+  try {
+    const pdf = await PDFDocument.load(buffer);
+    const { width, height } = pdf.getPages()[0].getSize();
+    return {
+      pageWidth: Math.round(width),
+      pageHeight: Math.round(height),
+      backgroundBytes: buffer.byteLength,
+    };
+  } catch {
+    await unlink(filepath).catch(() => {});
+    throw new Response("The uploaded file is not a valid PDF", { status: 400 });
+  }
+}
+
 export async function duplicateTemplate(
   existingTpl: Template,
   duplicatedTpl: Template,
 ) {
-  await copyFile(
-    `${templateDir}/${existingTpl.id}.pdf`,
-    `${templateDir}/${duplicatedTpl.id}.pdf`,
-  );
+  if (existingTpl.backgroundBytes !== null) {
+    await copyFile(
+      `${templateDir}/${existingTpl.id}.pdf`,
+      `${templateDir}/${duplicatedTpl.id}.pdf`,
+    );
+  }
   await copyFile(
     `${templateDir}/${existingTpl.id}.sample.pdf`,
     `${templateDir}/${duplicatedTpl.id}.sample.pdf`,

@@ -39,16 +39,27 @@ import {
   sampleLayout,
   sampleQR,
   saveTemplateUpload,
+  readTemplateBackground,
 } from "~/lib/pdf.server";
 import { locales, defaultLocale } from "~/lib/template-locales";
 
 export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
-  let template: Template | void = undefined;
+  let template = undefined as Template | void;
 
   const qrcode = { ...sampleQR };
   qrcode.show = true;
+
+  const templateData = {
+    name: "(Template Name)",
+    layout: sampleLayout,
+    qrcode,
+    locale: defaultLocale.code,
+    program: {
+      connect: { id: Number(params.programId) },
+    },
+  };
 
   const uploadHandler = async (fileUpload: FileUpload) => {
     if (
@@ -56,17 +67,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       fileUpload.type === "application/pdf"
     ) {
       template = await prisma.template
-        .create({
-          data: {
-            name: "(Template Name)",
-            layout: sampleLayout,
-            qrcode,
-            locale: defaultLocale.code,
-            program: {
-              connect: { id: Number(params.programId) },
-            },
-          },
-        })
+        .create({ data: templateData })
         .catch((error) => {
           throwErrorResponse(error, "Could not create template record");
         });
@@ -87,23 +88,29 @@ export async function action({ request, params }: Route.ActionArgs) {
   const templateName = (formData.get("name") as string) || "(Template Name)";
   const templateLocale =
     (formData.get("locale") as string) || defaultLocale.code;
-  const templatePDF = formData.get("pdf") as string;
 
-  if (!templatePDF) {
-    throw new Response(null, {
-      status: 400,
-      statusText: "Missing uploaded PDF file",
-    });
+  // Without an uploaded PDF the template starts with a blank A4 portrait page
+  // (the schema defaults), nothing is written to disk.
+  let background = {};
+  if (template) {
+    background = await readTemplateBackground(template);
+  } else {
+    template = await prisma.template
+      .create({ data: templateData })
+      .catch((error) => {
+        throwErrorResponse(error, "Could not create template record");
+      });
   }
 
   template = await prisma.template
     .update({
       where: {
-        id: template!.id, // if the upload handler and prisma.template.create did not run, this will throw an error that we can catch
+        id: template!.id,
       },
       data: {
         name: templateName,
         locale: templateLocale,
+        ...background,
       },
     })
     .catch((error) => {
@@ -153,12 +160,12 @@ export default function CreateTemplateDialog() {
           <DialogHeader>
             <DialogTitle>Add template</DialogTitle>
             <DialogDescription>
-              Upload a new certificate template for this program, then configure
-              the layout options in the next step.
+              Create a new certificate template for this program, then configure
+              the layout and background in the next step.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <Label htmlFor="pdf">Select a PDF file</Label>
+            <Label htmlFor="pdf">Background PDF (optional)</Label>
             <Input
               id="pdf"
               name="pdf"
@@ -196,7 +203,7 @@ export default function CreateTemplateDialog() {
             </Select>
           </div>
           <DialogFooter>
-            <Button type="submit">Upload PDF</Button>
+            <Button type="submit">Create template</Button>
           </DialogFooter>
         </Form>
       </DialogContent>

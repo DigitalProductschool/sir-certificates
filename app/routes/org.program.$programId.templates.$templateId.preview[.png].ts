@@ -2,7 +2,10 @@ import type { Route } from "./+types/org.program.$programId.templates.$templateI
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
-import { generatePreviewOfTemplate } from "~/lib/pdf.server";
+import {
+  generatePreviewOfTemplate,
+  generateTemplateBackgroundPreview,
+} from "~/lib/pdf.server";
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
@@ -21,7 +24,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     });
   }
 
-  const preview = await generatePreviewOfTemplate(template, true);
+  const backgroundOnly = new URL(request.url).searchParams.has("background");
+  const preview = backgroundOnly
+    ? await generateTemplateBackgroundPreview(template)
+    : await generatePreviewOfTemplate(template, true);
 
   if (!preview) {
     throw new Response(null, {

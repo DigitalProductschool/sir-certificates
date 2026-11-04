@@ -69,6 +69,13 @@ jobs:
         env:
           REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
 
+      # TODO: remove after the first successful production rollout (see TODO.md)
+      - name: Backfill template background data
+        run: |
+          ssh -t preview "run $REVIEW_APP_NAME node prisma/backfill-template-backgrounds.js"
+        env:
+          REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}
+
       - name: Enable LetsEncrypt
         if: github.event_name == 'pull_request' && ( github.event.action == 'opened' || github.event.action == 'reopened' )
         # see https://blog.benoitblanchon.fr/github-action-run-ssh-commands/

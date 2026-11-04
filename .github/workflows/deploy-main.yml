@@ -51,3 +51,10 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_KEY_SIR }}
           SSH_HOST: 167.235.152.70
           APP_NAME: certificates
+
+      # TODO: remove after the first successful production rollout (see TODO.md)
+      - name: Backfill template background data
+        run: |
+          ssh -t preview "run $APP_NAME node prisma/backfill-template-backgrounds.js"
+        env:
+          APP_NAME: certificates

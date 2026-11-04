@@ -1,6 +1,7 @@
 import type { Route } from "./+types/org.program.$programId.templates.$templateId.edit-layout";
 import type { ErrorResponse } from "react-router";
 import { useEffect, useState } from "react";
+import { parseFormData, type FileUpload } from "@remix-run/form-data-parser";
 import {
   Form,
   useParams,
@@ -16,7 +17,10 @@ import {
   generateTemplateSample,
   generatePreviewOfTemplate,
   sampleQR,
+  saveTemplateUpload,
+  readTemplateBackground,
 } from "~/lib/pdf.server";
+import { resetTemplateBackground } from "~/lib/template.server";
 
 import { ClipboardCopy, ClipboardPaste, ClipboardCheck } from "lucide-react";
 
@@ -30,6 +34,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
+import { Switch } from "~/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -37,6 +42,7 @@ import {
 } from "~/components/ui/tooltip";
 
 import { LayoutEditor } from "~/components/template-layout-editor";
+import { LayoutBackgroundEditor } from "~/components/template-background-editor";
 import { LayoutQRCodeEditor } from "~/components/template-qrcode-editor";
 import { useToast } from "~/hooks/use-toast";
 
@@ -47,7 +53,88 @@ export function meta({ data }: Route.MetaArgs) {
 export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
+  const templateId = Number(params.templateId);
+  const programId = Number(params.programId);
+
+  // Background PDF upload (multipart)
+  if (request.headers.get("Content-Type")?.includes("multipart/form-data")) {
+    const existing = await prisma.template.findUnique({
+      where: { id: templateId, programId },
+    });
+    if (!existing) {
+      throw new Response(null, { status: 404, statusText: "Not Found" });
+    }
+
+    const uploadHandler = async (fileUpload: FileUpload) => {
+      if (
+        fileUpload.fieldName === "pdf" &&
+        fileUpload.type === "application/pdf"
+      ) {
+        return (await saveTemplateUpload(existing, fileUpload)).name;
+      }
+    };
+
+    // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@remix-run/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
+    const uploadData = await parseFormData(
+      request,
+      { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
+      uploadHandler,
+    );
+    if (!uploadData.get("pdf")) {
+      throw new Response(null, {
+        status: 400,
+        statusText: "Missing uploaded PDF file",
+      });
+    }
+
+    const background = await readTemplateBackground(existing);
+    const template = await prisma.template
+      .update({ where: { id: templateId, programId }, data: background })
+      .catch((error) => {
+        throwErrorResponse(error, "Could not update template background");
+      });
+    if (template) {
+      await generateTemplateSample(template);
+      await generatePreviewOfTemplate(template, false);
+    }
+    return { template };
+  }
+
   const formData = await request.formData();
+
+  // Background changes that do not involve a file
+  const intent = formData.get("intent");
+  if (intent === "reset-background" || intent === "blank-size") {
+    let template;
+    if (intent === "reset-background") {
+      template = await resetTemplateBackground(templateId, programId);
+    } else {
+      const pageWidth = Number(formData.get("pageWidth"));
+      const pageHeight = Number(formData.get("pageHeight"));
+      const valid = (n: number) => Number.isInteger(n) && n >= 1 && n <= 14400;
+      if (!valid(pageWidth) || !valid(pageHeight)) {
+        throw new Response(null, {
+          status: 400,
+          statusText: "Invalid page size",
+        });
+      }
+      template = await prisma.template
+        .update({
+          // Page size can only be set for blank backgrounds
+          where: { id: templateId, programId, backgroundBytes: null },
+          data: { pageWidth, pageHeight },
+        })
+        .catch((error) => {
+          throwErrorResponse(error, "Could not update page size");
+        });
+    }
+    if (template) {
+      await generateTemplateSample(template);
+      await generatePreviewOfTemplate(template, false);
+    }
+    return { template };
+  }
+
   const inputs = Object.fromEntries(formData) as { [k: string]: string };
   let layoutJSON: PrismaJson.TextBlock[];
   let qrJSON: PrismaJson.QRCode;
@@ -55,7 +142,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   // @todo verify schema of incoming JSON
   try {
     layoutJSON = JSON.parse(inputs.layout);
-  } catch (error) {
+  } catch {
     throw new Response(null, {
       status: 400,
       statusText: "Invalid JSON layout",
@@ -65,7 +152,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   // @todo verify schema of incoming JSON
   try {
     qrJSON = JSON.parse(inputs.qrcode);
-  } catch (error) {
+  } catch {
     throw new Response(null, {
       status: 400,
       statusText: "Invalid JSON layout",
@@ -126,15 +213,33 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { template, typefaces };
 }
 
+// The editor state is initialised from the loaded template. The key remounts
+// the editor when the saved layout or QR code changes by value, but not on
+// background changes (which also revalidate the loader), so unsaved layout
+// edits are kept.
 export default function TemplateEditorPage({
   loaderData,
 }: Route.ComponentProps) {
   const { template, typefaces } = loaderData;
+  return (
+    <TemplateEditor
+      key={`${template.id}:${JSON.stringify(template.layout)}:${JSON.stringify(template.qrcode)}`}
+      template={template}
+      typefaces={typefaces}
+    />
+  );
+}
+
+function TemplateEditor({
+  template,
+  typefaces,
+}: Route.ComponentProps["loaderData"]) {
   const navigation = useNavigation();
   const [layout, setLayout] = useState<PrismaJson.TextBlock[]>(template.layout);
   const [qrcode, setQrcode] = useState(template.qrcode);
   const [copySuccess, setCopySuccess] = useState(false);
   const [pasteSuccess, setPasteSuccess] = useState(false);
+  const [backgroundOnly, setBackgroundOnly] = useState(false);
   const { toast } = useToast();
 
   const clipboardCopy = async () => {
@@ -181,14 +286,6 @@ export default function TemplateEditorPage({
     }
   };
 
-  useEffect(() => {
-    setLayout(template.layout);
-  }, [template.id, template.layout]);
-
-  useEffect(() => {
-    setQrcode(template.qrcode);
-  }, [template.id, template.qrcode]);
-
   return (
     <div className="pt-2 grid grid-cols-2 gap-4 items-start">
       <div className="flex flex-col gap-2 pb-8">
@@ -220,6 +317,11 @@ export default function TemplateEditorPage({
           </Form>
         </div>
 
+        <LayoutBackgroundEditor
+          key={`background${template.id}`}
+          template={template}
+        />
+
         {qrcode && (
           <LayoutQRCodeEditor
             key={`qrcode${template.id}`}
@@ -237,15 +339,31 @@ export default function TemplateEditorPage({
           }
         />
       </div>
-      <div className="flex flex-col gap-2">
-        <Label className="flex grow h-10 justify-center items-center">
-          Template Preview
-        </Label>
+      <div className="flex flex-col gap-2 self-start items-stretch justify-self-center">
+        <div className="relative flex h-10 items-center justify-center">
+          <Label>Template Preview</Label>
+          <Label
+            htmlFor="preview-background-only"
+            className="absolute right-0 gap-2 text-xs font-normal text-muted-foreground"
+          >
+            <Switch
+              id="preview-background-only"
+              checked={backgroundOnly}
+              onCheckedChange={setBackgroundOnly}
+              className="h-4 w-7 [&_[data-slot=switch-thumb]]:size-3 [&_[data-slot=switch-thumb]]:data-[state=checked]:translate-x-3"
+            />
+            Background only
+          </Label>
+        </div>
 
         <img
-          className="drop-shadow-xl self-center"
-          src={`preview.png?t=${template.updatedAt}`}
-          alt="Preview of the template"
+          className="drop-shadow-xl"
+          src={`preview.png?${backgroundOnly ? "background&" : ""}t=${template.updatedAt}`}
+          alt={
+            backgroundOnly
+              ? "Preview of the template background"
+              : "Preview of the template"
+          }
         />
       </div>
     </div>
