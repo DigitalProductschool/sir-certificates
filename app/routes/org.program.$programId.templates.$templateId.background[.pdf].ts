@@ -15,7 +15,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		},
 	});
 
-	if (!template) {
+	// Blank backgrounds are generated on the fly and have no file to download
+	if (!template || template.backgroundBytes === null) {
 		throw new Response(null, {
 			status: 404,
 			statusText: "Not Found",
