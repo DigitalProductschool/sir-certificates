@@ -103,7 +103,7 @@ When opening a Pull Request from a different branch, a preview deployment will b
 
 Caveats:
 
--   preview deployments currently interact with the production database, so be careful
+-   preview deployments run on their own clone of the production database (cloned when the PR is opened), but share the storage directory with production. Files written or deleted in a preview (uploaded PDFs, fonts, generated certificates and previews) affect production, so be careful
 - 	storage: `dokku storage:ensure-directory --chown root [app]`, `dokku storage:mount [app] host-path:container-path`, `dokku ps:restart app-name`
 
 Server disk clean-up:

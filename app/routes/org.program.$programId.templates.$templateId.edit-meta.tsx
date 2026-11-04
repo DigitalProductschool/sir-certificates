@@ -1,7 +1,6 @@
 import type { Route } from "./+types/org.program.$programId.templates.$templateId.edit-meta";
 import { useEffect, useState, useRef } from "react";
 import { Form, redirect, useNavigate } from "react-router";
-import { type FileUpload, parseFormData } from "@remix-run/form-data-parser";
 
 import { Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -32,7 +31,6 @@ import { requireAdminWithProgram } from "~/lib/auth.server";
 import {
   generateTemplateSample,
   generatePreviewOfTemplate,
-  saveTemplateUpload,
 } from "~/lib/pdf.server";
 import { prisma, throwErrorResponse } from "~/lib/prisma.server";
 import { defaultLocale, locales } from "~/lib/template-locales";
@@ -40,29 +38,7 @@ import { defaultLocale, locales } from "~/lib/template-locales";
 export async function action({ request, params }: Route.ActionArgs) {
   await requireAdminWithProgram(request, Number(params.programId));
 
-  const existing = await prisma.template.findUnique({
-    where: {
-      id: Number(params.templateId),
-      programId: Number(params.programId),
-    },
-  });
-
-  const uploadHandler = async (fileUpload: FileUpload) => {
-    if (
-      fileUpload.fieldName === "pdf" &&
-      fileUpload.type === "application/pdf"
-    ) {
-      if (existing)
-        return (await saveTemplateUpload(existing, fileUpload)).name;
-    }
-  };
-
-  // @todo handle MaxFilesExceededError, MaxFileSizeExceededError in a try...catch block (see example https://www.npmjs.com/package/@remix-run/form-data-parser) when https://github.com/mjackson/remix-the-web/issues/60 is resolved
-  const formData = await parseFormData(
-    request,
-    { maxFiles: 1, maxFileSize: 5 * 1024 * 1024 },
-    uploadHandler,
-  );
+  const formData = await request.formData();
 
   const templateName = (formData.get("name") as string) || "(Template Name)";
   const templateLocale =
@@ -148,10 +124,7 @@ export default function EditTemplateDialog({
             the certificates afterwards.
           </DialogDescription>
         </DialogHeader>
-        <Form
-          method="POST"
-          encType="multipart/form-data"
-          ref={formRef}
+        <Form method="POST" ref={formRef}
           className="grid gap-4 py-4"
         >
           <Label htmlFor="name">Name</Label>
@@ -170,9 +143,6 @@ export default function EditTemplateDialog({
               ))}
             </SelectContent>
           </Select>
-
-          <Label htmlFor="pdf">Replace PDF template</Label>
-          <Input id="pdf" name="pdf" type="file" accept="application/pdf" />
         </Form>
         <DialogFooter>
           <Form

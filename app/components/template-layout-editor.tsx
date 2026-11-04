@@ -343,7 +343,7 @@ function TextBlock({
     },
   );
   return (
-    <div className="flex flex-col gap-2 text-sm rounded-lg border bg-card text-card-foreground shadow-sm">
+    <div className="flex flex-col gap-2 overflow-hidden text-sm rounded-lg border bg-card text-card-foreground shadow-sm">
       <Toolbar
         settings={settings}
         onChange={(changedSettings: PrismaJson.TextBlock) => {

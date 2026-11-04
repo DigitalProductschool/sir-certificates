@@ -199,6 +199,13 @@ model Template {
   qrcode        Json?
 
   locale        String    @default("en-US")
+
+  // Page size in whole points. backgroundBytes is the byte size of the uploaded
+  // background PDF; null means a blank page generated on the fly.
+  pageWidth       Int     @default(595)
+  pageHeight      Int     @default(842)
+  backgroundBytes Int?
+
   updatedAt     DateTime  @updatedAt    
   certificates  Certificate[]
   program       Program   @relation(fields: [programId], references: [id])  
