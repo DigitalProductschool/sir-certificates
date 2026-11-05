@@ -36,7 +36,6 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
-import { Switch } from "~/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -248,7 +247,7 @@ function TemplateEditor({
   const [qrcode, setQrcode] = useState(template.qrcode);
   const [copySuccess, setCopySuccess] = useState(false);
   const [pasteSuccess, setPasteSuccess] = useState(false);
-  const [backgroundOnly, setBackgroundOnly] = useState(false);
+  const [showBackground, setShowBackground] = useState(true);
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -342,6 +341,8 @@ function TemplateEditor({
         <LayoutBackgroundEditor
           key={`background${template.id}`}
           template={template}
+          visible={showBackground}
+          onVisibleChange={setShowBackground}
         />
 
         {qrcode && (
@@ -362,30 +363,14 @@ function TemplateEditor({
         />
       </div>
       <div className="flex flex-col gap-2 self-start items-stretch justify-self-center">
-        <div className="relative flex h-10 items-center justify-center">
-          <Label>Template Preview</Label>
-          <Label
-            htmlFor="preview-background-only"
-            className="absolute right-0 gap-2 text-xs font-normal text-muted-foreground"
-          >
-            <Switch
-              id="preview-background-only"
-              checked={backgroundOnly}
-              onCheckedChange={setBackgroundOnly}
-              className="h-4 w-7 [&_[data-slot=switch-thumb]]:size-3 [&_[data-slot=switch-thumb]]:data-[state=checked]:translate-x-3"
-            />
-            Background only
-          </Label>
-        </div>
+        <Label className="flex h-10 justify-center items-center">
+          Template Preview
+        </Label>
 
         <img
           className="drop-shadow-xl"
-          src={`preview.png?${backgroundOnly ? "background&" : ""}t=${template.updatedAt}`}
-          alt={
-            backgroundOnly
-              ? "Preview of the template background"
-              : "Preview of the template"
-          }
+          src={`preview.png?${showBackground ? "" : "hideBackground&"}t=${template.updatedAt}`}
+          alt="Preview of the template"
         />
       </div>
     </div>
