@@ -319,7 +319,7 @@ function TemplateEditor({
                 {copySuccess ? <ClipboardCheck /> : <ClipboardCopy />}
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top">Copy Layout</TooltipContent>
+            <TooltipContent side="top">Copy Layout (except background)</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
