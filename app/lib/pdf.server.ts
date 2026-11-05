@@ -198,7 +198,18 @@ export async function generateTemplateSample(template: Template) {
     throw new Error("Could not create certificate storage folder");
   }
 
-  const pdf = await loadTemplateBackground(template);
+  const pdfBuffer = await buildTemplateSample(template);
+  await writeFile(pdfFilePath, pdfBuffer);
+
+  return pdfBuffer;
+}
+
+// Sample certificate with texts and QR code. Without the background the
+// content is drawn on a blank page of the same size.
+async function buildTemplateSample(template: Template, withBackground = true) {
+  const pdf = await loadTemplateBackground(
+    withBackground ? template : { ...template, backgroundBytes: null },
+  );
 
   // Load custom fonts
   pdf.registerFontkit(fontkit);
@@ -269,12 +280,7 @@ export async function generateTemplateSample(template: Template) {
   }
 
   // Wrap up and return as buffer
-  const pdfBytes = await pdf.save();
-  const pdfBuffer = Buffer.from(pdfBytes);
-
-  await writeFile(pdfFilePath, pdfBuffer);
-
-  return pdfBuffer;
+  return Buffer.from(await pdf.save());
 }
 
 export async function generateBlankA4Pdf() {
@@ -497,10 +503,12 @@ export async function generatePreviewOfTemplate(
   return await generatePdfPreview(pdfFilePath, previewFilePath, skipIfExists);
 }
 
-// Renders the background layer only (no texts or QR code). Not stored on disk.
-export async function generateTemplateBackgroundPreview(template: Template) {
-  const pdf = await loadTemplateBackground(template);
-  const document = await pdfPreview(await pdf.save(), { scale: 2 });
+// Renders the preview without the background layer. Not stored on disk.
+export async function generateTemplatePreviewWithoutBackground(
+  template: Template,
+) {
+  const sample = await buildTemplateSample(template, false);
+  const document = await pdfPreview(sample, { scale: 2 });
   for await (const page of document) {
     return page;
   }

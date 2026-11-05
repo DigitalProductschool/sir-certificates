@@ -4,7 +4,7 @@ import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import {
   generatePreviewOfTemplate,
-  generateTemplateBackgroundPreview,
+  generateTemplatePreviewWithoutBackground,
 } from "~/lib/pdf.server";
 
 export async function loader({ params, request }: Route.LoaderArgs) {
@@ -24,9 +24,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     });
   }
 
-  const backgroundOnly = new URL(request.url).searchParams.has("background");
-  const preview = backgroundOnly
-    ? await generateTemplateBackgroundPreview(template)
+  const hideBackground = new URL(request.url).searchParams.has(
+    "hideBackground",
+  );
+  const preview = hideBackground
+    ? await generateTemplatePreviewWithoutBackground(template)
     : await generatePreviewOfTemplate(template, true);
 
   if (!preview) {

@@ -4,7 +4,7 @@ import type { Template } from "~/generated/prisma/client";
 
 import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
-import { Download, FileText, Trash2, Upload } from "lucide-react";
+import { Download, Eye, EyeOff, FileText, Trash2, Upload } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -40,13 +40,11 @@ type BackgroundTemplate = Pick<
 type BackgroundFetcher = ReturnType<typeof useFetcher>;
 
 function Toolbar({
-  hasPdf,
-  busy,
-  onRemove,
+  visible,
+  onVisibleChange,
 }: {
-  hasPdf: boolean;
-  busy: boolean;
-  onRemove: () => void;
+  visible: boolean;
+  onVisibleChange: (visible: boolean) => void;
 }) {
   return (
     <div className="flex items-center bg-muted pl-4 pr-2 py-2">
@@ -59,23 +57,21 @@ function Toolbar({
         </Tooltip>
         <span className="text-sm font-medium">Background Layer</span>
       </div>
-      {hasPdf && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled={busy}
-              aria-label="Remove background PDF"
-              onClick={onRemove}
-            >
-              <Trash2 />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">Remove background PDF</TooltipContent>
-        </Tooltip>
-      )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => onVisibleChange(!visible)}
+          >
+            {visible ? <Eye /> : <EyeOff />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {visible ? "Hide background" : "Show background"}
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 }
@@ -83,9 +79,11 @@ function Toolbar({
 function Content({
   template,
   fetcher,
+  onRemove,
 }: {
   template: BackgroundTemplate;
   fetcher: BackgroundFetcher;
+  onRemove: () => void;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const { pageWidth, pageHeight, backgroundBytes } = template;
@@ -198,6 +196,24 @@ function Content({
         >
           <Upload /> {hasPdf ? "Replace" : "Upload PDF"}
         </Button>
+        {hasPdf && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-8 px-0"
+                disabled={busy}
+                aria-label="Remove background PDF"
+                onClick={onRemove}
+              >
+                <Trash2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Remove background PDF</TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </div>
   );
@@ -258,8 +274,12 @@ function CustomSize({
 
 export function LayoutBackgroundEditor({
   template,
+  visible,
+  onVisibleChange,
 }: {
   template: BackgroundTemplate;
+  visible: boolean;
+  onVisibleChange: (visible: boolean) => void;
 }) {
   const fetcher = useFetcher();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -302,12 +322,12 @@ export function LayoutBackgroundEditor({
           });
         }}
       >
-        <Toolbar
-          hasPdf={template.backgroundBytes !== null}
-          busy={fetcher.state !== "idle"}
+        <Toolbar visible={visible} onVisibleChange={onVisibleChange} />
+        <Content
+          template={template}
+          fetcher={fetcher}
           onRemove={() => setConfirmOpen(true)}
         />
-        <Content template={template} fetcher={fetcher} />
         {uploading && (
           <div
             role="progressbar"
