@@ -120,6 +120,7 @@ model Program {
   about         String?
   achievement   String?
   website       String?   @db.VarChar(128)
+  advertise     Boolean   @default(false)
   admins        User[]
   batches       Batch[]
   logo          ProgramLogo?

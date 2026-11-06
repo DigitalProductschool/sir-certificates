@@ -77,16 +77,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const programs = await prisma.program.findMany({
     where: {
-      batches: {
-        some: {
-          certificates: {
-            some: {
-              publishedAt: {
-                not: null,
-              },
-            },
-          },
-        },
+      advertise: true,
+      id: {
+        notIn: certificates.map((cert) => cert.batch.program.id),
       },
     },
     orderBy: {
@@ -154,7 +147,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
             ))}
           </div>
 
-          {programs.length > 1 && (
+          {programs.length > 0 && (
             <>
               <div>
                 <h3 className="text-lg font-bold px-16">
