@@ -1,5 +1,5 @@
 import type { Route } from "./+types/_index";
-import type { Organisation, Program, User } from "~/generated/prisma/client";
+import type { Organisation, User } from "~/generated/prisma/client";
 import type { CertificatesWithBatchAndProgram } from "~/lib/types";
 
 import { Link, redirect } from "react-router";
@@ -22,6 +22,15 @@ import {
 import { requireUserId, getUser, logout } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { getPublicOrg } from "~/lib/organisation.server";
+import { ExternalLink } from "lucide-react";
+
+function getDomain(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
 
 export function meta({ data }: Route.MetaArgs) {
   return [
@@ -81,6 +90,9 @@ export async function loader({ request }: Route.LoaderArgs) {
       id: {
         notIn: certificates.map((cert) => cert.batch.program.id),
       },
+    },
+    include: {
+      logo: true,
     },
     orderBy: {
       name: "asc",
@@ -159,25 +171,36 @@ export default function Index({ loaderData }: Route.ComponentProps) {
                 </p>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 p-16 pt-2 gap-8">
-                {programs.map((program: Program) => (
+                {programs.map((program) => (
                   <Card key={program.id}>
-                    <CardHeader>
+                    <CardHeader className="flex gap-4 items-center">
+                      {program.logo && (
+                        <img
+                          src={`/logo/program/${program.logo.uuid}.svg?t=${program.logo.updatedAt}`}
+                          alt=""
+                          role="presentation"
+                          className="h-12 w-12 object-contain"
+                        />
+                      )}
                       <CardTitle className="text-xl">{program.name}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <Markdown>{program.about ?? ""}</Markdown>
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="pt-2 gap-2">
                       {/* @todo insert <wbr> tags into long urls for better breakpoints */}
                       {program.website && (
-                        <a
-                          href={program.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline underline-offset-2 break-all"
-                        >
-                          {program.website}
-                        </a>
+                        <>
+                          <a
+                            href={program.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline underline-offset-2 break-all"
+                          >
+                            {getDomain(program.website)}
+                          </a>
+                          <ExternalLink size={18} strokeWidth={2}/>
+                        </>
                       )}
                     </CardFooter>
                   </Card>
