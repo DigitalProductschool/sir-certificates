@@ -6,6 +6,7 @@ import { ArrowUpRight, ImageUp, Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
 import { FormUpdate } from "~/components/form-update";
 
@@ -42,13 +43,17 @@ export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
   const inputs = Object.fromEntries(formData) as { [k: string]: string };
 
-  const update: { [key: string]: string } = {};
+  const update: { [key: string]: string | boolean } = {};
 
   allowedUpdateFields.forEach((field) => {
     if (inputs[field]) {
       update[field] = inputs[field].trim();
     }
   });
+
+  if (inputs.advertise !== undefined) {
+    update.advertise = inputs.advertise === "true";
+  }
 
   const program = await prisma.program.update({
     where: {
@@ -65,6 +70,10 @@ export default function ProgramSettings({ loaderData }: Route.ComponentProps) {
   // @todo typesafe use of useRouteLoaderData
   const { program } = useRouteLoaderData("routes/org.program.$programId");
   const fetcherIcon = useFetcher({ key: "program-icon" });
+  const fetcherAdvertise = useFetcher({ key: "program-advertise" });
+  const advertise = fetcherAdvertise.formData
+    ? fetcherAdvertise.formData.get("advertise") === "true"
+    : program.advertise;
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const handleUploadClick = () => {
@@ -223,6 +232,29 @@ export default function ProgramSettings({ loaderData }: Route.ComponentProps) {
           </section>
         )}
       </div>
+
+        <section className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-4 max-w-[500px]">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="advertise">
+                Advertise interally
+              </Label>
+              <span className="text-xs text-muted-foreground">
+                Show this program to participants of other programs.
+              </span>
+            </div>
+            <Switch
+              id="advertise"
+              checked={advertise}
+              onCheckedChange={(checked) =>
+                fetcherAdvertise.submit(
+                  { advertise: String(checked) },
+                  { method: "POST", preventScrollReset: true },
+                )
+              }
+            />
+          </div>
+        </section>      
 
       <section className="flex flex-col gap-2 my-16">
         <Label>Danger Zone</Label>
