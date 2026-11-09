@@ -173,15 +173,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 p-16 pt-2 gap-8">
                 {programs.map((program) => (
                   <Card key={program.id}>
-                    <CardHeader className="flex gap-4 items-center">
-                      {program.logo && (
-                        <img
-                          src={`/logo/program/${program.logo.uuid}.svg?t=${program.logo.updatedAt}`}
-                          alt=""
-                          role="presentation"
-                          className="h-12 w-12 object-contain"
-                        />
-                      )}
+                    <CardHeader>
                       <CardTitle className="text-xl">{program.name}</CardTitle>
                     </CardHeader>
                     <CardContent>
