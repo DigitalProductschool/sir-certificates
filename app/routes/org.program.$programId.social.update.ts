@@ -139,7 +139,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (template) {
     await addTemplateAndPhotoToPreview(social, template);
   } else {
-    addPhotoToPreview(social);
+    await addPhotoToPreview(social);
   }
 
   return { social };
