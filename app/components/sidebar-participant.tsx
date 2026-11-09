@@ -1,6 +1,6 @@
 import type {
   CertificatesWithBatchAndProgram,
-  UserAuthenticated,
+  UserParticipant,
 } from "~/lib/types";
 
 import { Link, NavLink, useLocation } from "react-router";
@@ -34,7 +34,7 @@ export function SidebarParticipant({
   user,
   certificates,
 }: {
-  user: UserAuthenticated;
+  user: UserParticipant;
   certificates: CertificatesWithBatchAndProgram[];
 }) {
   const { pathname } = useLocation();

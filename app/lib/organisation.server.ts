@@ -19,8 +19,8 @@ export type PublicOrgWithLogo = Prisma.OrganisationGetPayload<{
 		name: true;
 		imprintUrl: true;
 		privacyUrl: true;
-		logo: true;
-		brandImage: true;
+		logo: { select: { updatedAt: true } };
+		brandImage: { select: { updatedAt: true; backgroundColor: true } };
 	};
 }>;
 
@@ -73,8 +73,8 @@ export async function getPublicOrg(): Promise<PublicOrgWithLogo> {
 				name: true,
 				imprintUrl: true,
 				privacyUrl: true,
-				logo: true,
-				brandImage: true,
+				logo: { select: { updatedAt: true } },
+				brandImage: { select: { updatedAt: true, backgroundColor: true } },
 			},
 		});
 
@@ -128,8 +128,8 @@ export async function refreshCachedOrg() {
 			name: true,
 			imprintUrl: true,
 			privacyUrl: true,
-			logo: true,
-			brandImage: true,
+			logo: { select: { updatedAt: true } },
+			brandImage: { select: { updatedAt: true, backgroundColor: true } },
 		},
 	});
 	return { org, publicOrg };
