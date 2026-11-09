@@ -4,9 +4,8 @@
 import type { Dispatch, SetStateAction } from "react";
 
 import { HexColorPicker } from "react-colorful";
-import { Eye, EyeOff, QrCode } from "lucide-react";
+import { QrCode } from "lucide-react";
 
-import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { InputTiny } from "~/components/ui/input-tiny";
 import {
@@ -14,6 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
+import { Switch } from "~/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -33,7 +33,7 @@ function Toolbar({
   const background = rgbToHex(settings.background || [1, 1, 1]);
   // @todo fix layout / overflow / wrapping on small screens
   return (
-    <div className="flex bg-muted pl-4 pr-2 py-2">
+    <div className="flex items-center bg-muted pl-4 pr-2 py-2">
       <div className="flex grow flex-wrap items-center gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -171,16 +171,16 @@ function Toolbar({
       </div>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              onChange({ ...settings, show: !settings.show });
-            }}
-          >
-            {settings.show ? <Eye /> : <EyeOff />}
-          </Button>
+          <div className="flex items-center px-2">
+            <Switch
+              size="sm"
+              checked={settings.show}
+              onCheckedChange={(show) => {
+                onChange({ ...settings, show });
+              }}
+              aria-label="Show QR code"
+            />
+          </div>
         </TooltipTrigger>
         <TooltipContent side="top">
           {settings.show ? "Hide code" : "Show code"}

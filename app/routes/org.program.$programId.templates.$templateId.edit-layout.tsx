@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { parseFormData, type FileUpload } from "@remix-run/form-data-parser";
 import {
   Form,
+  Link,
   useParams,
   useSearchParams,
   useNavigate,
@@ -24,7 +25,12 @@ import {
 } from "~/lib/pdf.server";
 import { resetTemplateBackground } from "~/lib/template.server";
 
-import { ClipboardCopy, ClipboardPaste, ClipboardCheck } from "lucide-react";
+import {
+  ArrowUpRight,
+  ClipboardCopy,
+  ClipboardPaste,
+  ClipboardCheck,
+} from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -251,6 +257,12 @@ function TemplateEditor({
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Unsaved layout changes (text blocks and QR code). The background preview
+  // toggle is intentionally not part of this, because it is never persisted.
+  const isDirty =
+    JSON.stringify(layout) !== JSON.stringify(template.layout) ||
+    JSON.stringify(qrcode) !== JSON.stringify(template.qrcode);
+
   // Set by the create template route when the chosen PDF was invalid
   const pdfRejected = searchParams.get("pdf") === "rejected";
   useEffect(() => {
@@ -332,7 +344,11 @@ function TemplateEditor({
           <Form key={template.id} method="POST">
             <input type="hidden" name="layout" value={JSON.stringify(layout)} />
             <input type="hidden" name="qrcode" value={JSON.stringify(qrcode)} />
-            <Button type="submit" disabled={navigation.state !== "idle"}>
+            <Button
+              type="submit"
+              variant={isDirty ? "default" : "outline"}
+              disabled={navigation.state !== "idle"}
+            >
               Save and Preview
             </Button>
           </Form>
@@ -364,7 +380,15 @@ function TemplateEditor({
       </div>
       <div className="flex flex-col gap-2 self-start items-stretch justify-self-center">
         <Label className="flex h-10 justify-center items-center">
-          Template Preview
+          <Link
+            to={`/view/sample/${template.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Preview the public certificate page"
+            className="flex items-center gap-1 underline-offset-4 hover:underline"
+          >
+            Template Preview <ArrowUpRight className="size-4" />
+          </Link>
         </Label>
 
         <img
