@@ -17,6 +17,7 @@ import {
   readPreviewOfTemplate,
 } from "./pdf.server";
 import { readPhoto } from "./user.server";
+import { defaultPageSize } from "./page-sizes";
 
 // @todo refactor to dry up filesystem functions across server libs
 // @todo dry up extension code
@@ -96,21 +97,39 @@ export async function readCompositeImage(
   );
 }
 
+// Stand-in for the template preview as long as the program has no template
+// (new templates start out as a blank A4 page as well)
+async function generateBlankA4Preview() {
+  // Render at 2x the point size for a sharper result when scaled down
+  return await sharp({
+    create: {
+      width: defaultPageSize.width * 2,
+      height: defaultPageSize.height * 2,
+      channels: 3,
+      background: "#ffffff",
+    },
+  })
+    .png()
+    .toBuffer();
+}
+
 export async function addPhotoToPreview(social: SocialPreview) {
   const background = await readBackgroundImage(social);
+  const certificate = await generateBlankA4Preview();
   const photo = await readFileIfExists(`${assetsDir}/photo-placeholder.png`);
 
   if (background && photo) {
     const composition = await composeImages(
       social.layout as PrismaJson.SocialPreviewLayout,
       background,
+      certificate,
     );
     await writeFile(`${socialDir}/${social.id}.noPhoto.png`, composition);
 
     const compositionWithPhoto = await composeImages(
       social.layout as PrismaJson.SocialPreviewLayout,
       background,
-      undefined,
+      certificate,
       photo,
     );
     await writeFile(
