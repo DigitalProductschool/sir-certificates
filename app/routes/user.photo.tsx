@@ -1,8 +1,15 @@
 import type { Route } from "./+types/user.photo";
 import type { Point, Area } from "react-easy-crop";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Cropper from "react-easy-crop";
-import { Form, Link, useNavigate, useFetcher, useLocation } from "react-router";
+import {
+	Form,
+	Link,
+	useNavigate,
+	useFetcher,
+	useLocation,
+	useSearchParams,
+} from "react-router";
 import { UserRound, Loader2, Trash2Icon } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
@@ -34,6 +41,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 		where: {
 			userId,
 		},
+		select: {
+			updatedAt: true,
+		},
 	});
 	return {
 		userId,
@@ -42,12 +52,72 @@ export async function loader({ request }: Route.LoaderArgs) {
 	};
 }
 
+const createImage = (url: string): Promise<HTMLImageElement> =>
+	new Promise((resolve, reject) => {
+		const image = new Image();
+		image.addEventListener("load", () => resolve(image));
+		image.addEventListener("error", (error) => reject(error));
+		image.setAttribute("crossOrigin", "anonymous");
+		image.src = url;
+	});
+
+const isEdgeTransparent = (imageData: Uint8ClampedArray): boolean => {
+	for (let i = 3; i < imageData.length; i += 4) {
+		if (imageData[i] !== 0) return false;
+	}
+	return true;
+};
+
+const getEdgeTransparency = async (imageUrl: string, cropArea: Area) => {
+	const image = await createImage(imageUrl);
+	const canvas = document.createElement("canvas");
+	const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+	if (!ctx) return null;
+
+	canvas.width = cropArea.width;
+	canvas.height = cropArea.height;
+	ctx.drawImage(
+		image,
+		cropArea.x,
+		cropArea.y,
+		cropArea.width,
+		cropArea.height,
+		0,
+		0,
+		cropArea.width,
+		cropArea.height,
+	);
+
+	return {
+		left: isEdgeTransparent(ctx.getImageData(0, 0, 1, cropArea.height).data),
+		right: isEdgeTransparent(
+			ctx.getImageData(cropArea.width - 1, 0, 1, cropArea.height).data,
+		),
+		top: isEdgeTransparent(ctx.getImageData(0, 0, cropArea.width, 1).data),
+		bottom: isEdgeTransparent(
+			ctx.getImageData(0, cropArea.height - 1, cropArea.width, 1).data,
+		),
+	};
+};
+
 export default function UserUploadPictureDialog({
 	loaderData,
 }: Route.ComponentProps) {
 	const { userPhoto, canRemoveBackground } = loaderData;
 	const navigate = useNavigate();
 	const location = useLocation();
+	const [searchParams] = useSearchParams();
+	// Passed as location state when opened from within the app, or as search
+	// param after deleting the photo (see user.photo.delete.ts)
+	const rawFromPath: unknown =
+		location.state?.fromPath ?? searchParams.get("fromPath");
+	const fromPath =
+		typeof rawFromPath === "string" &&
+		rawFromPath.startsWith("/") &&
+		!rawFromPath.startsWith("//")
+			? rawFromPath
+			: "/";
 	const [open, setOpen] = useState(true);
 	const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(
 		null,
@@ -124,63 +194,8 @@ export default function UserUploadPictureDialog({
 		return new Blob([transparentImageBuffer], { type: "image/png" });
 	};
 
-	const onCropComplete = useCallback(
-		(croppedArea: Area, croppedAreaPixels: Area) => {
-			setCroppedAreaPixels(croppedAreaPixels);
-			if (canRemoveBackground) checkEdgeTransparency(croppedAreaPixels);
-		},
-		[croppedAreaPixels],
-	);
-
-	const checkEdgeTransparency = async (cropArea: Area) => {
-		if (!transparentPreviewUrl) return;
-
-		const image = await createImage(transparentPreviewUrl);
-		const canvas = document.createElement("canvas");
-		const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-		if (!ctx) return;
-
-		canvas.width = cropArea.width;
-		canvas.height = cropArea.height;
-		ctx.drawImage(
-			image,
-			cropArea.x,
-			cropArea.y,
-			cropArea.width,
-			cropArea.height,
-			0,
-			0,
-			cropArea.width,
-			cropArea.height,
-		);
-
-		const leftEdgeData = ctx.getImageData(0, 0, 1, cropArea.height).data;
-		const rightEdgeData = ctx.getImageData(
-			cropArea.width - 1,
-			0,
-			1,
-			cropArea.height,
-		).data;
-		const topEdgeData = ctx.getImageData(0, 0, cropArea.width, 1).data;
-		const bottomEdgeData = ctx.getImageData(
-			0,
-			cropArea.height - 1,
-			cropArea.width,
-			1,
-		).data;
-
-		setLeftEdgeTransparent(isEdgeTransparent(leftEdgeData));
-		setRightEdgeTransparent(isEdgeTransparent(rightEdgeData));
-		setTopEdgeTransparent(isEdgeTransparent(topEdgeData));
-		setBottomEdgeTransparent(isEdgeTransparent(bottomEdgeData));
-	};
-
-	const isEdgeTransparent = (imageData: Uint8ClampedArray): boolean => {
-		for (let i = 3; i < imageData.length; i += 4) {
-			if (imageData[i] !== 0) return false;
-		}
-		return true;
+	const onCropComplete = (_croppedArea: Area, croppedAreaPixels: Area) => {
+		setCroppedAreaPixels(croppedAreaPixels);
 	};
 
 	const getCroppedImg = async (
@@ -228,15 +243,6 @@ export default function UserUploadPictureDialog({
 		});
 	};
 
-	const createImage = (url: string): Promise<HTMLImageElement> =>
-		new Promise((resolve, reject) => {
-			const image = new Image();
-			image.addEventListener("load", () => resolve(image));
-			image.addEventListener("error", (error) => reject(error));
-			image.setAttribute("crossOrigin", "anonymous");
-			image.src = url;
-		});
-
 	const resizeImage = (
 		image: HTMLImageElement | HTMLCanvasElement,
 		maxSize: number,
@@ -272,7 +278,7 @@ export default function UserUploadPictureDialog({
 	};
 
 	const handleSubmit = async (event?: React.FormEvent<HTMLFormElement>) => {
-		event && event.preventDefault();
+		event?.preventDefault();
 		if (transparentPreviewUrl && croppedAreaPixels) {
 			try {
 				const croppedImage = await getCroppedImg(
@@ -296,17 +302,28 @@ export default function UserUploadPictureDialog({
 		}
 	};
 
-	const handleReset = () => {
-		setOriginalPreviewUrl(null);
-		setTransparentPreviewUrl(null);
-		setCrop({ x: 0, y: 0 });
-		setZoom(1);
-		setCroppedAreaPixels(null);
-		setIsLoading(false);
-		setError(null);
+	// Re-check the edges whenever the transparent image or the crop area changes
+	// (also right after the background removal finished, using the latest crop)
+	useEffect(() => {
+		if (!canRemoveBackground || !transparentPreviewUrl || !croppedAreaPixels) {
+			return;
+		}
 
-		if (fileInputRef.current) fileInputRef.current.value = "";
-	};
+		let cancelled = false;
+		getEdgeTransparency(transparentPreviewUrl, croppedAreaPixels).then(
+			(edges) => {
+				if (cancelled || !edges) return;
+				setLeftEdgeTransparent(edges.left);
+				setRightEdgeTransparent(edges.right);
+				setTopEdgeTransparent(edges.top);
+				setBottomEdgeTransparent(edges.bottom);
+			},
+		);
+
+		return () => {
+			cancelled = true;
+		};
+	}, [canRemoveBackground, transparentPreviewUrl, croppedAreaPixels]);
 
 	useEffect(() => {
 		const down = (e: KeyboardEvent) => {
@@ -321,20 +338,18 @@ export default function UserUploadPictureDialog({
 	}, [navigate]);
 
 	useEffect(() => {
-		// If we have data, then the picture was uploaded and we can reset the state
+		// If we have data, then the picture was uploaded and we can close the
+		// dialog (leaving the route unmounts it, so no state reset is needed)
 		if (fetcher.data && fetcher.data.userPhoto) {
-			handleReset();
-
-			// Close the dialog
-			navigate(-1);
+			navigate(fromPath);
 		}
-	}, [fetcher.data]);
+	}, [fetcher.data, navigate, fromPath]);
 
 	return (
 		<Dialog
 			open={open}
 			onOpenChange={(open) => {
-				if (!open) navigate(-1);
+				if (!open) navigate(fromPath);
 			}}
 		>
 			<TooltipProvider delayDuration={0}>
@@ -517,6 +532,7 @@ export default function UserUploadPictureDialog({
 								method="POST"
 								className="flex grow"
 							>
+								<input type="hidden" name="fromPath" value={fromPath} />
 								<Tooltip>
 									<TooltipTrigger asChild>
 										<Button
@@ -534,7 +550,7 @@ export default function UserUploadPictureDialog({
 							</Form>
 						)}
 						<Button type="button" variant="outline" asChild>
-							<Link to={location.state?.fromPath ?? "/"}>
+							<Link to={fromPath}>
 								Back
 							</Link>
 						</Button>

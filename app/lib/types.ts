@@ -58,12 +58,17 @@ export type CertificatesWithBatch = Prisma.CertificateGetPayload<{
 }>;
 
 export type CertificatesWithBatchAndProgram = Prisma.CertificateGetPayload<{
-	include: {
+	select: {
+		id: true;
+		uuid: true;
+		updatedAt: true;
 		batch: {
-			include: {
+			select: {
+				name: true;
 				program: {
-					include: {
-						logo: true;
+					select: {
+						name: true;
+						logo: { select: { uuid: true; updatedAt: true } };
 					};
 				};
 			};
@@ -122,10 +127,16 @@ export type UserAuthenticated = Prisma.UserGetPayload<{
 		lastName: true;
 		isAdmin: true;
 		isSuperAdmin: true;
-		adminOfPrograms: true;
-		photo: true;
+		adminOfPrograms: { select: { id: true } };
+		photo: { select: { updatedAt: true } };
 	};
 }>;
+
+// Subset of UserAuthenticated that is safe to send to the browser (participant UI)
+export type UserParticipant = Pick<
+	UserAuthenticated,
+	"firstName" | "lastName" | "email" | "isAdmin" | "photo"
+>;
 
 export type UserContact = Prisma.UserGetPayload<{
 	select: {

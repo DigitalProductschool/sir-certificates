@@ -6,6 +6,7 @@ import { deleteUserPhoto } from "~/lib/user.server";
 
 export async function action({ request }: Route.ActionArgs) {
 	const userId = await requireUserId(request);
+	const formData = await request.formData();
 	const userPhoto = await prisma.userPhoto.findUnique({
 		where: {
 			userId,
@@ -21,7 +22,18 @@ export async function action({ request }: Route.ActionArgs) {
 
 	await deleteUserPhoto(userPhoto);
 
-	return {};
+	// Hand the path to return to over to the photo dialog (works without JS)
+	const rawFromPath = formData.get("fromPath");
+	if (
+		typeof rawFromPath === "string" &&
+		rawFromPath.startsWith("/") &&
+		!rawFromPath.startsWith("//")
+	) {
+		const searchParams = new URLSearchParams([["fromPath", rawFromPath]]);
+		return redirect(`/user/photo?${searchParams}`);
+	}
+
+	return redirect("/user/photo");
 }
 
 export async function loader() {

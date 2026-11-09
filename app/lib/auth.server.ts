@@ -118,8 +118,8 @@ export async function login(formData: FormData) {
 	const user = await prisma.user.findUnique({
 		where: { email: email.toLowerCase() },
 		include: {
-			adminOfPrograms: true,
-			photo: true,
+			adminOfPrograms: { select: { id: true } },
+			photo: { select: { updatedAt: true } },
 		},
 	});
 
@@ -272,8 +272,8 @@ export async function getUser(
 				lastName: true,
 				isAdmin: true,
 				isSuperAdmin: true,
-				adminOfPrograms: true,
-				photo: true,
+				adminOfPrograms: { select: { id: true } },
+				photo: { select: { updatedAt: true } },
 			},
 		});
 		return user;
@@ -294,8 +294,8 @@ export async function getUserByEmail(
 			lastName: true,
 			isAdmin: true,
 			isSuperAdmin: true,
-			adminOfPrograms: true,
-			photo: true,
+			adminOfPrograms: { select: { id: true } },
+			photo: { select: { updatedAt: true } },
 		},
 	});
 }

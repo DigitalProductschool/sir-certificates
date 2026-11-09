@@ -1,6 +1,8 @@
 import type { Route } from "./+types/_index";
-import type { Organisation, User } from "~/generated/prisma/client";
-import type { CertificatesWithBatchAndProgram } from "~/lib/types";
+import type {
+  CertificatesWithBatchAndProgram,
+  UserParticipant,
+} from "~/lib/types";
 
 import { Link, redirect } from "react-router";
 import Markdown from "markdown-to-jsx/react";
@@ -46,9 +48,9 @@ export function meta({ data }: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireUserId(request);
-  const user = await getUser(request);
+  const authUser = await getUser(request);
 
-  if (!user) {
+  if (!authUser) {
     return await logout(request);
   }
 
@@ -57,17 +59,23 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const certificates = await prisma.certificate.findMany({
     where: {
-      email: user.email,
+      email: authUser.email,
       publishedAt: {
         not: null,
       },
     },
-    include: {
+    select: {
+      id: true,
+      uuid: true,
+      updatedAt: true,
       batch: {
-        include: {
+        select: {
+          name: true,
           program: {
-            include: {
-              logo: true,
+            select: {
+              id: true,
+              name: true,
+              logo: { select: { uuid: true, updatedAt: true } },
             },
           },
         },
@@ -91,23 +99,28 @@ export async function loader({ request }: Route.LoaderArgs) {
         notIn: certificates.map((cert) => cert.batch.program.id),
       },
     },
-    include: {
-      logo: true,
+    select: {
+      id: true,
+      name: true,
+      about: true,
+      website: true,
     },
     orderBy: {
       name: "asc",
     },
   });
 
+  // only the data needed for SidebarParticipant is sent to the browser
+  const user: UserParticipant = {
+    firstName: authUser.firstName,
+    lastName: authUser.lastName,
+    email: authUser.email,
+    isAdmin: authUser.isAdmin,
+    photo: authUser.photo,
+  };
+
   return { user, org, programs, certificates };
 }
-
-// Loader from /_index route
-export type LoaderReturnType = {
-  user: User;
-  org: Organisation;
-  certificates: CertificatesWithBatchAndProgram[];
-};
 
 export default function Index({ loaderData }: Route.ComponentProps) {
   const { user, org, programs, certificates } = loaderData;

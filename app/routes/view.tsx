@@ -1,5 +1,8 @@
 import type { Route } from "./+types/view";
-import type { CertificatesWithBatchAndProgram } from "~/lib/types";
+import type {
+  CertificatesWithBatchAndProgram,
+  UserParticipant,
+} from "~/lib/types";
 
 import { Outlet } from "react-router";
 import { SidebarParticipant } from "~/components/sidebar-participant";
@@ -15,24 +18,29 @@ export function meta() {
 
 export async function loader({ request }: Route.LoaderArgs) {
   // @todo refactor the loader into the subroutes, based on public/private access, with strict select statements
-  const user = await getUser(request);
+  const authUser = await getUser(request);
   const org = await getPublicOrg();
 
   let certificates: CertificatesWithBatchAndProgram[] = [];
-  if (user) {
+  if (authUser) {
     certificates = await prisma.certificate.findMany({
       where: {
-        email: user.email,
+        email: authUser.email,
         publishedAt: {
           not: null,
         },
       },
-      include: {
+      select: {
+        id: true,
+        uuid: true,
+        updatedAt: true,
         batch: {
-          include: {
+          select: {
+            name: true,
             program: {
-              include: {
-                logo: true,
+              select: {
+                name: true,
+                logo: { select: { uuid: true, updatedAt: true } },
               },
             },
           },
@@ -46,7 +54,15 @@ export async function loader({ request }: Route.LoaderArgs) {
     });
   }
 
-  // needed data for SidebarParticipant
+  // only the data needed for SidebarParticipant is sent to the browser
+  const user: UserParticipant | null = authUser && {
+    firstName: authUser.firstName,
+    lastName: authUser.lastName,
+    email: authUser.email,
+    isAdmin: authUser.isAdmin,
+    photo: authUser.photo,
+  };
+
   return { certificates, org, user };
 }
 

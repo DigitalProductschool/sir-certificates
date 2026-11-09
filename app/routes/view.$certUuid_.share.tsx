@@ -36,10 +36,36 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         not: null,
       },
     },
-    include: {
+    select: {
+      uuid: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      teamName: true,
+      publishedAt: true,
+      updatedAt: true,
       batch: {
-        include: {
-          program: true,
+        select: {
+          name: true,
+          startDate: true,
+          endDate: true,
+          program: {
+            select: {
+              name: true,
+              about: true,
+              achievement: true,
+              website: true,
+              socialPreview: {
+                select: {
+                  imageWidth: true,
+                  imageHeight: true,
+                  linkedinOrganizationId: true,
+                  ogTitle: true,
+                  ogDescription: true,
+                },
+              },
+            },
+          },
         },
       },
       template: {
@@ -64,11 +90,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     });
   }
 
-  const social = await prisma.socialPreview.findUniqueOrThrow({
-    where: {
-      programId: certificate.batch.program.id,
-    },
-  });
+  const social = certificate.batch.program.socialPreview;
+
+  if (!social) {
+    throw new Response(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
 
   return { certificate, social, domain };
 }
