@@ -45,3 +45,10 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_KEY_SIR }}
           SSH_HOST: 167.235.152.70
           REVIEW_APP_NAME: pre-${{ github.event.pull_request.number }}          
+      - name: Clean up unused docker containers and images
+        # runs even if the database destroy failed, the review app is gone either way.
+        # `dokku cleanup` removes exited/dead containers and dangling images, the safe
+        # equivalent of `docker system prune` (the dokku SSH user can't run docker directly)
+        if: always()
+        run: |
+          ssh -t preview "cleanup"
