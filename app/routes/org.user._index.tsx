@@ -2,6 +2,7 @@ import type { Route } from "./+types/org.user._index";
 import { Form, Link, useSearchParams } from "react-router";
 import { ArrowDown, Settings, Trash2Icon } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 import {
   Table,
@@ -94,11 +95,20 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
   // @todo prevent sorting from triggering a new data fetch (probably by implementing a clientLoader)
   const [searchParams, setSearchParams] = useSearchParams();
 
-  let sortedUser = user;
+  const group = searchParams.get("group") ?? "all";
+  const filteredUser = user.filter((u) => {
+    if (group === "admins") return u.isAdmin || u.isSuperAdmin;
+    if (group === "participants") return !u.isAdmin && !u.isSuperAdmin;
+    return true;
+  });
+  // Pending invitations are all admin invitations
+  const showInvitations = group !== "participants";
+
+  let sortedUser = filteredUser;
   if (searchParams.has("sort")) {
     switch (searchParams.get("sort")) {
       case "name":
-        sortedUser = user.toSorted((a, b) => {
+        sortedUser = filteredUser.toSorted((a, b) => {
           if (a.firstName < b.firstName) {
             return -1;
           }
@@ -109,7 +119,7 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
         });
         break;
       case "email":
-        sortedUser = user.toSorted((a, b) => {
+        sortedUser = filteredUser.toSorted((a, b) => {
           if (a.email < b.email) {
             return -1;
           }
@@ -120,7 +130,7 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
         });
         break;
       case "permission":
-        sortedUser = user.toSorted((a, b) => {
+        sortedUser = filteredUser.toSorted((a, b) => {
           if (a.isSuperAdmin && !b.isSuperAdmin) {
             return -1;
           }
@@ -140,8 +150,20 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
   }
 
   const onSetSort = (propName: string) => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams);
     params.set("sort", propName);
+    setSearchParams(params, {
+      preventScrollReset: true,
+    });
+  };
+
+  const onSetGroup = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value === "all") {
+      params.delete("group");
+    } else {
+      params.set("group", value);
+    }
     setSearchParams(params, {
       preventScrollReset: true,
     });
@@ -149,8 +171,15 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Button asChild>
+      <div className="flex items-center gap-4">
+        <Tabs value={group} onValueChange={onSetGroup}>
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="admins">Admins</TabsTrigger>
+            <TabsTrigger value="participants">Participants</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <Button asChild size="sm">
           <Link to="invite">Invite Admin</Link>
         </Button>
       </div>
@@ -195,45 +224,46 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invitations.map((invite) => (
-            <TableRow key={invite.id} className="text-muted-foreground">
-              <TableCell>
-                {invite.firstName} {invite.lastName}
-              </TableCell>
-              <TableCell className="font-medium">{invite.email}</TableCell>
-              <TableCell>
-                Invite pending…{" "}
-                {invite.isAdmin && (
-                  <>
-                    as Program Manager:{" "}
-                    {invite.programs.map((p) => p.name).join(", ")}
-                  </>
-                )}
-              </TableCell>
-              <TableCell className="text-foreground">
-                <div className="flex items-center gap-3">
-                  <Form action={`invite/${invite.id}/delete`} method="POST">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="outline">
-                          <Trash2Icon /> Cancel
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        Cancel invitation
-                      </TooltipContent>
-                    </Tooltip>
-                  </Form>
-                  <span
-                    className="text-xs text-muted-foreground"
-                    suppressHydrationWarning
-                  >
-                    {formatElapsed(invite.createdAt)}
-                  </span>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+          {showInvitations &&
+            invitations.map((invite) => (
+              <TableRow key={invite.id} className="text-muted-foreground">
+                <TableCell>
+                  {invite.firstName} {invite.lastName}
+                </TableCell>
+                <TableCell className="font-medium">{invite.email}</TableCell>
+                <TableCell>
+                  Invite pending…{" "}
+                  {invite.isAdmin && (
+                    <>
+                      as Program Manager:{" "}
+                      {invite.programs.map((p) => p.name).join(", ")}
+                    </>
+                  )}
+                </TableCell>
+                <TableCell className="text-foreground">
+                  <div className="flex items-center gap-3">
+                    <Form action={`invite/${invite.id}/delete`} method="POST">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline">
+                            <Trash2Icon /> Cancel
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          Cancel invitation
+                        </TooltipContent>
+                      </Tooltip>
+                    </Form>
+                    <span
+                      className="text-xs text-muted-foreground"
+                      suppressHydrationWarning
+                    >
+                      {formatElapsed(invite.createdAt)}
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           {sortedUser.map((u) => (
             <TableRow key={u.id}>
               <TableCell className="align-top py-4">
@@ -269,15 +299,26 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
               </TableCell>
             </TableRow>
           ))}
-          {user.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={5} className="text-destructive">
-                No user in the database.
-              </TableCell>
-            </TableRow>
-          )}
+          {filteredUser.length === 0 &&
+            !(showInvitations && invitations.length > 0) && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-destructive">
+                  No users found.
+                </TableCell>
+              </TableRow>
+            )}
         </TableBody>
       </Table>
+      <div className="text-xs text-muted-foreground pl-4">
+        {filteredUser.length} {filteredUser.length === 1 ? "user" : "users"}
+        {showInvitations && invitations.length > 0 && (
+          <>
+            {" "}
+            + {invitations.length} pending{" "}
+            {invitations.length === 1 ? "invitation" : "invitations"}
+          </>
+        )}
+      </div>
     </div>
   );
 }
