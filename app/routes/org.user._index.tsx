@@ -25,6 +25,18 @@ export function meta() {
   return [{ title: "User" }];
 }
 
+// Compact elapsed time, e.g. "5m ago", "3h ago", "2d ago"
+function formatElapsed(date: Date) {
+  const minutes = Math.max(
+    0,
+    Math.floor((Date.now() - date.getTime()) / 60000),
+  );
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   await requireSuperAdmin(request);
 
@@ -49,10 +61,31 @@ export async function loader({ request }: Route.LoaderArgs) {
       firstName: true,
       lastName: true,
       email: true,
+      createdAt: true,
+      isAdmin: true,
+      adminOfPrograms: true,
     },
   });
 
-  return { user, invitations };
+  // Invitations store program ids as a plain Int[] (no relation), so resolve names separately
+  const programs = await prisma.program.findMany({
+    where: {
+      id: { in: invitations.flatMap((invite) => invite.adminOfPrograms) },
+    },
+    select: { id: true, name: true },
+  });
+
+  const invitationsWithPrograms = invitations.map((invite) => ({
+    id: invite.id,
+    firstName: invite.firstName,
+    lastName: invite.lastName,
+    email: invite.email,
+    isAdmin: invite.isAdmin,
+    createdAt: invite.createdAt,
+    programs: programs.filter((p) => invite.adminOfPrograms.includes(p.id)),
+  }));
+
+  return { user, invitations: invitationsWithPrograms };
 }
 
 export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
@@ -168,20 +201,36 @@ export default function UserIndexPage({ loaderData }: Route.ComponentProps) {
                 {invite.firstName} {invite.lastName}
               </TableCell>
               <TableCell className="font-medium">{invite.email}</TableCell>
-              <TableCell>Invite pending…</TableCell>
+              <TableCell>
+                Invite pending…{" "}
+                {invite.isAdmin && (
+                  <>
+                    as Program Manager:{" "}
+                    {invite.programs.map((p) => p.name).join(", ")}
+                  </>
+                )}
+              </TableCell>
               <TableCell className="text-foreground">
-                <Form action={`invite/${invite.id}/delete`} method="POST">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">
-                        <Trash2Icon /> Cancel
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      Cancel invitation
-                    </TooltipContent>
-                  </Tooltip>
-                </Form>
+                <div className="flex items-center gap-3">
+                  <Form action={`invite/${invite.id}/delete`} method="POST">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline">
+                          <Trash2Icon /> Cancel
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        Cancel invitation
+                      </TooltipContent>
+                    </Tooltip>
+                  </Form>
+                  <span
+                    className="text-xs text-muted-foreground"
+                    suppressHydrationWarning
+                  >
+                    {formatElapsed(invite.createdAt)}
+                  </span>
+                </div>
               </TableCell>
             </TableRow>
           ))}
