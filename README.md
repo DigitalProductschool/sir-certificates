@@ -110,7 +110,7 @@ Server disk clean-up:
 
 - See available disk space `df -h`
 - See docker disk usage `docker system df`
-- Reclaim space from docker `docker system prune` (-a / -f)
+- Reclaim space from docker `docker system prune` (-a / -f). This is done automatically (`dokku cleanup`) whenever a Pull Request is merged or closed, see `.github/workflows/remove-preview.yml`. Run it manually only if the disk still fills up
 
 ### DIY
 
