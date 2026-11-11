@@ -21,6 +21,7 @@ import {
   AlignLeft,
   AlignRight,
   ArrowLeft,
+  Move,
   Minus,
   Plus,
   Settings,
@@ -117,6 +118,10 @@ const KEEP_VISIBLE = 120; // px of the page that stay on screen when panning
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2;
 const ZOOM_STEP = 0.25;
+// How far a block can be moved beyond the page edges, in points: half the page
+// width to the left and right (see the move handle), and this much at the top
+// and bottom
+const OFF_PAGE_VERTICAL = 100;
 
 // Position of the page's top left corner in the viewport (px) and its scale
 // relative to the real paper size
@@ -169,6 +174,7 @@ function TemplateCanvas({
   // Set while the focus moves on from the editor with the Tab key
   const tabFromEditor = useRef(false);
   const widthAtStart = useRef(0);
+  const positionAtStart = useRef({ x: 0, y: 0 });
   const isDirty = JSON.stringify(layout) !== JSON.stringify(template.layout);
   const dragStart = useRef<{ x: number; y: number; view: View } | null>(null);
 
@@ -584,6 +590,33 @@ function TemplateCanvas({
                         );
                       },
                     }}
+                    onMoveElement={{
+                      onStart: () => {
+                        positionAtStart.current = { x: block.x, y: block.y };
+                      },
+                      // PDF coordinates grow upwards, the screen downwards
+                      onMove: (dx, dy) => {
+                        const x = clamp(
+                          Math.round(
+                            positionAtStart.current.x + dx / pixelsPerPoint,
+                          ),
+                          -template.pageWidth / 2,
+                          template.pageWidth * 1.5,
+                        );
+                        const y = clamp(
+                          Math.round(
+                            positionAtStart.current.y - dy / pixelsPerPoint,
+                          ),
+                          -OFF_PAGE_VERTICAL,
+                          template.pageHeight + OFF_PAGE_VERTICAL,
+                        );
+                        setLayout((current) =>
+                          current.map((b) =>
+                            b.id === block.id ? { ...b, x, y } : b,
+                          ),
+                        );
+                      },
+                    }}
                     onSelect={(point) => {
                       setQrSelected(false);
                       setSelected({ id: block.id, point });
@@ -701,6 +734,7 @@ function CanvasElement({
   onFocus,
   onBlur,
   onResizeWidth,
+  onMoveElement,
   children,
 }: {
   id?: string;
@@ -716,6 +750,12 @@ function CanvasElement({
   // Shows a handle at the right edge. onStart is called when dragging begins,
   // onMove with the distance dragged since then (in screen pixels).
   onResizeWidth?: { onStart: () => void; onMove: (distance: number) => void };
+  // Shows a handle at the bottom left corner. onMove gets the distance dragged
+  // since onStart, in screen pixels.
+  onMoveElement?: {
+    onStart: () => void;
+    onMove: (dx: number, dy: number) => void;
+  };
   children?: React.ReactNode;
 }) {
   return (
@@ -744,21 +784,61 @@ function CanvasElement({
         onSelect?.(null);
       }}
       // While selected, only the outline is drawn: clicks reach the editor below
-      className={`absolute cursor-default hover:[--outline:#0d99ff] focus-visible:[--outline:#0d99ff] ${selected ? "pointer-events-none [--outline:#0d99ff]" : "[--outline:transparent]"}`}
+      className={`absolute cursor-default outline-none hover:[--outline:#0d99ff] focus-visible:[--outline:#0d99ff] ${selected ? "pointer-events-none [--outline:#0d99ff]" : "[--outline:transparent]"}`}
       style={{
-        // Constant on-screen thickness and gap at any zoom (--ui-scale is 1/zoom)
-        outline: "calc(2px * var(--ui-scale)) solid var(--outline)",
-        outlineOffset: "calc(2px * var(--ui-scale))",
         left: `${left * 100}%`,
         top: `${top * 100}%`,
         width: `${width * 100}%`,
         height: `${height * 100}%`,
       }}
     >
+      {/* The bounding box line: 2px thick and 2px away from the element, at a
+          constant on-screen size at any zoom (--ui-scale is 1/zoom). It is a
+          box positioned like the handles (instead of a CSS outline), so the
+          rounding on the scaled page is the same for all of them. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute"
+        style={{
+          inset: "calc(-4px * var(--ui-scale))",
+          border: "calc(2px * var(--ui-scale)) solid var(--outline)",
+        }}
+      />
       {onResizeWidth && selected && <WidthHandle {...onResizeWidth} />}
+      {onMoveElement && selected && <MoveHandle {...onMoveElement} />}
       {children}
     </div>
   );
+}
+
+// Pointer handling for dragging a handle: onMove gets the distance dragged
+// since the start in screen pixels. The pointer is captured, so dragging goes
+// on outside the handle. The mouse down is prevented to keep the focus (and
+// the cursor in the text editor) where it is.
+function useDragHandle(
+  onStart: () => void,
+  onMove: (dx: number, dy: number) => void,
+) {
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const end = () => {
+    start.current = null;
+  };
+  return {
+    onMouseDown: (e: React.MouseEvent) => e.preventDefault(),
+    onPointerDown: (e: React.PointerEvent) => {
+      if (e.button !== 0) return;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      start.current = { x: e.clientX, y: e.clientY };
+      onStart();
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      if (start.current) {
+        onMove(e.clientX - start.current.x, e.clientY - start.current.y);
+      }
+    },
+    onPointerUp: end,
+    onPointerCancel: end,
+  };
 }
 
 // Square handle in the middle of the right edge of a box, to drag its width.
@@ -770,11 +850,8 @@ function WidthHandle({
   onStart: () => void;
   onMove: (distance: number) => void;
 }) {
-  const startX = useRef<number | null>(null);
-  // The click target is larger than the visible square: 2px on the left and
-  // right, 4px on the top and bottom
+  const drag = useDragHandle(onStart, (dx) => onMove(dx));
   return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- mouse only handle; the width is edited in the toolbar later
     <div
       data-no-pan
       className="pointer-events-auto absolute flex cursor-ew-resize touch-none items-center justify-center"
@@ -782,27 +859,13 @@ function WidthHandle({
         // Centered on the outline of the box, which is drawn 2px away from it
         left: "calc(100% + 3px * var(--ui-scale))",
         top: "50%",
+        // The click target is larger than the visible square: 2px on the left
+        // and right, 4px on the top and bottom
         width: "calc(12px * var(--ui-scale))",
         height: "calc(16px * var(--ui-scale))",
         transform: "translate(-50%, -50%)",
       }}
-      // Keeps the focus (and the cursor in the text editor)
-      onMouseDown={(e) => e.preventDefault()}
-      onPointerDown={(e) => {
-        if (e.button !== 0) return;
-        e.currentTarget.setPointerCapture(e.pointerId);
-        startX.current = e.clientX;
-        onStart();
-      }}
-      onPointerMove={(e) => {
-        if (startX.current !== null) onMove(e.clientX - startX.current);
-      }}
-      onPointerUp={() => {
-        startX.current = null;
-      }}
-      onPointerCancel={() => {
-        startX.current = null;
-      }}
+      {...drag}
     >
       <span
         className="bg-white"
@@ -810,6 +873,46 @@ function WidthHandle({
           width: "calc(8px * var(--ui-scale))",
           height: "calc(8px * var(--ui-scale))",
           border: "calc(1.5px * var(--ui-scale)) solid #0d99ff",
+        }}
+      />
+    </div>
+  );
+}
+
+// Handle outside the bottom left corner of a box, to drag the box around.
+// Shown while the box is selected, at constant on-screen size.
+function MoveHandle({
+  onStart,
+  onMove,
+}: {
+  onStart: () => void;
+  onMove: (dx: number, dy: number) => void;
+}) {
+  const drag = useDragHandle(onStart, onMove);
+  return (
+    <div
+      data-no-pan
+      className="pointer-events-auto absolute flex cursor-move touch-none items-center justify-center bg-[#0d99ff]"
+      style={{
+        // The outline is drawn 2px away from the box and is 2px thick: its outer
+        // edge is 4px outside. The handle touches that edge on the left and is
+        // aligned with it at the bottom, like the coordinate system of the
+        // page, which starts at the bottom left. It reaches 1px into the
+        // (equally colored) outline, so rounding on the scaled page can't leave
+        // a gap.
+        right: "calc(100% + 3px * var(--ui-scale))",
+        paddingRight: "calc(1px * var(--ui-scale))",
+        bottom: "calc(-4px * var(--ui-scale))",
+        width: "calc(17px * var(--ui-scale))",
+        height: "calc(16px * var(--ui-scale))",
+      }}
+      {...drag}
+    >
+      <Move
+        className="text-white"
+        style={{
+          width: "calc(10px * var(--ui-scale))",
+          height: "calc(10px * var(--ui-scale))",
         }}
       />
     </div>
