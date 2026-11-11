@@ -16,11 +16,16 @@ export const MIN_ZOOM = 0.3;
 export const MAX_ZOOM = 2;
 export const ZOOM_STEP = 0.25;
 
-// Mouse cursor of the add text tool: a crosshair (the hot spot, where the text
-// starts) with a T next to it
+// Mouse cursor of the add text tool: a crosshair whose center (the hot spot) is
+// the bottom left corner of the bounding box that appears around the new text
+// block (its line is drawn 3px outside the block, see CanvasElement). The top
+// and right lines are long, and a T in the top right quadrant shows where the
+// text goes: 4px away from both the vertical and the horizontal line, and
+// about the size of a default text block at 100% zoom. The 1px lines are at
+// the center of the hot spot pixel, so they are sharp.
 const ADD_TEXT_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke-linecap="round"><path d="M8 2v12M2 8h12M15 14h10M20 14v11" stroke="white" stroke-width="3.5"/><path d="M8 2v12M2 8h12M15 14h10M20 14v11" stroke="black" stroke-width="1.5"/></svg>',
-)}") 8 8, crosshair`;
+  '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke-linecap="round"><path d="M8.5 2v28M2 24.5h28M13 10h10M18 10v10" stroke="white" stroke-width="3"/><path d="M8.5 2v28M2 24.5h28" stroke="black" stroke-width="1"/><path d="M13 10h10M18 10v10" stroke="black" stroke-width="2" stroke-linecap="butt"/></svg>',
+)}") 8 24, crosshair`;
 
 // Active tool: select and drag, or click on the page to add a text block
 export type CanvasTool = "select" | "text";
