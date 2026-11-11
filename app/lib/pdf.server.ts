@@ -541,6 +541,17 @@ export async function generateTemplatePreviewWithoutBackground(
   }
 }
 
+// Renders only the background layer. Not stored on disk.
+export async function generateTemplateBackgroundPreview(template: Template) {
+  const pdf = await loadTemplateBackground(template);
+  const document = await pdfPreview(Buffer.from(await pdf.save()), {
+    scale: 2,
+  });
+  for await (const page of document) {
+    return page;
+  }
+}
+
 export async function generatePdfPreview(
   pdfFilePath: string,
   previewFilePath: string,
