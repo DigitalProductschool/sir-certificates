@@ -15,7 +15,16 @@ import {
 } from "react-router";
 import type { Typeface } from "~/generated/prisma/client";
 import QRCode from "qrcode";
-import { ArrowLeft, Minus, Plus, Settings } from "lucide-react";
+import { FontSizeIcon, LineHeightIcon } from "@radix-ui/react-icons";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  ArrowLeft,
+  Minus,
+  Plus,
+  Settings,
+} from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
@@ -33,6 +42,7 @@ import {
 } from "~/components/ui/tooltip";
 
 import { applyReplacements } from "~/lib/variables";
+import { rgbToHex } from "~/lib/utils";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { getTemplateSampleReplacements, sampleQR } from "~/lib/pdf.server";
@@ -525,7 +535,7 @@ function TemplateCanvas({
                     ? {
                         x: block.x,
                         top: block.y + block.size * 0.8,
-                        width: block.size,
+                        width: block.maxWidth ?? block.size,
                         height: block.size * 1.05,
                       }
                     : null);
@@ -543,7 +553,9 @@ function TemplateCanvas({
                     }
                     width={shown.width / template.pageWidth}
                     height={shown.height / template.pageHeight}
-                  />
+                  >
+                    {isSelected && <BlockInfo block={block} />}
+                  </CanvasElement>
                 );
               })}
               {qrcode.show && (
@@ -623,6 +635,7 @@ function CanvasElement({
   height,
   selected = false,
   onSelect,
+  children,
 }: {
   id?: string;
   label: string;
@@ -632,6 +645,7 @@ function CanvasElement({
   height: number;
   selected?: boolean;
   onSelect?: (point: { x: number; y: number } | null) => void;
+  children?: React.ReactNode;
 }) {
   return (
     <div
@@ -640,7 +654,12 @@ function CanvasElement({
       aria-label={label}
       data-box={id}
       data-no-pan
-      onClick={(e) => onSelect?.({ x: e.clientX, y: e.clientY })}
+      onClick={(e) => {
+        // Clicks on content of the element (the info box) are not for selecting
+        if (e.target === e.currentTarget) {
+          onSelect?.({ x: e.clientX, y: e.clientY });
+        }
+      }}
       onKeyDown={(e) => {
         if (e.key !== "Enter" && e.key !== " ") return;
         // Otherwise the key press would continue in the editor that opens
@@ -658,7 +677,63 @@ function CanvasElement({
         width: `${width * 100}%`,
         height: `${height * 100}%`,
       }}
-    />
+    >
+      {children}
+    </div>
+  );
+}
+
+// Read-only properties of the selected block, shown above it. Styled like
+// the tooltip component, but drawn in the page (not a portal) so it follows
+// panning and zooming; --ui-scale keeps its on-screen size constant. It takes
+// pointer events, so the canvas is not dragged from it (and it can get
+// interactive controls later).
+function BlockInfo({ block }: { block: PrismaJson.TextBlock }) {
+  const align = block.align ?? "left";
+  const AlignIcon =
+    align === "center"
+      ? AlignCenter
+      : align === "right"
+        ? AlignRight
+        : AlignLeft;
+  const none = <span className="opacity-60">auto</span>;
+  return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the handler only keeps the focus in the editor
+    <div
+      role="status"
+      data-no-pan
+      // Keeps the focus (and cursor) in the text editor when clicking here;
+      // to be revisited once the info box gets interactive controls
+      onMouseDown={(e) => e.preventDefault()}
+      className="pointer-events-auto absolute left-1/2 cursor-default select-none flex w-max items-center gap-3 whitespace-nowrap rounded-md bg-primary px-3 py-1.5 text-xs tabular-nums text-primary-foreground"
+      style={{
+        bottom: "calc(100% + 12px * var(--ui-scale))",
+        transform: "translateX(-50%) scale(var(--ui-scale))",
+        transformOrigin: "bottom center",
+      }}
+    >
+      <span title="X position (in points)">X {block.x}</span>
+      <span title="Y position (in points) from bottom">Y {block.y}</span>
+      <span title="Max width (optional)">W {block.maxWidth ?? none}</span>
+      <span className="flex items-center gap-1.5" title="Text color">
+        <span
+          className="size-3.5 rounded-sm border border-primary-foreground/40"
+          style={{ backgroundColor: `#${rgbToHex(block.color ?? [0, 0, 0])}` }}
+        />
+        {rgbToHex(block.color ?? [0, 0, 0])}
+      </span>
+      <span className="flex items-center gap-1" title="Font size">
+        <FontSizeIcon /> {block.size}
+      </span>
+      <span className="flex items-center gap-1" title="Line height (optional)">
+        <LineHeightIcon /> {block.lineHeight ?? none}
+      </span>
+      <AlignIcon className="size-3.5" aria-label={`Aligned ${align}`} />
+      <span
+        className="absolute left-1/2 top-full size-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[2px] bg-primary"
+        aria-hidden
+      />
+    </div>
   );
 }
 
@@ -934,10 +1009,17 @@ function placeTextBlock(
   });
 }
 
-// Bounding box of the text of a block in PDF points (top is measured from the
-// page bottom), or null if the block has no text.
+// Bounding box of a block in PDF points (top is measured from the page
+// bottom), or null if the block has no text. It hugs the text, unless the block
+// has a maximum width.
 function textBlockBox(block: PrismaJson.TextBlock, lines: PlacedLine[]) {
   if (lines.length === 0) return null;
+  // A defined maximum width is the width of the block, whatever its text
+  if (block.maxWidth !== undefined) {
+    const top = lines[0].baseline + block.size * 0.8;
+    const bottom = lines[lines.length - 1].baseline - block.size * 0.25;
+    return { x: block.x, top, width: block.maxWidth, height: top - bottom };
+  }
   const left = Math.min(...lines.map((l) => l.tokens[0].x));
   const right = Math.max(...lines.map((l) => l.tokens[0].x + l.width));
   const top = lines[0].baseline + block.size * 0.8;
