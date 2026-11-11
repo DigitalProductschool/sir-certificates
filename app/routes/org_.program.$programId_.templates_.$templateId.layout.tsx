@@ -32,9 +32,10 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
+import { applyReplacements } from "~/lib/variables";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
-import { getTemplateSampleLayout, sampleQR } from "~/lib/pdf.server";
+import { getTemplateSampleReplacements, sampleQR } from "~/lib/pdf.server";
 import { domain } from "~/lib/config.server";
 
 export function meta({ data }: Route.MetaArgs) {
@@ -79,13 +80,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     select: { id: true, name: true, weight: true, style: true },
   });
 
-  // Text with variables replaced by sample data, like in the preview image
-  const sampleLayout = getTemplateSampleLayout(template);
+  // Values for the variables in the texts, like in the preview image
+  const sampleReplacements = getTemplateSampleReplacements(template);
 
   // Same length as the URL of a real certificate, so the QR code looks alike
   const qrUrl = `${domain}/view/00000000-0000-4000-8000-000000000000`;
 
-  return { program, template, qrcode, typefaces, sampleLayout, qrUrl };
+  return {
+    program,
+    template,
+    qrcode,
+    typefaces,
+    sampleReplacements,
+    qrUrl,
+  };
 }
 
 // The PDF page size is in points (1/72 inch). Browsers define a CSS inch as
@@ -107,11 +115,22 @@ type View = { zoom: number; x: number; y: number };
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
+// The editor state starts from the loaded template. The key restarts it when
+// another template is selected, but not when the same template is saved.
 export default function TemplateCanvasPage({
   loaderData,
 }: Route.ComponentProps) {
-  const { program, template, qrcode, typefaces, sampleLayout, qrUrl } =
-    loaderData;
+  return <TemplateCanvas key={loaderData.template.id} {...loaderData} />;
+}
+
+function TemplateCanvas({
+  program,
+  template,
+  qrcode,
+  typefaces,
+  sampleReplacements,
+  qrUrl,
+}: Route.ComponentProps["loaderData"]) {
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -128,6 +147,15 @@ export default function TemplateCanvasPage({
   // Edit: background from the server, texts and QR code drawn in the browser
   // with interactive elements. Preview: the complete server rendering.
   const [mode, setMode] = useState<"edit" | "preview">("edit");
+  // The text blocks being edited, and the one open in the inline text editor
+  // (with the pointer position of the click to place the cursor, or null if
+  // it was opened with the keyboard)
+  const [layout, setLayout] = useState(template.layout);
+  const [selected, setSelected] = useState<{
+    id: string;
+    point: { x: number; y: number } | null;
+  } | null>(null);
+  const isDirty = JSON.stringify(layout) !== JSON.stringify(template.layout);
   const dragStart = useRef<{ x: number; y: number; view: View } | null>(null);
 
   const realWidth = template.pageWidth * CSS_PX_PER_POINT;
@@ -227,6 +255,7 @@ export default function TemplateCanvasPage({
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!view || e.button !== 0) return;
     if ((e.target as Element).closest("[data-no-pan]")) return;
+    setSelected(null);
     e.currentTarget.setPointerCapture(e.pointerId);
     dragStart.current = { x: e.clientX, y: e.clientY, view };
     setDragging(true);
@@ -248,11 +277,39 @@ export default function TemplateCanvasPage({
     setDragging(false);
   };
 
+  // Escape closes the inline text editor
+  const hasSelection = selected !== null;
+  useEffect(() => {
+    if (!hasSelection) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const editor =
+        document.activeElement?.closest<HTMLElement>("[data-editor]");
+      setSelected(null);
+      if (editor) focusBox(editor.dataset.editor!);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [hasSelection]);
+
   const measurer = useTextMeasurer(typefaces);
-  const placedBlocks = sampleLayout.flatMap((block) => {
+  const selectedBlock = layout.find((b) => b.id === selected?.id);
+
+  // Texts show sample data for their variables, except the one being edited
+  const placedBlocks = layout.flatMap((raw) => {
+    const block =
+      raw.id === selected?.id
+        ? raw
+        : {
+            ...raw,
+            lines: raw.lines.map((line) => ({
+              ...line,
+              text: applyReplacements(line.text, sampleReplacements),
+            })),
+          };
     const lines = placeTextBlock(block, template.pageWidth, measurer);
     const box = textBlockBox(block, lines);
-    return box ? [{ block, lines, box }] : [];
+    return [{ block, lines, box }];
   });
 
   const templatePath = `/org/program/${program.id}/templates/${template.id}`;
@@ -329,7 +386,9 @@ export default function TemplateCanvasPage({
           variant="outline"
           value={mode}
           onValueChange={(value) => {
-            if (value === "edit" || value === "preview") setMode(value);
+            if (value !== "edit" && value !== "preview") return;
+            setSelected(null);
+            setMode(value);
           }}
           className="bg-background"
           aria-label="Mode"
@@ -344,13 +403,14 @@ export default function TemplateCanvasPage({
 
         {/* Saves through the action of the classic editor route */}
         <fetcher.Form method="POST" action={`${templatePath}/edit-layout`}>
-          <input
-            type="hidden"
-            name="layout"
-            value={JSON.stringify(template.layout)}
-          />
+          <input type="hidden" name="layout" value={JSON.stringify(layout)} />
           <input type="hidden" name="qrcode" value={JSON.stringify(qrcode)} />
-          <Button type="submit" disabled={fetcher.state !== "idle"}>
+          <Button
+            type="submit"
+            variant={isDirty ? "default" : "outline"}
+            className={isDirty ? "" : "bg-background"}
+            disabled={fetcher.state !== "idle"}
+          >
             Save
           </Button>
         </fetcher.Form>
@@ -407,20 +467,43 @@ export default function TemplateCanvasPage({
                 }}
               >
                 {placedBlocks.map(({ block, lines }) =>
-                  lines.map((line, i) =>
-                    line.tokens.map((token, j) =>
-                      token.isSpace ? null : (
-                        <TextToken
-                          key={`${block.id}-${i}-${j}`}
-                          token={token}
-                          block={block}
-                          baseline={line.baseline}
-                          pageHeight={template.pageHeight}
-                          measurer={measurer}
-                        />
+                  block.id === selected?.id
+                    ? null
+                    : lines.map((line, i) =>
+                        line.tokens.map((token, j) =>
+                          token.isSpace ? null : (
+                            <TextToken
+                              key={`${block.id}-${i}-${j}`}
+                              token={token}
+                              block={block}
+                              baseline={line.baseline}
+                              pageHeight={template.pageHeight}
+                              measurer={measurer}
+                            />
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                )}
+                {selectedBlock && selected && (
+                  <InlineTextEditor
+                    key={selectedBlock.id}
+                    block={selectedBlock}
+                    point={selected.point}
+                    pageWidth={template.pageWidth}
+                    pageHeight={template.pageHeight}
+                    measurer={measurer}
+                    onClose={() => {
+                      setSelected(null);
+                      focusBox(selectedBlock.id);
+                    }}
+                    onChange={(lines) =>
+                      setLayout((current) =>
+                        current.map((b) =>
+                          b.id === selectedBlock.id ? { ...b, lines } : b,
+                        ),
+                      )
+                    }
+                  />
                 )}
                 {qrcode.show && (
                   <QRCodeLayer
@@ -433,16 +516,36 @@ export default function TemplateCanvasPage({
 
               {/* Interactive elements. Positions are percentages of the page,
                   so they follow the page size at any zoom. */}
-              {placedBlocks.map(({ block, box }) => (
-                <CanvasElement
-                  key={block.id}
-                  label="Text block"
-                  left={box.x / template.pageWidth}
-                  top={(template.pageHeight - box.top) / template.pageHeight}
-                  width={box.width / template.pageWidth}
-                  height={box.height / template.pageHeight}
-                />
-              ))}
+              {placedBlocks.map(({ block, box }) => {
+                const isSelected = block.id === selected?.id;
+                // A block without text is still shown while it is edited
+                const shown =
+                  box ??
+                  (isSelected
+                    ? {
+                        x: block.x,
+                        top: block.y + block.size * 0.8,
+                        width: block.size,
+                        height: block.size * 1.05,
+                      }
+                    : null);
+                if (!shown) return null;
+                return (
+                  <CanvasElement
+                    key={block.id}
+                    id={block.id}
+                    label="Text block"
+                    selected={isSelected}
+                    onSelect={(point) => setSelected({ id: block.id, point })}
+                    left={shown.x / template.pageWidth}
+                    top={
+                      (template.pageHeight - shown.top) / template.pageHeight
+                    }
+                    width={shown.width / template.pageWidth}
+                    height={shown.height / template.pageHeight}
+                  />
+                );
+              })}
               {qrcode.show && (
                 <CanvasElement
                   label="QR code"
@@ -509,26 +612,43 @@ export default function TemplateCanvasPage({
   );
 }
 
-// Hover target for an element on the page; draws a Figma-like bounding box.
-// Position and size are fractions (0-1) of the page.
+// Interactive element on the page; draws a Figma-like bounding box on hover
+// and while selected. Position and size are fractions (0-1) of the page.
 function CanvasElement({
+  id,
   label,
   left,
   top,
   width,
   height,
+  selected = false,
+  onSelect,
 }: {
+  id?: string;
   label: string;
   left: number;
   top: number;
   width: number;
   height: number;
+  selected?: boolean;
+  onSelect?: (point: { x: number; y: number } | null) => void;
 }) {
   return (
     <div
+      role="button"
+      tabIndex={onSelect ? 0 : -1}
       aria-label={label}
+      data-box={id}
       data-no-pan
-      className="absolute cursor-default [--outline:transparent] hover:[--outline:#0d99ff]"
+      onClick={(e) => onSelect?.({ x: e.clientX, y: e.clientY })}
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        // Otherwise the key press would continue in the editor that opens
+        e.preventDefault();
+        onSelect?.(null);
+      }}
+      // While selected, only the outline is drawn: clicks reach the editor below
+      className={`absolute cursor-default hover:[--outline:#0d99ff] focus-visible:[--outline:#0d99ff] ${selected ? "pointer-events-none [--outline:#0d99ff]" : "[--outline:transparent]"}`}
       style={{
         // Constant on-screen thickness and gap at any zoom (--ui-scale is 1/zoom)
         outline: "calc(2px * var(--ui-scale)) solid var(--outline)",
@@ -539,6 +659,125 @@ function CanvasElement({
         height: `${height * 100}%`,
       }}
     />
+  );
+}
+
+// Moves the keyboard focus to the bounding box of a block, e.g. after its
+// editor closed (which is when the focused editor disappears)
+function focusBox(id: string) {
+  requestAnimationFrame(() =>
+    document
+      .querySelector<HTMLElement>(`[data-box="${CSS.escape(id)}"]`)
+      ?.focus(),
+  );
+}
+
+// Inline editor for the text of a block, shown in place of the rendered text.
+// Only the text can be changed; every text segment keeps its font. Line breaks
+// are not supported by the PDF rendering, so Enter finishes editing.
+function InlineTextEditor({
+  block,
+  point,
+  pageWidth,
+  pageHeight,
+  measurer,
+  onChange,
+  onClose,
+}: {
+  block: PrismaJson.TextBlock;
+  point: { x: number; y: number } | null;
+  pageWidth: number;
+  pageHeight: number;
+  measurer: Measurer;
+  onChange: (lines: PrismaJson.TextSegment[]) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  // The contents are owned by the browser while typing; React must not
+  // rewrite them, so they are rendered from the segments at the start only.
+  const [initialLines] = useState(block.lines);
+  const [startPoint] = useState(point);
+
+  // Focus, with the cursor where the user clicked
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    element.focus();
+    const selection = window.getSelection();
+    if (!selection) return;
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    // Without a click position the cursor stays at the end of the text
+    const position =
+      startPoint &&
+      document.caretPositionFromPoint?.(startPoint.x, startPoint.y);
+    if (position && element.contains(position.offsetNode)) {
+      range.setStart(position.offsetNode, position.offset);
+      range.collapse(true);
+    }
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }, [startPoint]);
+
+  const readLines = (element: HTMLElement) => {
+    const texts = initialLines.map(() => "");
+    let index = 0;
+    element.childNodes.forEach((node) => {
+      if (node instanceof HTMLElement && node.dataset.segment !== undefined) {
+        index = Number(node.dataset.segment);
+      }
+      texts[index] += node.textContent ?? "";
+    });
+    return initialLines.map((line, i) => ({ ...line, text: texts[i] }));
+  };
+
+  // The line box is as tall as the line height, with the font's own line box
+  // centered in it; the first baseline is at the block's y
+  const lineHeight = block.lineHeight ?? block.size * 1.4;
+  const { ascent, descent } = measurer.metrics(
+    initialLines[0]?.font ?? "",
+    block.size,
+  );
+  const baselineOffset = (lineHeight - (ascent + descent)) / 2 + ascent;
+  const [r, g, b] = block.color ?? [0, 0, 0];
+
+  return (
+    <div
+      ref={ref}
+      role="textbox"
+      tabIndex={0}
+      aria-label="Text block"
+      data-editor={block.id}
+      data-no-pan
+      contentEditable="plaintext-only"
+      suppressContentEditableWarning
+      spellCheck={false}
+      className="pointer-events-auto absolute cursor-text select-text whitespace-pre-wrap outline-none"
+      style={{
+        left: block.x,
+        top: pageHeight - block.y - baselineOffset,
+        width: block.maxWidth ?? pageWidth,
+        minHeight: lineHeight,
+        fontSize: block.size,
+        lineHeight: `${lineHeight}px`,
+        textAlign: block.align ?? "left",
+        color: `rgb(${r * 255} ${g * 255} ${b * 255})`,
+      }}
+      onInput={(e) => onChange(readLines(e.currentTarget))}
+      onKeyDown={(e) => {
+        // Line breaks are not supported, so Enter finishes editing instead
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        onClose();
+      }}
+    >
+      {initialLines.map((line, i) => (
+        <span key={line.id} data-segment={i} style={measurer.css(line.font)}>
+          {line.text}
+        </span>
+      ))}
+    </div>
   );
 }
 
