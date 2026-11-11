@@ -23,8 +23,10 @@ import {
   ArrowLeft,
   Move,
   Minus,
+  MousePointer2,
   Plus,
   Settings,
+  Type,
 } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
@@ -43,7 +45,7 @@ import {
 } from "~/components/ui/tooltip";
 
 import { applyReplacements } from "~/lib/variables";
-import { rgbToHex } from "~/lib/utils";
+import { generateRandomId, rgbToHex } from "~/lib/utils";
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { getTemplateSampleReplacements, sampleQR } from "~/lib/pdf.server";
@@ -82,10 +84,31 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // Same fallback as the classic editor, until all templates have QR settings
   const qrcode = template.qrcode ?? sampleQR;
 
-  // Only the fonts used by the layout are needed to measure the text
-  const fontNames = new Set(
-    template.layout.flatMap((block) => block.lines.map((line) => line.font)),
-  );
+  // The font for new text blocks: the one of the first text in the layout, or
+  // otherwise a regular weight typeface
+  const defaultFont =
+    template.layout.flatMap((block) =>
+      block.lines.map((line) => line.font),
+    )[0] ??
+    (
+      (await prisma.typeface.findFirst({
+        where: { weight: 400 },
+        orderBy: { name: "asc" },
+        select: { name: true },
+      })) ??
+      (await prisma.typeface.findFirst({
+        orderBy: { name: "asc" },
+        select: { name: true },
+      }))
+    )?.name ??
+    "";
+
+  // Only the fonts used by the layout (and new blocks) are needed to measure
+  // the text
+  const fontNames = new Set([
+    defaultFont,
+    ...template.layout.flatMap((block) => block.lines.map((line) => line.font)),
+  ]);
   const typefaces = await prisma.typeface.findMany({
     where: { name: { in: [...fontNames] } },
     select: { id: true, name: true, weight: true, style: true },
@@ -102,6 +125,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     template,
     qrcode,
     typefaces,
+    defaultFont,
     sampleReplacements,
     qrUrl,
   };
@@ -118,6 +142,11 @@ const KEEP_VISIBLE = 120; // px of the page that stay on screen when panning
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2;
 const ZOOM_STEP = 0.25;
+// Mouse cursor of the add text tool: a crosshair (the hot spot, where the text
+// starts) with a T next to it
+const ADD_TEXT_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke-linecap="round"><path d="M8 2v12M2 8h12M15 14h10M20 14v11" stroke="white" stroke-width="3.5"/><path d="M8 2v12M2 8h12M15 14h10M20 14v11" stroke="black" stroke-width="1.5"/></svg>',
+)}") 8 8, crosshair`;
 // How far a block can be moved beyond the page edges, in points: half the page
 // width to the left and right (see the move handle), and this much at the top
 // and bottom
@@ -141,8 +170,9 @@ export default function TemplateCanvasPage({
 function TemplateCanvas({
   program,
   template,
-  qrcode,
+  qrcode: savedQrcode,
   typefaces,
+  defaultFont,
   sampleReplacements,
   qrUrl,
 }: Route.ComponentProps["loaderData"]) {
@@ -171,11 +201,25 @@ function TemplateCanvas({
     point: { x: number; y: number } | null;
   } | null>(null);
   const [qrSelected, setQrSelected] = useState(false);
+  // Active tool: select and drag, or click on the page to add a text block
+  const [tool, setTool] = useState<"select" | "text">("select");
+  // Blocks added in this session. Those that are left without text are dropped
+  // (they are invisible and would be unreachable).
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   // Set while the focus moves on from the editor with the Tab key
   const tabFromEditor = useRef(false);
   const widthAtStart = useRef(0);
   const positionAtStart = useRef({ x: 0, y: 0 });
-  const isDirty = JSON.stringify(layout) !== JSON.stringify(template.layout);
+  const [qrcode, setQrcode] = useState(savedQrcode);
+  const layoutToSave = layout.filter(
+    (block) =>
+      !addedIds.has(block.id) ||
+      block.id === selected?.id ||
+      block.lines.some((line) => line.text.trim() !== ""),
+  );
+  const isDirty =
+    JSON.stringify(layoutToSave) !== JSON.stringify(template.layout) ||
+    JSON.stringify(qrcode) !== JSON.stringify(savedQrcode);
   const dragStart = useRef<{ x: number; y: number; view: View } | null>(null);
 
   const realWidth = template.pageWidth * CSS_PX_PER_POINT;
@@ -273,7 +317,7 @@ function TemplateCanvas({
 
   // Dragging the canvas, except from interactive elements (data-no-pan)
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!view || e.button !== 0) return;
+    if (!view || e.button !== 0 || tool === "text") return;
     if ((e.target as Element).closest("[data-no-pan]")) return;
     setSelected(null);
     setQrSelected(false);
@@ -281,6 +325,46 @@ function TemplateCanvas({
     dragStart.current = { x: e.clientX, y: e.clientY, view };
     setDragging(true);
   };
+  // With the text tool, a click on the page adds a text block there, and opens
+  // it in the editor. The tool is used once. The click is the top left corner
+  // of the text, the block's y is the baseline of its first line.
+  const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (tool !== "text" || !view || !viewportRef.current) return;
+    const rect = viewportRef.current.getBoundingClientRect();
+    const pageX = (e.clientX - rect.left - view.x) / pixelsPerPoint;
+    const pageY = (e.clientY - rect.top - view.y) / pixelsPerPoint;
+    if (
+      pageX < 0 ||
+      pageX > template.pageWidth ||
+      pageY < 0 ||
+      pageY > template.pageHeight
+    ) {
+      return;
+    }
+    const size = 12;
+    const block: PrismaJson.TextBlock = {
+      id: generateRandomId(),
+      x: Math.round(pageX),
+      y: Math.round(template.pageHeight - pageY - size * 0.8),
+      size,
+      align: "left",
+      color: [0, 0, 0],
+      lines: [{ id: generateRandomId(), font: defaultFont, text: "" }],
+    };
+    setLayout((current) => [...current, block]);
+    setAddedIds((current) => new Set(current).add(block.id));
+    setSelected({ id: block.id, point: null });
+    setTool("select");
+  };
+
+  const changeTool = (next: "select" | "text") => {
+    setTool(next);
+    if (next === "text") {
+      setSelected(null);
+      setQrSelected(false);
+    }
+  };
+
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const start = dragStart.current;
     if (!start) return;
@@ -298,8 +382,8 @@ function TemplateCanvas({
     setDragging(false);
   };
 
-  // Escape closes the inline text editor
-  const hasSelection = selected !== null || qrSelected;
+  // Escape closes the inline text editor, or the text tool
+  const hasSelection = selected !== null || qrSelected || tool === "text";
   useEffect(() => {
     if (!hasSelection) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -308,6 +392,7 @@ function TemplateCanvas({
         document.activeElement?.closest<HTMLElement>("[data-editor]");
       setSelected(null);
       setQrSelected(false);
+      setTool("select");
       if (editor) focusBox(editor.dataset.editor!);
     };
     document.addEventListener("keydown", onKeyDown);
@@ -315,6 +400,21 @@ function TemplateCanvas({
   }, [hasSelection]);
 
   const pixelsPerPoint = (view?.zoom ?? 1) * CSS_PX_PER_POINT;
+
+  // New position of an element dragged by (dx, dy) screen pixels from where it
+  // was. PDF coordinates grow upwards, the screen downwards.
+  const movedPosition = (dx: number, dy: number) => ({
+    x: clamp(
+      Math.round(positionAtStart.current.x + dx / pixelsPerPoint),
+      -template.pageWidth / 2,
+      template.pageWidth * 1.5,
+    ),
+    y: clamp(
+      Math.round(positionAtStart.current.y - dy / pixelsPerPoint),
+      -OFF_PAGE_VERTICAL,
+      template.pageHeight + OFF_PAGE_VERTICAL,
+    ),
+  });
 
   const measurer = useTextMeasurer(typefaces);
   const selectedBlock = layout.find((b) => b.id === selected?.id);
@@ -413,6 +513,7 @@ function TemplateCanvas({
             if (value !== "edit" && value !== "preview") return;
             setSelected(null);
             setQrSelected(false);
+            setTool("select");
             setMode(value);
           }}
           className="bg-background"
@@ -428,7 +529,11 @@ function TemplateCanvas({
 
         {/* Saves through the action of the classic editor route */}
         <fetcher.Form method="POST" action={`${templatePath}/edit-layout`}>
-          <input type="hidden" name="layout" value={JSON.stringify(layout)} />
+          <input
+            type="hidden"
+            name="layout"
+            value={JSON.stringify(layoutToSave)}
+          />
           <input type="hidden" name="qrcode" value={JSON.stringify(qrcode)} />
           <Button
             type="submit"
@@ -443,12 +548,15 @@ function TemplateCanvas({
 
       {/* Canvas: the page is laid out at real size and moved/scaled with a
           transform, so zooming and panning animate as one movement */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- the text tool needs a pointer; adding text by keyboard comes later */}
       <div
         ref={viewportRef}
-        className={`absolute inset-0 touch-none select-none bg-[url('/assets/canvas-pattern.svg')] bg-[length:48px_48px] ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+        className={`absolute inset-0 touch-none select-none bg-[url('/assets/canvas-pattern.svg')] bg-[length:48px_48px] ${tool === "text" ? "" : dragging ? "cursor-grabbing" : "cursor-grab"}`}
         style={{
+          cursor: tool === "text" ? ADD_TEXT_CURSOR : undefined,
           backgroundPosition: view ? `${view.x}px ${view.y}px` : undefined,
         }}
+        onClick={onClick}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -517,6 +625,7 @@ function TemplateCanvas({
                     pageWidth={template.pageWidth}
                     pageHeight={template.pageHeight}
                     measurer={measurer}
+                    defaultFont={defaultFont}
                     onTab={() => {
                       // The browser moves the focus on from the bounding box of
                       // this block. If that lands on another text block, it
@@ -550,122 +659,124 @@ function TemplateCanvas({
 
               {/* Interactive elements. Positions are percentages of the page,
                   so they follow the page size at any zoom. */}
-              {placedBlocks.map(({ block, box }) => {
-                const isSelected = block.id === selected?.id;
-                // A block without text is still shown while it is edited
-                const shown =
-                  box ??
-                  (isSelected
-                    ? {
-                        x: block.x,
-                        top: block.y + block.size * 0.8,
-                        width: block.maxWidth ?? block.size,
-                        height: block.size * 1.05,
-                      }
-                    : null);
-                if (!shown) return null;
-                return (
-                  <CanvasElement
-                    key={block.id}
-                    id={block.id}
-                    label="Text block"
-                    selected={isSelected}
-                    onResizeWidth={{
-                      // A block without maxWidth starts at its current width
-                      onStart: () => {
-                        widthAtStart.current = shown.x + shown.width - block.x;
-                      },
-                      onMove: (distance) => {
-                        const maxWidth = clamp(
-                          Math.round(
-                            widthAtStart.current + distance / pixelsPerPoint,
-                          ),
-                          block.size,
-                          template.pageWidth - block.x,
-                        );
-                        setLayout((current) =>
-                          current.map((b) =>
-                            b.id === block.id ? { ...b, maxWidth } : b,
-                          ),
-                        );
-                      },
-                    }}
-                    onMoveElement={{
-                      onStart: () => {
-                        positionAtStart.current = { x: block.x, y: block.y };
-                      },
-                      // PDF coordinates grow upwards, the screen downwards
-                      onMove: (dx, dy) => {
-                        const x = clamp(
-                          Math.round(
-                            positionAtStart.current.x + dx / pixelsPerPoint,
-                          ),
-                          -template.pageWidth / 2,
-                          template.pageWidth * 1.5,
-                        );
-                        const y = clamp(
-                          Math.round(
-                            positionAtStart.current.y - dy / pixelsPerPoint,
-                          ),
-                          -OFF_PAGE_VERTICAL,
-                          template.pageHeight + OFF_PAGE_VERTICAL,
-                        );
-                        setLayout((current) =>
-                          current.map((b) =>
-                            b.id === block.id ? { ...b, x, y } : b,
-                          ),
-                        );
-                      },
-                    }}
-                    onSelect={(point) => {
-                      setQrSelected(false);
-                      setSelected({ id: block.id, point });
-                    }}
-                    onFocus={() => {
-                      if (tabFromEditor.current && !isSelected) {
+              {/* With the text tool, clicks go through to the page */}
+              <div
+                className={`contents ${tool === "text" ? "pointer-events-none" : ""}`}
+              >
+                {placedBlocks.map(({ block, box }) => {
+                  const isSelected = block.id === selected?.id;
+                  // A block without text is still shown while it is edited
+                  const shown =
+                    box ??
+                    (isSelected
+                      ? {
+                          x: block.x,
+                          top: block.y + block.size * 0.8,
+                          width: block.maxWidth ?? block.size,
+                          height: block.size * 1.05,
+                        }
+                      : null);
+                  if (!shown) return null;
+                  return (
+                    <CanvasElement
+                      key={block.id}
+                      id={block.id}
+                      label="Text block"
+                      selected={isSelected}
+                      onResizeWidth={{
+                        // A block without maxWidth starts at its current width
+                        onStart: () => {
+                          widthAtStart.current =
+                            shown.x + shown.width - block.x;
+                        },
+                        onMove: (distance) => {
+                          const maxWidth = clamp(
+                            Math.round(
+                              widthAtStart.current + distance / pixelsPerPoint,
+                            ),
+                            block.size,
+                            template.pageWidth - block.x,
+                          );
+                          setLayout((current) =>
+                            current.map((b) =>
+                              b.id === block.id ? { ...b, maxWidth } : b,
+                            ),
+                          );
+                        },
+                      }}
+                      onMoveElement={{
+                        onStart: () => {
+                          positionAtStart.current = { x: block.x, y: block.y };
+                        },
+                        onMove: (dx, dy) => {
+                          const { x, y } = movedPosition(dx, dy);
+                          setLayout((current) =>
+                            current.map((b) =>
+                              b.id === block.id ? { ...b, x, y } : b,
+                            ),
+                          );
+                        },
+                      }}
+                      onSelect={(point) => {
                         setQrSelected(false);
-                        setSelected({ id: block.id, point: null });
+                        setSelected({ id: block.id, point });
+                      }}
+                      onFocus={() => {
+                        if (tabFromEditor.current && !isSelected) {
+                          setQrSelected(false);
+                          setSelected({ id: block.id, point: null });
+                        }
+                      }}
+                      left={shown.x / template.pageWidth}
+                      top={
+                        (template.pageHeight - shown.top) / template.pageHeight
                       }
-                    }}
-                    left={shown.x / template.pageWidth}
-                    top={
-                      (template.pageHeight - shown.top) / template.pageHeight
-                    }
-                    width={shown.width / template.pageWidth}
-                    height={shown.height / template.pageHeight}
-                  >
-                    {isSelected && <BlockInfo block={block} />}
-                  </CanvasElement>
-                );
-              })}
-              {qrcode.show && (
-                <CanvasElement
-                  id="qrcode"
-                  label="QR code"
-                  selected={qrSelected}
-                  onSelect={() => {
-                    setSelected(null);
-                    setQrSelected(true);
-                  }}
-                  onFocus={() => {
-                    // Like text blocks, it opens when the focus comes from the editor
-                    if (tabFromEditor.current && !qrSelected) {
+                      width={shown.width / template.pageWidth}
+                      height={shown.height / template.pageHeight}
+                    >
+                      {isSelected && <BlockInfo block={block} />}
+                    </CanvasElement>
+                  );
+                })}
+                {qrcode.show && (
+                  <CanvasElement
+                    id="qrcode"
+                    label="QR code"
+                    selected={qrSelected}
+                    onSelect={() => {
                       setSelected(null);
                       setQrSelected(true);
+                    }}
+                    onFocus={() => {
+                      // Like text blocks, it opens when the focus comes from the editor
+                      if (tabFromEditor.current && !qrSelected) {
+                        setSelected(null);
+                        setQrSelected(true);
+                      }
+                    }}
+                    onBlur={() => setQrSelected(false)}
+                    onMoveElement={{
+                      onStart: () => {
+                        positionAtStart.current = { x: qrcode.x, y: qrcode.y };
+                      },
+                      onMove: (dx, dy) =>
+                        setQrcode((current) => ({
+                          ...current,
+                          ...movedPosition(dx, dy),
+                        })),
+                    }}
+                    left={qrcode.x / template.pageWidth}
+                    top={
+                      (template.pageHeight - qrcode.y - qrcode.width) /
+                      template.pageHeight
                     }
-                  }}
-                  onBlur={() => setQrSelected(false)}
-                  left={qrcode.x / template.pageWidth}
-                  top={
-                    (template.pageHeight - qrcode.y - qrcode.width) /
-                    template.pageHeight
-                  }
-                  width={qrcode.width / template.pageWidth}
-                  height={qrcode.width / template.pageHeight}
-                >
-                  {qrSelected && <QRCodeInfo qrcode={qrcode} />}
-                </CanvasElement>
-              )}
+                    width={qrcode.width / template.pageWidth}
+                    height={qrcode.width / template.pageHeight}
+                  >
+                    {qrSelected && <QRCodeInfo qrcode={qrcode} />}
+                  </CanvasElement>
+                )}
+              </div>
             </>
           )}
 
@@ -680,8 +791,44 @@ function TemplateCanvas({
         </div>
       </div>
 
-      {/* Zoom control */}
+      {/* Toolbar: tools, and zoom control */}
       <div className="fixed bottom-4 left-1/2 z-20 flex cursor-default -translate-x-1/2 items-center gap-1 rounded-lg border bg-background p-1 shadow-md">
+        <ToggleGroup
+          type="single"
+          value={tool}
+          onValueChange={(value) => {
+            if (value === "select" || value === "text") changeTool(value);
+          }}
+          className="gap-1"
+          aria-label="Tool"
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ToggleGroupItem
+                value="select"
+                aria-label="Select and drag"
+                className="size-9 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90 data-[state=on]:hover:text-primary-foreground"
+              >
+                <MousePointer2 />
+              </ToggleGroupItem>
+            </TooltipTrigger>
+            <TooltipContent side="top">Select and drag</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ToggleGroupItem
+                value="text"
+                aria-label="Add text"
+                className="size-9 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90 data-[state=on]:hover:text-primary-foreground"
+                disabled={mode === "preview" || defaultFont === ""}
+              >
+                <Type />
+              </ToggleGroupItem>
+            </TooltipTrigger>
+            <TooltipContent side="top">Add text</TooltipContent>
+          </Tooltip>
+        </ToggleGroup>
+        <div className="mx-1 h-5 w-px bg-border" aria-hidden />
         <Button
           variant="ghost"
           size="icon"
@@ -1023,6 +1170,7 @@ function InlineTextEditor({
   pageWidth,
   pageHeight,
   measurer,
+  defaultFont,
   onChange,
   onClose,
   onTab,
@@ -1032,6 +1180,7 @@ function InlineTextEditor({
   pageWidth: number;
   pageHeight: number;
   measurer: Measurer;
+  defaultFont: string;
   onChange: (lines: PrismaJson.TextSegment[]) => void;
   onClose: () => void;
   onTab: () => void;
@@ -1039,7 +1188,12 @@ function InlineTextEditor({
   const ref = useRef<HTMLDivElement>(null);
   // The contents are owned by the browser while typing; React must not
   // rewrite them, so they are rendered from the segments at the start only.
-  const [initialLines] = useState(block.lines);
+  // (a block without any text segment gets one, in the default font)
+  const [initialLines] = useState(() =>
+    block.lines.length > 0
+      ? block.lines
+      : [{ id: generateRandomId(), font: defaultFont, text: "" }],
+  );
   const [startPoint] = useState(point);
 
   // Focus, with the cursor where the user clicked
