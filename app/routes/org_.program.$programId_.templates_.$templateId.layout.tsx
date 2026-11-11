@@ -14,9 +14,11 @@ import {
   useRouteError,
 } from "react-router";
 import type { Typeface } from "~/generated/prisma/client";
+import QRCode from "qrcode";
 import { ArrowLeft, Minus, Plus, Settings } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import {
   Select,
   SelectContent,
@@ -33,6 +35,7 @@ import {
 import { requireAdminWithProgram } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { getTemplateSampleLayout, sampleQR } from "~/lib/pdf.server";
+import { domain } from "~/lib/config.server";
 
 export function meta({ data }: Route.MetaArgs) {
   return [{ title: `Template ${data?.template?.name}` }];
@@ -79,7 +82,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // Text with variables replaced by sample data, like in the preview image
   const sampleLayout = getTemplateSampleLayout(template);
 
-  return { program, template, qrcode, typefaces, sampleLayout };
+  // Same length as the URL of a real certificate, so the QR code looks alike
+  const qrUrl = `${domain}/view/00000000-0000-4000-8000-000000000000`;
+
+  return { program, template, qrcode, typefaces, sampleLayout, qrUrl };
 }
 
 // The PDF page size is in points (1/72 inch). Browsers define a CSS inch as
@@ -87,53 +93,174 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 // has twice the device pixels per CSS pixel, but the same CSS pixels per
 // inch), so this is the closest to real paper size we can get.
 const CSS_PX_PER_POINT = 96 / 72;
-const PAGE_MARGIN = "4rem"; // total horizontal space kept free on small screens
-const MIN_ZOOM = 0.25;
-const MAX_ZOOM = 4;
+const PAGE_MARGIN = 64; // total horizontal space kept free when fitting the page
+const TOP_SPACE = 88; // space above the page for the sticky header
+const KEEP_VISIBLE = 120; // px of the page that stay on screen when panning
+const MIN_ZOOM = 0.3;
+const MAX_ZOOM = 2;
 const ZOOM_STEP = 0.25;
+
+// Position of the page's top left corner in the viewport (px) and its scale
+// relative to the real paper size
+type View = { zoom: number; x: number; y: number };
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
 
 export default function TemplateCanvasPage({
   loaderData,
 }: Route.ComponentProps) {
-  const { program, template, qrcode, typefaces, sampleLayout } = loaderData;
+  const { program, template, qrcode, typefaces, sampleLayout, qrUrl } =
+    loaderData;
   const navigate = useNavigate();
   const fetcher = useFetcher();
-  const pageRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
-  // null = automatic: real paper size, contained to the window width
-  const [zoom, setZoom] = useState<number | null>(null);
-  // Displayed size relative to the real paper size, measured from the DOM
-  const [displayedZoom, setDisplayedZoom] = useState(1);
+  const [viewport, setViewport] = useState<{ w: number; h: number } | null>(
+    null,
+  );
+  // null = automatic: real paper size, contained to the window width. Set as
+  // soon as the user zooms or pans.
+  const [manualView, setManualView] = useState<View | null>(null);
+  // Animate zoom changes by the buttons, but not dragging or wheel zooming
+  const [animate, setAnimate] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  // Edit: background from the server, texts and QR code drawn in the browser
+  // with interactive elements. Preview: the complete server rendering.
+  const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const dragStart = useRef<{ x: number; y: number; view: View } | null>(null);
 
   const realWidth = template.pageWidth * CSS_PX_PER_POINT;
-  const pageWidthCss =
-    zoom === null
-      ? `min(${realWidth}px, 100vw - ${PAGE_MARGIN})`
-      : `${realWidth * zoom}px`;
+  const realHeight = template.pageHeight * CSS_PX_PER_POINT;
+
+  let autoView: View | null = null;
+  if (viewport) {
+    const zoom = clamp((viewport.w - PAGE_MARGIN) / realWidth, MIN_ZOOM, 1);
+    autoView = { zoom, x: (viewport.w - realWidth * zoom) / 2, y: TOP_SPACE };
+  }
+  const view = manualView ?? autoView;
 
   useEffect(() => {
-    const page = pageRef.current;
-    if (!page) return;
+    const element = viewportRef.current;
+    if (!element) return;
     const observer = new ResizeObserver(([entry]) => {
-      setDisplayedZoom(entry.contentRect.width / realWidth);
+      setViewport({
+        w: entry.contentRect.width,
+        h: entry.contentRect.height,
+      });
     });
-    observer.observe(page);
+    observer.observe(element);
     return () => observer.disconnect();
-  }, [realWidth]);
+  }, []);
 
-  const measureText = useTextMeasurer(typefaces);
-
-  const changeZoom = (delta: number) => {
-    const next = Math.round((displayedZoom + delta) / ZOOM_STEP) * ZOOM_STEP;
-    setZoom(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next)));
+  // Keeps part of the page on screen, but allows it to move beyond the edges
+  const commitView = (next: View, animated: boolean) => {
+    if (!viewport) return;
+    const w = realWidth * next.zoom;
+    const h = realHeight * next.zoom;
+    setAnimate(animated);
+    setManualView({
+      zoom: next.zoom,
+      x: clamp(next.x, KEEP_VISIBLE - w, viewport.w - KEEP_VISIBLE),
+      y: clamp(next.y, KEEP_VISIBLE - h, viewport.h - KEEP_VISIBLE),
+    });
   };
+
+  // Zooms so that the page point under (cx, cy) stays where it is
+  const zoomAt = (
+    from: View,
+    zoom: number,
+    cx: number,
+    cy: number,
+    animated: boolean,
+  ) => {
+    const z = clamp(zoom, MIN_ZOOM, MAX_ZOOM);
+    commitView(
+      {
+        zoom: z,
+        x: cx - ((cx - from.x) / from.zoom) * z,
+        y: cy - ((cy - from.y) / from.zoom) * z,
+      },
+      animated,
+    );
+  };
+
+  const stepZoom = (delta: number) => {
+    if (!view || !viewport) return;
+    const next = Math.round((view.zoom + delta) / ZOOM_STEP) * ZOOM_STEP;
+    zoomAt(view, next, viewport.w / 2, viewport.h / 2, true);
+  };
+
+  // Wheel / trackpad: pan, or zoom around the cursor with ctrl/cmd (also
+  // pinch gestures). A native listener is needed to be allowed to prevent the
+  // browser's own page zoom.
+  const wheelHandler = useRef<(e: WheelEvent) => void>(undefined);
+  useEffect(() => {
+    wheelHandler.current = (e) => {
+      if (!view) return;
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey) {
+        zoomAt(
+          view,
+          view.zoom * Math.exp(-e.deltaY * 0.01),
+          e.clientX,
+          e.clientY,
+          false,
+        );
+      } else {
+        commitView(
+          { ...view, x: view.x - e.deltaX, y: view.y - e.deltaY },
+          false,
+        );
+      }
+    };
+  });
+  useEffect(() => {
+    const element = viewportRef.current;
+    if (!element) return;
+    const listener = (e: WheelEvent) => wheelHandler.current?.(e);
+    element.addEventListener("wheel", listener, { passive: false });
+    return () => element.removeEventListener("wheel", listener);
+  }, []);
+
+  // Dragging the canvas, except from interactive elements (data-no-pan)
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!view || e.button !== 0) return;
+    if ((e.target as Element).closest("[data-no-pan]")) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragStart.current = { x: e.clientX, y: e.clientY, view };
+    setDragging(true);
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = dragStart.current;
+    if (!start) return;
+    commitView(
+      {
+        ...start.view,
+        x: start.view.x + e.clientX - start.x,
+        y: start.view.y + e.clientY - start.y,
+      },
+      false,
+    );
+  };
+  const endDrag = () => {
+    dragStart.current = null;
+    setDragging(false);
+  };
+
+  const measurer = useTextMeasurer(typefaces);
+  const placedBlocks = sampleLayout.flatMap((block) => {
+    const lines = placeTextBlock(block, template.pageWidth, measurer);
+    const box = textBlockBox(block, lines);
+    return box ? [{ block, lines, box }] : [];
+  });
 
   const templatePath = `/org/program/${program.id}/templates/${template.id}`;
 
   return (
-    <div className="min-h-screen bg-[#fafafa] bg-[url('/assets/canvas-pattern.svg')] bg-[length:48px_48px]">
+    <div className="fixed inset-0 overflow-hidden bg-[#fafafa]">
       {/* Sticky header; transparent, so only the controls cover the canvas */}
-      <header className="pointer-events-none sticky top-0 z-20 flex flex-wrap items-center gap-2 p-3 [&>*]:pointer-events-auto">
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-20 flex flex-wrap items-center gap-2 p-3 [&>*]:pointer-events-auto">
         <Button
           variant="outline"
           className="h-10 bg-background shadow-xs"
@@ -167,7 +294,12 @@ export default function TemplateCanvasPage({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" className="bg-background" asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="bg-background"
+                asChild
+              >
                 <Link
                   to={`${templatePath}/edit-meta`}
                   aria-label="Edit template settings"
@@ -176,7 +308,9 @@ export default function TemplateCanvasPage({
                 </Link>
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Edit template settings</TooltipContent>
+            <TooltipContent side="bottom">
+              Edit template settings
+            </TooltipContent>
           </Tooltip>
           <Button variant="outline" className="bg-background" asChild>
             <Link to={`${templatePath}/duplicate`}>Duplicate template</Link>
@@ -189,6 +323,24 @@ export default function TemplateCanvasPage({
         </div>
 
         <div className="grow" />
+
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          value={mode}
+          onValueChange={(value) => {
+            if (value === "edit" || value === "preview") setMode(value);
+          }}
+          className="bg-background"
+          aria-label="Mode"
+        >
+          <ToggleGroupItem value="edit" className="px-3">
+            Edit
+          </ToggleGroupItem>
+          <ToggleGroupItem value="preview" className="px-3">
+            Preview
+          </ToggleGroupItem>
+        </ToggleGroup>
 
         {/* Saves through the action of the classic editor route */}
         <fetcher.Form method="POST" action={`${templatePath}/edit-layout`}>
@@ -204,63 +356,127 @@ export default function TemplateCanvasPage({
         </fetcher.Form>
       </header>
 
-      {/* Canvas. min-w-full w-max lets the page scroll horizontally when zoomed in */}
-      <main className="min-w-full w-max px-8 pb-28 pt-6">
+      {/* Canvas: the page is laid out at real size and moved/scaled with a
+          transform, so zooming and panning animate as one movement */}
+      <div
+        ref={viewportRef}
+        className={`absolute inset-0 touch-none select-none bg-[url('/assets/canvas-pattern.svg')] bg-[length:48px_48px] ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+        style={{
+          backgroundPosition: view ? `${view.x}px ${view.y}px` : undefined,
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+      >
         <div
-          ref={pageRef}
-          className="relative mx-auto bg-white shadow-xl"
-          style={{
-            width: pageWidthCss,
-            aspectRatio: `${template.pageWidth} / ${template.pageHeight}`,
-          }}
+          className={`absolute left-0 top-0 origin-top-left bg-white shadow-xl ${animate ? "transition-transform duration-200 ease-out motion-reduce:transition-none" : ""}`}
+          onTransitionEnd={() => setAnimate(false)}
+          style={
+            {
+              width: realWidth,
+              height: realHeight,
+              visibility: view ? "visible" : "hidden",
+              transform: view
+                ? `translate(${view.x}px, ${view.y}px) scale(${view.zoom})`
+                : undefined,
+              // Lets interface details keep their on-screen size when zoomed
+              "--ui-scale": view ? 1 / view.zoom : 1,
+            } as React.CSSProperties
+          }
         >
           <img
             className="absolute inset-0 size-full select-none"
             draggable={false}
-            src={`/org/program/${program.id}/templates/${template.id}/preview.png?t=${template.updatedAt}`}
-            alt="Preview of the template"
+            src={`/org/program/${program.id}/templates/${template.id}/preview.png?backgroundOnly&t=${template.updatedAt}`}
+            alt="Background of the template"
           />
 
-          {/* Interactive layers. Positions are percentages of the page, so they
-              follow the page size at any zoom. PDF coordinates start at the
-              bottom left, CSS at the top left. */}
-          {sampleLayout.map((block) => {
-            const box = textBlockBox(block, template.pageWidth, measureText);
-            if (!box) return null;
-            return (
-              <CanvasElement
-                key={block.id}
-                label="Text block"
-                left={box.x / template.pageWidth}
-                top={(template.pageHeight - box.top) / template.pageHeight}
-                width={box.width / template.pageWidth}
-                height={box.height / template.pageHeight}
-              />
-            );
-          })}
-          {qrcode.show && (
-            <CanvasElement
-              label="QR code"
-              left={qrcode.x / template.pageWidth}
-              top={
-                (template.pageHeight - qrcode.y - qrcode.width) /
-                template.pageHeight
-              }
-              width={qrcode.width / template.pageWidth}
-              height={qrcode.width / template.pageHeight}
+          {mode === "edit" && (
+            <>
+              {/* Texts and QR code are positioned in PDF points, so they are
+                  drawn in a layer of that size, scaled to the real page size.
+                  PDF coordinates start at the bottom left, CSS at the top
+                  left. */}
+              <div
+                className="pointer-events-none absolute left-0 top-0 origin-top-left"
+                style={{
+                  width: template.pageWidth,
+                  height: template.pageHeight,
+                  transform: `scale(${CSS_PX_PER_POINT})`,
+                }}
+              >
+                {placedBlocks.map(({ block, lines }) =>
+                  lines.map((line, i) =>
+                    line.tokens.map((token, j) =>
+                      token.isSpace ? null : (
+                        <TextToken
+                          key={`${block.id}-${i}-${j}`}
+                          token={token}
+                          block={block}
+                          baseline={line.baseline}
+                          pageHeight={template.pageHeight}
+                          measurer={measurer}
+                        />
+                      ),
+                    ),
+                  ),
+                )}
+                {qrcode.show && (
+                  <QRCodeLayer
+                    qrcode={qrcode}
+                    url={qrUrl}
+                    pageHeight={template.pageHeight}
+                  />
+                )}
+              </div>
+
+              {/* Interactive elements. Positions are percentages of the page,
+                  so they follow the page size at any zoom. */}
+              {placedBlocks.map(({ block, box }) => (
+                <CanvasElement
+                  key={block.id}
+                  label="Text block"
+                  left={box.x / template.pageWidth}
+                  top={(template.pageHeight - box.top) / template.pageHeight}
+                  width={box.width / template.pageWidth}
+                  height={box.height / template.pageHeight}
+                />
+              ))}
+              {qrcode.show && (
+                <CanvasElement
+                  label="QR code"
+                  left={qrcode.x / template.pageWidth}
+                  top={
+                    (template.pageHeight - qrcode.y - qrcode.width) /
+                    template.pageHeight
+                  }
+                  width={qrcode.width / template.pageWidth}
+                  height={qrcode.width / template.pageHeight}
+                />
+              )}
+            </>
+          )}
+
+          {mode === "preview" && (
+            <img
+              className="absolute inset-0 size-full select-none"
+              draggable={false}
+              src={`/org/program/${program.id}/templates/${template.id}/preview.png?t=${template.updatedAt}`}
+              alt="Preview of the template"
             />
           )}
         </div>
-      </main>
+      </div>
 
       {/* Zoom control */}
-      <div className="fixed bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-lg border bg-background p-1 shadow-md">
+      <div className="fixed bottom-4 left-1/2 z-20 flex cursor-default -translate-x-1/2 items-center gap-1 rounded-lg border bg-background p-1 shadow-md">
         <Button
           variant="ghost"
           size="icon"
           aria-label="Zoom out"
-          disabled={displayedZoom <= MIN_ZOOM}
-          onClick={() => changeZoom(-ZOOM_STEP)}
+          disabled={!view || view.zoom <= MIN_ZOOM}
+          onClick={() => stepZoom(-ZOOM_STEP)}
         >
           <Minus />
         </Button>
@@ -269,19 +485,22 @@ export default function TemplateCanvasPage({
             <Button
               variant="ghost"
               className="w-16 tabular-nums"
-              onClick={() => setZoom(null)}
+              onClick={() => {
+                setAnimate(true);
+                setManualView(null);
+              }}
             >
-              {Math.round(displayedZoom * 100)}%
+              {Math.round((view?.zoom ?? 1) * 100)}%
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="top">Real paper size</TooltipContent>
+          <TooltipContent side="top">Fit to window</TooltipContent>
         </Tooltip>
         <Button
           variant="ghost"
           size="icon"
           aria-label="Zoom in"
-          disabled={displayedZoom >= MAX_ZOOM}
-          onClick={() => changeZoom(ZOOM_STEP)}
+          disabled={!view || view.zoom >= MAX_ZOOM}
+          onClick={() => stepZoom(ZOOM_STEP)}
         >
           <Plus />
         </Button>
@@ -308,8 +527,12 @@ function CanvasElement({
   return (
     <div
       aria-label={label}
-      className="absolute rounded-[2px] outline outline-2 outline-offset-4 outline-transparent hover:outline-[#0d99ff]"
+      data-no-pan
+      className="absolute cursor-default [--outline:transparent] hover:[--outline:#0d99ff]"
       style={{
+        // Constant on-screen thickness and gap at any zoom (--ui-scale is 1/zoom)
+        outline: "calc(2px * var(--ui-scale)) solid var(--outline)",
+        outlineOffset: "calc(2px * var(--ui-scale))",
         left: `${left * 100}%`,
         top: `${top * 100}%`,
         width: `${width * 100}%`,
@@ -326,15 +549,22 @@ function getMeasureContext() {
   return measureContext;
 }
 
-type MeasureText = (text: string, font: string, size: number) => number;
+type Measurer = {
+  width: (text: string, font: string, size: number) => number;
+  // Distance from the baseline to the top and bottom of the font's line box
+  metrics: (font: string, size: number) => { ascent: number; descent: number };
+  // CSS font properties of a typeface (its font family is loaded in the browser)
+  css: (font: string) => React.CSSProperties;
+};
 
-// Loads the fonts of the layout into the browser and returns a function to
-// measure text with them (in the unit of the size passed in). Until a font is
-// loaded, or if it fails to load, text is measured with an average glyph width.
+// Loads the fonts of the layout into the browser and returns functions to
+// measure and style text with them (in the unit of the size passed in). Until
+// a font is loaded, or if it fails to load, text uses a fallback font and an
+// average glyph width.
 function useTextMeasurer(
   typefaces: Pick<Typeface, "id" | "name" | "weight" | "style">[],
-): MeasureText {
-  const [loaded, setLoaded] = useState<Map<string, Typeface["id"]>>(new Map());
+): Measurer {
+  const [loaded, setLoaded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -347,11 +577,11 @@ function useTextMeasurer(
         );
         await face.load();
         document.fonts.add(face);
-        return [t.name, t.id] as const;
+        return t.name;
       }),
     )
-      .then((entries) => {
-        if (!cancelled) setLoaded(new Map(entries));
+      .then((names) => {
+        if (!cancelled) setLoaded(new Set(names));
       })
       .catch((error) => console.error("Could not load fonts", error));
     return () => {
@@ -359,61 +589,206 @@ function useTextMeasurer(
     };
   }, [typefaces]);
 
-  // A new function identity when fonts have loaded makes dependents re-measure
-  return (text, font, size) => {
-    const id = loaded.get(font);
+  // The canvas context with the font set, or null if it is not available
+  const prepare = (font: string, size: number) => {
     const typeface = typefaces.find((t) => t.name === font);
     const context = getMeasureContext();
-    if (!context || id === undefined || !typeface) {
-      return text.length * size * 0.5;
-    }
-    context.font = `${typeface.style} ${typeface.weight} ${size}px "certiffy-${id}"`;
-    return context.measureText(text).width;
+    if (!context || !typeface || !loaded.has(font)) return null;
+    context.font = `${typeface.style} ${typeface.weight} ${size}px "certiffy-${typeface.id}"`;
+    return context;
+  };
+
+  // A new object when fonts have loaded makes dependents re-measure
+  return {
+    width: (text, font, size) =>
+      prepare(font, size)?.measureText(text).width ?? text.length * size * 0.5,
+    metrics: (font, size) => {
+      const m = prepare(font, size)?.measureText("x");
+      return {
+        ascent: m?.fontBoundingBoxAscent ?? size * 0.8,
+        descent: m?.fontBoundingBoxDescent ?? size * 0.2,
+      };
+    },
+    css: (font) => {
+      const typeface = typefaces.find((t) => t.name === font);
+      if (!typeface || !loaded.has(font)) return {};
+      return {
+        fontFamily: `"certiffy-${typeface.id}"`,
+        fontWeight: typeface.weight,
+        fontStyle: typeface.style,
+      };
+    },
   };
 }
 
-// Bounding box of the text of a block in PDF points (top is measured from the
-// page bottom), or null if the block has no text. Text is wrapped like
-// drawTextBlock in pdf.server.ts does.
-function textBlockBox(
+type PlacedToken = {
+  text: string;
+  font: string;
+  isSpace: boolean;
+  x: number;
+  width: number;
+};
+type PlacedLine = { tokens: PlacedToken[]; baseline: number; width: number };
+
+// Wraps and aligns a text block like drawTextBlock in pdf.server.ts does.
+// Returns the lines with positions in PDF points (the baseline is measured
+// from the page bottom). The optical margin of right-aligned text is ignored.
+function placeTextBlock(
   block: PrismaJson.TextBlock,
   pageWidth: number,
-  measure: MeasureText,
-) {
+  measurer: Measurer,
+): PlacedLine[] {
   const maxWidth = block.maxWidth ?? pageWidth;
   const lineHeight = block.lineHeight ?? block.size * 1.4;
 
-  const widths: number[] = [];
-  let current = 0;
-  let hasContent = false;
+  type Token = Omit<PlacedToken, "x">;
+  const visualLines: { tokens: Token[]; width: number }[] = [];
+  let current: Token[] = [];
+  let currentWidth = 0;
+
+  const pushLine = () => {
+    while (current.length && current[current.length - 1].isSpace) {
+      currentWidth -= current[current.length - 1].width;
+      current.pop();
+    }
+    if (!current.length) return;
+    visualLines.push({ tokens: current, width: currentWidth });
+    current = [];
+    currentWidth = 0;
+  };
+
   for (const segment of block.lines) {
-    for (const token of segment.text.split(/(\s+)/)) {
-      if (token === "") continue;
-      const isSpace = /^\s+$/.test(token);
-      if (!hasContent && isSpace) continue;
-      const width = measure(token, segment.font, block.size);
-      if (hasContent && current + width > maxWidth) {
-        widths.push(current);
-        current = 0;
-        hasContent = false;
-        if (isSpace) continue;
+    for (const text of segment.text.split(/(\s+)/)) {
+      if (text === "") continue;
+      const isSpace = /^\s+$/.test(text);
+      if (!current.length && isSpace) continue;
+      const token = {
+        text,
+        font: segment.font,
+        isSpace,
+        width: measurer.width(text, segment.font, block.size),
+      };
+      if (currentWidth + token.width <= maxWidth || !current.length) {
+        current.push(token);
+        currentWidth += token.width;
+      } else {
+        pushLine();
+        if (!isSpace) {
+          current.push(token);
+          currentWidth = token.width;
+        }
       }
-      current += width;
-      hasContent = true;
     }
   }
-  if (hasContent) widths.push(current);
-  if (widths.length === 0) return null;
+  pushLine();
 
-  const width = Math.min(Math.max(...widths), maxWidth);
-  let x = block.x;
-  if (block.align === "center") x += (maxWidth - width) / 2;
-  if (block.align === "right") x += maxWidth - width;
+  return visualLines.map((line, i) => {
+    let x = block.x;
+    if (block.align === "center") x += (maxWidth - line.width) / 2;
+    if (block.align === "right") x += maxWidth - line.width;
+    const tokens = line.tokens.map((token) => {
+      const placed = { ...token, x };
+      x += token.width;
+      return placed;
+    });
+    return { tokens, baseline: block.y - i * lineHeight, width: line.width };
+  });
+}
 
-  // block.y is the baseline of the first line, following lines move downwards
-  const top = block.y + block.size * 0.8;
-  const bottom = block.y - (widths.length - 1) * lineHeight - block.size * 0.25;
-  return { x, top, width, height: top - bottom };
+// Bounding box of the text of a block in PDF points (top is measured from the
+// page bottom), or null if the block has no text.
+function textBlockBox(block: PrismaJson.TextBlock, lines: PlacedLine[]) {
+  if (lines.length === 0) return null;
+  const left = Math.min(...lines.map((l) => l.tokens[0].x));
+  const right = Math.max(...lines.map((l) => l.tokens[0].x + l.width));
+  const top = lines[0].baseline + block.size * 0.8;
+  const bottom = lines[lines.length - 1].baseline - block.size * 0.25;
+  return { x: left, top, width: right - left, height: top - bottom };
+}
+
+// A piece of text on a line, at the position where the PDF puts it. The line
+// box is as tall as the font's ascent plus descent, which puts the baseline at
+// the ascent below the top.
+function TextToken({
+  token,
+  block,
+  baseline,
+  pageHeight,
+  measurer,
+}: {
+  token: PlacedToken;
+  block: PrismaJson.TextBlock;
+  baseline: number;
+  pageHeight: number;
+  measurer: Measurer;
+}) {
+  const { ascent, descent } = measurer.metrics(token.font, block.size);
+  const [r, g, b] = block.color ?? [0, 0, 0];
+  return (
+    <span
+      className="absolute whitespace-pre"
+      style={{
+        ...measurer.css(token.font),
+        left: token.x,
+        top: pageHeight - baseline - ascent,
+        fontSize: block.size,
+        lineHeight: `${ascent + descent}px`,
+        color: `rgb(${r * 255} ${g * 255} ${b * 255})`,
+      }}
+    >
+      {token.text}
+    </span>
+  );
+}
+
+// QR code drawn like drawQRCode in pdf.server.ts: x/y is the bottom left
+// corner of the code, with a margin of one module in the background color.
+function QRCodeLayer({
+  qrcode,
+  url,
+  pageHeight,
+}: {
+  qrcode: PrismaJson.QRCode;
+  url: string;
+  pageHeight: number;
+}) {
+  const { modules } = QRCode.create(url, {
+    errorCorrectionLevel: qrcode.ec,
+  });
+  const count = modules.size;
+  const moduleSize = qrcode.width / count;
+  const rgbString = ([r, g, b]: [number, number, number]) =>
+    `rgb(${r * 255} ${g * 255} ${b * 255})`;
+
+  let path = "";
+  for (let y = 0; y < count; y++) {
+    for (let x = 0; x < count; x++) {
+      if (modules.get(x, y)) path += `M${x} ${y}h1v1h-1z`;
+    }
+  }
+
+  return (
+    <svg
+      className="absolute"
+      style={{
+        left: qrcode.x - moduleSize,
+        top: pageHeight - qrcode.y - qrcode.width - moduleSize,
+        width: qrcode.width + moduleSize * 2,
+        height: qrcode.width + moduleSize * 2,
+      }}
+      viewBox={`-1 -1 ${count + 2} ${count + 2}`}
+      shapeRendering="crispEdges"
+    >
+      <rect
+        x={-1}
+        y={-1}
+        width={count + 2}
+        height={count + 2}
+        fill={rgbString(qrcode.background)}
+      />
+      <path d={path} fill={rgbString(qrcode.color)} />
+    </svg>
+  );
 }
 
 export function ErrorBoundary() {
