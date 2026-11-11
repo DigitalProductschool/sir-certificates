@@ -142,6 +142,11 @@ const KEEP_VISIBLE = 120; // px of the page that stay on screen when panning
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2;
 const ZOOM_STEP = 0.25;
+// The active tool is inverted. The state of the toggle can't be styled with
+// data-[state=on], because the tooltip around the button sets data-state too.
+const toolButtonClass = (active: boolean) =>
+  `size-9 rounded-md ${active ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : ""}`;
+
 // Mouse cursor of the add text tool: a crosshair (the hot spot, where the text
 // starts) with a T next to it
 const ADD_TEXT_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
@@ -155,6 +160,17 @@ const OFF_PAGE_VERTICAL = 100;
 // Position of the page's top left corner in the viewport (px) and its scale
 // relative to the real paper size
 type View = { zoom: number; x: number; y: number };
+
+// JSON with the keys of objects in a fixed order, to compare values. The
+// database returns the keys in another order than they were saved in.
+const stableStringify = (value: unknown) =>
+  JSON.stringify(value, (_, v) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.fromEntries(
+          Object.entries(v).sort(([a], [b]) => a.localeCompare(b)),
+        )
+      : v,
+  );
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -218,8 +234,8 @@ function TemplateCanvas({
       block.lines.some((line) => line.text.trim() !== ""),
   );
   const isDirty =
-    JSON.stringify(layoutToSave) !== JSON.stringify(template.layout) ||
-    JSON.stringify(qrcode) !== JSON.stringify(savedQrcode);
+    stableStringify(layoutToSave) !== stableStringify(template.layout) ||
+    stableStringify(qrcode) !== stableStringify(savedQrcode);
   const dragStart = useRef<{ x: number; y: number; view: View } | null>(null);
 
   const realWidth = template.pageWidth * CSS_PX_PER_POINT;
@@ -807,7 +823,7 @@ function TemplateCanvas({
               <ToggleGroupItem
                 value="select"
                 aria-label="Select and drag"
-                className="size-9 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90 data-[state=on]:hover:text-primary-foreground"
+                className={toolButtonClass(tool === "select")}
               >
                 <MousePointer2 />
               </ToggleGroupItem>
@@ -819,7 +835,7 @@ function TemplateCanvas({
               <ToggleGroupItem
                 value="text"
                 aria-label="Add text"
-                className="size-9 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90 data-[state=on]:hover:text-primary-foreground"
+                className={toolButtonClass(tool === "text")}
                 disabled={mode === "preview" || defaultFont === ""}
               >
                 <Type />
