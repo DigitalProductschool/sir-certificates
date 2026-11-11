@@ -16,7 +16,7 @@ import QRCode from "qrcode";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 import { getSampleBatch, getSampleCertificate } from "./sample-data";
-import { replaceVariables } from "./variables";
+import { prepareCertificateReplacements, replaceVariables } from "./variables";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 
 import type { CertificatesWithBatch } from "./types";
@@ -226,24 +226,17 @@ function getTemplateSampleData(template: Pick<Template, "id">) {
   return { mockBatch, mockCertificate };
 }
 
-// The text blocks of a template with the variables replaced by sample data,
-// as they are drawn in the sample certificate
-export function getTemplateSampleLayout(
-  template: Pick<Template, "id" | "layout" | "locale">,
-): PrismaJson.TextBlock[] {
+// Values for the variables in the text blocks of a template, as they are
+// drawn in the sample certificate
+export function getTemplateSampleReplacements(
+  template: Pick<Template, "id" | "locale">,
+) {
   const { mockBatch, mockCertificate } = getTemplateSampleData(template);
-  return template.layout.map((block) => ({
-    ...block,
-    lines: block.lines.map((line) => ({
-      ...line,
-      text: replaceVariables(
-        line.text,
-        mockCertificate,
-        mockBatch,
-        template.locale,
-      ),
-    })),
-  }));
+  return prepareCertificateReplacements(
+    mockCertificate,
+    mockBatch,
+    template.locale,
+  );
 }
 
 // Sample certificate with texts and QR code. Without the background the
