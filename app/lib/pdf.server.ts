@@ -16,7 +16,7 @@ import QRCode from "qrcode";
 import { ensureFolderExists, readFileIfExists } from "./fs.server";
 import { prisma, throwErrorResponse } from "./prisma.server";
 import { getSampleBatch, getSampleCertificate } from "./sample-data";
-import { replaceVariables } from "./variables";
+import { prepareCertificateReplacements, replaceVariables } from "./variables";
 import { getAvailableTypefaces, readFontFile } from "./typeface.server";
 
 import type { CertificatesWithBatch } from "./types";
@@ -204,6 +204,41 @@ export async function generateTemplateSample(template: Template) {
   return pdfBuffer;
 }
 
+// Sample batch and certificate used to fill in the variables of a template
+function getTemplateSampleData(template: Pick<Template, "id">) {
+  const mockBatch: Batch = {
+    ...getSampleBatch(),
+    id: 1,
+    programId: 1,
+    updatedAt: new Date(),
+  };
+
+  const mockCertificate: Certificate = {
+    ...getSampleCertificate(),
+    id: 1,
+    batchId: 1,
+    templateId: template.id,
+    publishedAt: new Date(),
+    notifiedAt: null,
+    mjResponse: {},
+  };
+
+  return { mockBatch, mockCertificate };
+}
+
+// Values for the variables in the text blocks of a template, as they are
+// drawn in the sample certificate
+export function getTemplateSampleReplacements(
+  template: Pick<Template, "id" | "locale">,
+) {
+  const { mockBatch, mockCertificate } = getTemplateSampleData(template);
+  return prepareCertificateReplacements(
+    mockCertificate,
+    mockBatch,
+    template.locale,
+  );
+}
+
 // Sample certificate with texts and QR code. Without the background the
 // content is drawn on a blank page of the same size.
 async function buildTemplateSample(template: Template, withBackground = true) {
@@ -221,22 +256,7 @@ async function buildTemplateSample(template: Template, withBackground = true) {
   // Modify page
   const page = pdf.getPages()[0];
 
-  const mockBatch: Batch = {
-    ...getSampleBatch(),
-    id: 1,
-    programId: 1,
-    updatedAt: new Date(),
-  };
-
-  const mockCertificate: Certificate = {
-    ...getSampleCertificate(),
-    id: 1,
-    batchId: 1,
-    templateId: template.id,
-    publishedAt: new Date(),
-    notifiedAt: null,
-    mjResponse: {},
-  };
+  const { mockBatch, mockCertificate } = getTemplateSampleData(template);
 
   const texts = template.layout;
   texts.forEach((text: PrismaJson.TextBlock) => {
@@ -509,6 +529,17 @@ export async function generateTemplatePreviewWithoutBackground(
 ) {
   const sample = await buildTemplateSample(template, false);
   const document = await pdfPreview(sample, { scale: 2 });
+  for await (const page of document) {
+    return page;
+  }
+}
+
+// Renders only the background layer. Not stored on disk.
+export async function generateTemplateBackgroundPreview(template: Template) {
+  const pdf = await loadTemplateBackground(template);
+  const document = await pdfPreview(Buffer.from(await pdf.save()), {
+    scale: 2,
+  });
   for await (const page of document) {
     return page;
   }

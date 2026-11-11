@@ -6,6 +6,7 @@ import { Link, Outlet, useNavigate } from "react-router";
 import { Settings } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { Badge } from "~/components/ui/badge";
 
 import {
   Select,
@@ -132,6 +133,14 @@ export default function ProgramTemplatesPage({
         <Button variant="outline" asChild>
           <Link to="create">Add template</Link>
         </Button>
+        {params.templateId && (
+          <Link
+            className="flex items-center gap-1"
+            to={`/org/program/${params.programId}/templates/${params.templateId}/layout`}
+          >
+            Try Canvas Editor <Badge >beta</Badge>
+          </Link>
+        )}
       </div>
 
       {program.templates.length === 0 && (
