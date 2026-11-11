@@ -227,8 +227,9 @@ function TemplateCanvas({
     }
   };
   // With the text tool, a click on the page adds a text block there, and opens
-  // it in the editor. The tool is used once. The click is the top left corner
-  // of the text, the block's y is the baseline of its first line.
+  // it in the editor. The tool is used once. The click is the bottom left
+  // corner of the bounding box (like the origin of the page); the block's y is
+  // the baseline of its first line.
   const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (tool !== "text" || !view || !canvas.viewportRef.current) return;
     const rect = canvas.viewportRef.current.getBoundingClientRect();
@@ -245,8 +246,13 @@ function TemplateCanvas({
     const size = 12;
     const block: PrismaJson.TextBlock = {
       id: generateRandomId(),
-      x: Math.round(pageX),
-      y: Math.round(template.pageHeight - pageY - size * 0.8),
+      // The line of the bounding box is drawn 3px outside the block, on screen
+      // (see CanvasElement). It, not the block, is at the click.
+      x: Math.round(pageX + 3 / pixelsPerPoint),
+      // The bottom of the block is a quarter of the font size below the baseline
+      y: Math.round(
+        template.pageHeight - pageY + 3 / pixelsPerPoint + size * 0.25,
+      ),
       size,
       align: "left",
       color: [0, 0, 0],
@@ -265,6 +271,32 @@ function TemplateCanvas({
       setQrSelected(false);
     }
   };
+
+  // Keyboard shortcuts for the tools: T for add text (when nothing is
+  // selected), V for select and drag (when in add text). Not while typing in
+  // a field or the text editor.
+  const nothingSelected = selected === null && !qrSelected;
+  const canAddText = mode === "edit" && defaultFont !== "";
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      if (
+        (e.target as Element).closest(
+          "input, textarea, select, [contenteditable]",
+        )
+      ) {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      if (key === "t" && tool === "select" && nothingSelected && canAddText) {
+        setTool("text");
+      } else if (key === "v" && tool === "text") {
+        setTool("select");
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [tool, nothingSelected, canAddText]);
 
   // Escape closes the inline text editor, or the text tool
   const hasSelection = selected !== null || qrSelected || tool === "text";

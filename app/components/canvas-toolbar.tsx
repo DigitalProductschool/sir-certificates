@@ -56,7 +56,7 @@ export function CanvasToolbar({
               <MousePointer2 />
             </ToggleGroupItem>
           </TooltipTrigger>
-          <TooltipContent side="top">Select and drag</TooltipContent>
+          <TooltipContent side="top">Select and drag (V)</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -69,7 +69,7 @@ export function CanvasToolbar({
               <Type />
             </ToggleGroupItem>
           </TooltipTrigger>
-          <TooltipContent side="top">Add text</TooltipContent>
+          <TooltipContent side="top">Add text (T)</TooltipContent>
         </Tooltip>
       </ToggleGroup>
       <div className="mx-1 h-5 w-px bg-border" aria-hidden />
