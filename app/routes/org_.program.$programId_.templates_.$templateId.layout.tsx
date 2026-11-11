@@ -168,6 +168,7 @@ function TemplateCanvas({
   const [qrSelected, setQrSelected] = useState(false);
   // Set while the focus moves on from the editor with the Tab key
   const tabFromEditor = useRef(false);
+  const widthAtStart = useRef(0);
   const isDirty = JSON.stringify(layout) !== JSON.stringify(template.layout);
   const dragStart = useRef<{ x: number; y: number; view: View } | null>(null);
 
@@ -306,6 +307,8 @@ function TemplateCanvas({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [hasSelection]);
+
+  const pixelsPerPoint = (view?.zoom ?? 1) * CSS_PX_PER_POINT;
 
   const measurer = useTextMeasurer(typefaces);
   const selectedBlock = layout.find((b) => b.id === selected?.id);
@@ -561,6 +564,26 @@ function TemplateCanvas({
                     id={block.id}
                     label="Text block"
                     selected={isSelected}
+                    onResizeWidth={{
+                      // A block without maxWidth starts at its current width
+                      onStart: () => {
+                        widthAtStart.current = shown.x + shown.width - block.x;
+                      },
+                      onMove: (distance) => {
+                        const maxWidth = clamp(
+                          Math.round(
+                            widthAtStart.current + distance / pixelsPerPoint,
+                          ),
+                          block.size,
+                          template.pageWidth - block.x,
+                        );
+                        setLayout((current) =>
+                          current.map((b) =>
+                            b.id === block.id ? { ...b, maxWidth } : b,
+                          ),
+                        );
+                      },
+                    }}
                     onSelect={(point) => {
                       setQrSelected(false);
                       setSelected({ id: block.id, point });
@@ -677,6 +700,7 @@ function CanvasElement({
   onSelect,
   onFocus,
   onBlur,
+  onResizeWidth,
   children,
 }: {
   id?: string;
@@ -689,6 +713,9 @@ function CanvasElement({
   onSelect?: (point: { x: number; y: number } | null) => void;
   onFocus?: () => void;
   onBlur?: () => void;
+  // Shows a handle at the right edge. onStart is called when dragging begins,
+  // onMove with the distance dragged since then (in screen pixels).
+  onResizeWidth?: { onStart: () => void; onMove: (distance: number) => void };
   children?: React.ReactNode;
 }) {
   return (
@@ -728,7 +755,63 @@ function CanvasElement({
         height: `${height * 100}%`,
       }}
     >
+      {onResizeWidth && selected && <WidthHandle {...onResizeWidth} />}
       {children}
+    </div>
+  );
+}
+
+// Square handle in the middle of the right edge of a box, to drag its width.
+// Shown while the box is selected, at constant on-screen size.
+function WidthHandle({
+  onStart,
+  onMove,
+}: {
+  onStart: () => void;
+  onMove: (distance: number) => void;
+}) {
+  const startX = useRef<number | null>(null);
+  // The click target is larger than the visible square: 2px on the left and
+  // right, 4px on the top and bottom
+  return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- mouse only handle; the width is edited in the toolbar later
+    <div
+      data-no-pan
+      className="pointer-events-auto absolute flex cursor-ew-resize touch-none items-center justify-center"
+      style={{
+        // Centered on the outline of the box, which is drawn 2px away from it
+        left: "calc(100% + 3px * var(--ui-scale))",
+        top: "50%",
+        width: "calc(12px * var(--ui-scale))",
+        height: "calc(16px * var(--ui-scale))",
+        transform: "translate(-50%, -50%)",
+      }}
+      // Keeps the focus (and the cursor in the text editor)
+      onMouseDown={(e) => e.preventDefault()}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        startX.current = e.clientX;
+        onStart();
+      }}
+      onPointerMove={(e) => {
+        if (startX.current !== null) onMove(e.clientX - startX.current);
+      }}
+      onPointerUp={() => {
+        startX.current = null;
+      }}
+      onPointerCancel={() => {
+        startX.current = null;
+      }}
+    >
+      <span
+        className="bg-white"
+        style={{
+          width: "calc(8px * var(--ui-scale))",
+          height: "calc(8px * var(--ui-scale))",
+          border: "calc(1.5px * var(--ui-scale)) solid #0d99ff",
+        }}
+      />
     </div>
   );
 }
