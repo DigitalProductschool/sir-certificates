@@ -204,6 +204,48 @@ export async function generateTemplateSample(template: Template) {
   return pdfBuffer;
 }
 
+// Sample batch and certificate used to fill in the variables of a template
+function getTemplateSampleData(template: Pick<Template, "id">) {
+  const mockBatch: Batch = {
+    ...getSampleBatch(),
+    id: 1,
+    programId: 1,
+    updatedAt: new Date(),
+  };
+
+  const mockCertificate: Certificate = {
+    ...getSampleCertificate(),
+    id: 1,
+    batchId: 1,
+    templateId: template.id,
+    publishedAt: new Date(),
+    notifiedAt: null,
+    mjResponse: {},
+  };
+
+  return { mockBatch, mockCertificate };
+}
+
+// The text blocks of a template with the variables replaced by sample data,
+// as they are drawn in the sample certificate
+export function getTemplateSampleLayout(
+  template: Pick<Template, "id" | "layout" | "locale">,
+): PrismaJson.TextBlock[] {
+  const { mockBatch, mockCertificate } = getTemplateSampleData(template);
+  return template.layout.map((block) => ({
+    ...block,
+    lines: block.lines.map((line) => ({
+      ...line,
+      text: replaceVariables(
+        line.text,
+        mockCertificate,
+        mockBatch,
+        template.locale,
+      ),
+    })),
+  }));
+}
+
 // Sample certificate with texts and QR code. Without the background the
 // content is drawn on a blank page of the same size.
 async function buildTemplateSample(template: Template, withBackground = true) {
@@ -221,22 +263,7 @@ async function buildTemplateSample(template: Template, withBackground = true) {
   // Modify page
   const page = pdf.getPages()[0];
 
-  const mockBatch: Batch = {
-    ...getSampleBatch(),
-    id: 1,
-    programId: 1,
-    updatedAt: new Date(),
-  };
-
-  const mockCertificate: Certificate = {
-    ...getSampleCertificate(),
-    id: 1,
-    batchId: 1,
-    templateId: template.id,
-    publishedAt: new Date(),
-    notifiedAt: null,
-    mjResponse: {},
-  };
+  const { mockBatch, mockCertificate } = getTemplateSampleData(template);
 
   const texts = template.layout;
   texts.forEach((text: PrismaJson.TextBlock) => {
