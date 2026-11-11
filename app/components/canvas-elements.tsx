@@ -403,6 +403,8 @@ export function InlineTextEditor({
         lineHeight: `${lineHeight}px`,
         textAlign: block.align ?? "left",
         color: `rgb(${r * 255} ${g * 255} ${b * 255})`,
+        // Like the PDF, which is drawn without kerning
+        fontKerning: "none",
       }}
       onInput={(e) => onChange(readLines(e.currentTarget))}
       onKeyDown={(e) => {

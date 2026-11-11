@@ -8,7 +8,12 @@ import type { Typeface } from "~/generated/prisma/client";
 let measureContext: CanvasRenderingContext2D | null = null;
 function getMeasureContext() {
   if (typeof document === "undefined") return null;
-  measureContext ??= document.createElement("canvas").getContext("2d");
+  if (!measureContext) {
+    measureContext = document.createElement("canvas").getContext("2d");
+    // The PDF is drawn without kerning (pdf-lib adds up the glyph widths), so
+    // the texts are measured and shown without it as well
+    if (measureContext) measureContext.fontKerning = "none";
+  }
   return measureContext;
 }
 
@@ -208,6 +213,8 @@ export function TextToken({
         fontSize: block.size,
         lineHeight: `${ascent + descent}px`,
         color: `rgb(${r * 255} ${g * 255} ${b * 255})`,
+        // Like the PDF, which is drawn without kerning
+        fontKerning: "none",
       }}
     >
       {token.text}
