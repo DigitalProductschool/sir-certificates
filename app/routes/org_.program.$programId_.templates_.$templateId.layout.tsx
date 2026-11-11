@@ -165,6 +165,9 @@ function TemplateCanvas({
     id: string;
     point: { x: number; y: number } | null;
   } | null>(null);
+  const [qrSelected, setQrSelected] = useState(false);
+  // Set while the focus moves on from the editor with the Tab key
+  const tabFromEditor = useRef(false);
   const isDirty = JSON.stringify(layout) !== JSON.stringify(template.layout);
   const dragStart = useRef<{ x: number; y: number; view: View } | null>(null);
 
@@ -266,6 +269,7 @@ function TemplateCanvas({
     if (!view || e.button !== 0) return;
     if ((e.target as Element).closest("[data-no-pan]")) return;
     setSelected(null);
+    setQrSelected(false);
     e.currentTarget.setPointerCapture(e.pointerId);
     dragStart.current = { x: e.clientX, y: e.clientY, view };
     setDragging(true);
@@ -288,7 +292,7 @@ function TemplateCanvas({
   };
 
   // Escape closes the inline text editor
-  const hasSelection = selected !== null;
+  const hasSelection = selected !== null || qrSelected;
   useEffect(() => {
     if (!hasSelection) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -296,6 +300,7 @@ function TemplateCanvas({
       const editor =
         document.activeElement?.closest<HTMLElement>("[data-editor]");
       setSelected(null);
+      setQrSelected(false);
       if (editor) focusBox(editor.dataset.editor!);
     };
     document.addEventListener("keydown", onKeyDown);
@@ -398,6 +403,7 @@ function TemplateCanvas({
           onValueChange={(value) => {
             if (value !== "edit" && value !== "preview") return;
             setSelected(null);
+            setQrSelected(false);
             setMode(value);
           }}
           className="bg-background"
@@ -502,6 +508,15 @@ function TemplateCanvas({
                     pageWidth={template.pageWidth}
                     pageHeight={template.pageHeight}
                     measurer={measurer}
+                    onTab={() => {
+                      // The browser moves the focus on from the bounding box of
+                      // this block. If that lands on another text block, it
+                      // opens in the editor too (see onFocus below).
+                      findBox(selectedBlock.id)?.focus();
+                      tabFromEditor.current = true;
+                      setTimeout(() => (tabFromEditor.current = false), 0);
+                      setSelected(null);
+                    }}
                     onClose={() => {
                       setSelected(null);
                       focusBox(selectedBlock.id);
@@ -546,7 +561,16 @@ function TemplateCanvas({
                     id={block.id}
                     label="Text block"
                     selected={isSelected}
-                    onSelect={(point) => setSelected({ id: block.id, point })}
+                    onSelect={(point) => {
+                      setQrSelected(false);
+                      setSelected({ id: block.id, point });
+                    }}
+                    onFocus={() => {
+                      if (tabFromEditor.current && !isSelected) {
+                        setQrSelected(false);
+                        setSelected({ id: block.id, point: null });
+                      }
+                    }}
                     left={shown.x / template.pageWidth}
                     top={
                       (template.pageHeight - shown.top) / template.pageHeight
@@ -560,7 +584,21 @@ function TemplateCanvas({
               })}
               {qrcode.show && (
                 <CanvasElement
+                  id="qrcode"
                   label="QR code"
+                  selected={qrSelected}
+                  onSelect={() => {
+                    setSelected(null);
+                    setQrSelected(true);
+                  }}
+                  onFocus={() => {
+                    // Like text blocks, it opens when the focus comes from the editor
+                    if (tabFromEditor.current && !qrSelected) {
+                      setSelected(null);
+                      setQrSelected(true);
+                    }
+                  }}
+                  onBlur={() => setQrSelected(false)}
                   left={qrcode.x / template.pageWidth}
                   top={
                     (template.pageHeight - qrcode.y - qrcode.width) /
@@ -568,7 +606,9 @@ function TemplateCanvas({
                   }
                   width={qrcode.width / template.pageWidth}
                   height={qrcode.width / template.pageHeight}
-                />
+                >
+                  {qrSelected && <QRCodeInfo qrcode={qrcode} />}
+                </CanvasElement>
               )}
             </>
           )}
@@ -635,6 +675,8 @@ function CanvasElement({
   height,
   selected = false,
   onSelect,
+  onFocus,
+  onBlur,
   children,
 }: {
   id?: string;
@@ -645,6 +687,8 @@ function CanvasElement({
   height: number;
   selected?: boolean;
   onSelect?: (point: { x: number; y: number } | null) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
   children?: React.ReactNode;
 }) {
   return (
@@ -653,6 +697,12 @@ function CanvasElement({
       tabIndex={onSelect ? 0 : -1}
       aria-label={label}
       data-box={id}
+      onFocus={(e) => {
+        if (e.target === e.currentTarget) onFocus?.();
+      }}
+      onBlur={(e) => {
+        if (e.target === e.currentTarget) onBlur?.();
+      }}
       data-no-pan
       onClick={(e) => {
         // Clicks on content of the element (the info box) are not for selecting
@@ -683,11 +733,54 @@ function CanvasElement({
   );
 }
 
-// Read-only properties of the selected block, shown above it. Styled like
-// the tooltip component, but drawn in the page (not a portal) so it follows
-// panning and zooming; --ui-scale keeps its on-screen size constant. It takes
-// pointer events, so the canvas is not dragged from it (and it can get
+// Shell of the read-only property boxes shown above a selected element.
+// Styled like the tooltip component, but drawn in the page (not a portal) so it
+// follows panning and zooming; --ui-scale keeps its on-screen size constant.
+// It takes pointer events, so the canvas is not dragged from it (and it can get
 // interactive controls later).
+function InfoBox({ children }: { children: React.ReactNode }) {
+  return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the handler only keeps the focus where it is
+    <div
+      role="status"
+      data-no-pan
+      // Keeps the focus (and the cursor in the text editor) when clicking here;
+      // to be revisited once the info box gets interactive controls
+      onMouseDown={(e) => e.preventDefault()}
+      className="pointer-events-auto absolute left-1/2 flex w-max cursor-default select-none items-center gap-3 whitespace-nowrap rounded-md bg-primary px-3 py-1.5 text-xs tabular-nums text-primary-foreground"
+      style={{
+        bottom: "calc(100% + 12px * var(--ui-scale))",
+        transform: "translateX(-50%) scale(var(--ui-scale))",
+        transformOrigin: "bottom center",
+      }}
+    >
+      {children}
+      <span
+        className="absolute left-1/2 top-full size-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[2px] bg-primary"
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+function ColorInfo({
+  color,
+  title,
+}: {
+  color: [number, number, number];
+  title: string;
+}) {
+  return (
+    <span className="flex items-center gap-1.5" title={title}>
+      <span
+        className="size-3.5 rounded-sm border border-primary-foreground/40"
+        style={{ backgroundColor: `#${rgbToHex(color)}` }}
+      />
+      {rgbToHex(color)}
+    </span>
+  );
+}
+
 function BlockInfo({ block }: { block: PrismaJson.TextBlock }) {
   const align = block.align ?? "left";
   const AlignIcon =
@@ -698,30 +791,11 @@ function BlockInfo({ block }: { block: PrismaJson.TextBlock }) {
         : AlignLeft;
   const none = <span className="opacity-60">auto</span>;
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the handler only keeps the focus in the editor
-    <div
-      role="status"
-      data-no-pan
-      // Keeps the focus (and cursor) in the text editor when clicking here;
-      // to be revisited once the info box gets interactive controls
-      onMouseDown={(e) => e.preventDefault()}
-      className="pointer-events-auto absolute left-1/2 cursor-default select-none flex w-max items-center gap-3 whitespace-nowrap rounded-md bg-primary px-3 py-1.5 text-xs tabular-nums text-primary-foreground"
-      style={{
-        bottom: "calc(100% + 12px * var(--ui-scale))",
-        transform: "translateX(-50%) scale(var(--ui-scale))",
-        transformOrigin: "bottom center",
-      }}
-    >
+    <InfoBox>
       <span title="X position (in points)">X {block.x}</span>
       <span title="Y position (in points) from bottom">Y {block.y}</span>
       <span title="Max width (optional)">W {block.maxWidth ?? none}</span>
-      <span className="flex items-center gap-1.5" title="Text color">
-        <span
-          className="size-3.5 rounded-sm border border-primary-foreground/40"
-          style={{ backgroundColor: `#${rgbToHex(block.color ?? [0, 0, 0])}` }}
-        />
-        {rgbToHex(block.color ?? [0, 0, 0])}
-      </span>
+      <ColorInfo color={block.color ?? [0, 0, 0]} title="Text color" />
       <span className="flex items-center gap-1" title="Font size">
         <FontSizeIcon /> {block.size}
       </span>
@@ -729,22 +803,29 @@ function BlockInfo({ block }: { block: PrismaJson.TextBlock }) {
         <LineHeightIcon /> {block.lineHeight ?? none}
       </span>
       <AlignIcon className="size-3.5" aria-label={`Aligned ${align}`} />
-      <span
-        className="absolute left-1/2 top-full size-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[2px] bg-primary"
-        aria-hidden
-      />
-    </div>
+    </InfoBox>
+  );
+}
+
+function QRCodeInfo({ qrcode }: { qrcode: PrismaJson.QRCode }) {
+  return (
+    <InfoBox>
+      <span title="X position (in points)">X {qrcode.x}</span>
+      <span title="Y position (in points) from bottom">Y {qrcode.y}</span>
+      <span title="Width">W {qrcode.width}</span>
+      <ColorInfo color={qrcode.color} title="Fill color" />
+      <ColorInfo color={qrcode.background} title="Background color" />
+    </InfoBox>
   );
 }
 
 // Moves the keyboard focus to the bounding box of a block, e.g. after its
 // editor closed (which is when the focused editor disappears)
+function findBox(id: string) {
+  return document.querySelector<HTMLElement>(`[data-box="${CSS.escape(id)}"]`);
+}
 function focusBox(id: string) {
-  requestAnimationFrame(() =>
-    document
-      .querySelector<HTMLElement>(`[data-box="${CSS.escape(id)}"]`)
-      ?.focus(),
-  );
+  requestAnimationFrame(() => findBox(id)?.focus());
 }
 
 // Inline editor for the text of a block, shown in place of the rendered text.
@@ -758,6 +839,7 @@ function InlineTextEditor({
   measurer,
   onChange,
   onClose,
+  onTab,
 }: {
   block: PrismaJson.TextBlock;
   point: { x: number; y: number } | null;
@@ -766,6 +848,7 @@ function InlineTextEditor({
   measurer: Measurer;
   onChange: (lines: PrismaJson.TextSegment[]) => void;
   onClose: () => void;
+  onTab: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   // The contents are owned by the browser while typing; React must not
@@ -841,6 +924,10 @@ function InlineTextEditor({
       }}
       onInput={(e) => onChange(readLines(e.currentTarget))}
       onKeyDown={(e) => {
+        if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          onTab(); // the key press itself still moves the focus
+          return;
+        }
         // Line breaks are not supported, so Enter finishes editing instead
         if (e.key !== "Enter") return;
         e.preventDefault();
