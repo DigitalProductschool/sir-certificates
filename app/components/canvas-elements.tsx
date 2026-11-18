@@ -19,6 +19,7 @@ export function CanvasElement({
   width,
   height,
   selected = false,
+  highlighted = false,
   onSelect,
   onFocus,
   onBlur,
@@ -33,6 +34,8 @@ export function CanvasElement({
   width: number;
   height: number;
   selected?: boolean;
+  // Shows the bounding box like on hover (for the hovered layer in the list)
+  highlighted?: boolean;
   onSelect?: (point: { x: number; y: number } | null) => void;
   onFocus?: () => void;
   onBlur?: () => void;
@@ -73,7 +76,7 @@ export function CanvasElement({
         onSelect?.(null);
       }}
       // While selected, only the outline is drawn: clicks reach the editor below
-      className={`absolute cursor-default outline-none hover:[--outline:#0d99ff] focus-visible:[--outline:#0d99ff] ${selected ? "pointer-events-none [--outline:#0d99ff]" : "[--outline:transparent]"}`}
+      className={`absolute cursor-default outline-none hover:[--outline:#0d99ff] focus-visible:[--outline:#0d99ff] ${selected ? "pointer-events-none [--outline:#0d99ff]" : highlighted ? "[--outline:#0d99ff]" : "[--outline:transparent]"}`}
       style={{
         left: `${left * 100}%`,
         top: `${top * 100}%`,

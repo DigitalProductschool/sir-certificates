@@ -114,6 +114,38 @@ export function useCanvasView(pageWidth: number, pageHeight: number) {
     zoomAt(view, next, viewport.w / 2, viewport.h / 2, true);
   };
 
+  // Animates to center a rectangle (in page points, y from the top of the
+  // page), unless it is fully on screen already (clear of the header and
+  // toolbar)
+  const revealRect = (rect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }) => {
+    if (!view || !viewport) return;
+    const scale = view.zoom * CSS_PX_PER_POINT;
+    const left = view.x + rect.x * scale;
+    const top = view.y + rect.y * scale;
+    const width = rect.width * scale;
+    const height = rect.height * scale;
+    const margin = 32;
+    const visible =
+      left >= margin &&
+      top >= TOP_SPACE &&
+      left + width <= viewport.w - margin &&
+      top + height <= viewport.h - 80;
+    if (visible) return;
+    commitView(
+      {
+        zoom: view.zoom,
+        x: viewport.w / 2 - (rect.x * scale + width / 2),
+        y: viewport.h / 2 - (rect.y * scale + height / 2),
+      },
+      true,
+    );
+  };
+
   // Back to the automatic view
   const fitToWindow = () => {
     setAnimate(true);
@@ -190,6 +222,7 @@ export function useCanvasView(pageWidth: number, pageHeight: number) {
     endAnimation: () => setAnimate(false),
     dragging,
     stepZoom,
+    revealRect,
     fitToWindow,
     startPan,
     movePan,

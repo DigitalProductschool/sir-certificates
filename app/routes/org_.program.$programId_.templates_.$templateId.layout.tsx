@@ -11,6 +11,7 @@
 // - canvas-render: texts and QR code drawn in the browser (fonts, text layout)
 // - canvas-elements: bounding boxes, handles, info boxes and the text editor
 // - canvas-toolbar: tools and zoom control
+// - canvas-layers: list of the layers, to select elements
 import type { Route } from "./+types/org_.program.$programId_.templates_.$templateId.layout";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -38,6 +39,11 @@ import {
   useTextMeasurer,
 } from "~/components/canvas-render";
 
+import {
+  CanvasLayers,
+  textLayerLabel,
+  type CanvasLayer,
+} from "~/components/canvas-layers";
 import { CanvasToolbar } from "~/components/canvas-toolbar";
 import {
   CSS_PX_PER_POINT,
@@ -198,6 +204,8 @@ function TemplateCanvas({
     point: { x: number; y: number } | null;
   } | null>(null);
   const [qrSelected, setQrSelected] = useState(false);
+  // The layer under the pointer in the layer list; its box is shown on the page
+  const [hoveredLayerId, setHoveredLayerId] = useState<string | null>(null);
   // Active tool: select and drag, or click on the page to add a text block
   const [tool, setTool] = useState<CanvasTool>("select");
   // Blocks added in this session. Those that are left without text are dropped
@@ -350,6 +358,55 @@ function TemplateCanvas({
     return [{ block, lines, box }];
   });
 
+  // Layers, top-most first: the QR code is drawn over the texts, and later
+  // texts over earlier ones
+  const layers: CanvasLayer[] = [
+    ...(qrcode.show
+      ? [{ id: "qrcode", kind: "qrcode" as const, label: "QR code" }]
+      : []),
+    ...[...layout].reverse().map((block) => ({
+      id: block.id,
+      kind: "text" as const,
+      label: textLayerLabel(block),
+    })),
+  ];
+
+  // Selects the element of a layer like a click on it does, and moves the
+  // canvas to it if it is offscreen
+  const selectLayer = (layer: CanvasLayer) => {
+    if (layer.kind === "qrcode") {
+      setSelected(null);
+      setQrSelected(true);
+      // The QR code is deselected when its box loses the focus
+      focusBox("qrcode");
+      canvas.revealRect({
+        x: qrcode.x,
+        y: template.pageHeight - qrcode.y - qrcode.width,
+        width: qrcode.width,
+        height: qrcode.width,
+      });
+      return;
+    }
+    setQrSelected(false);
+    setSelected({ id: layer.id, point: null });
+    const placed = placedBlocks.find(({ block }) => block.id === layer.id);
+    const block = placed?.block;
+    if (!block) return;
+    // A block without text has no box, use the one shown while it is edited
+    const box = placed.box ?? {
+      x: block.x,
+      top: block.y + block.size * 0.8,
+      width: block.maxWidth ?? block.size,
+      height: block.size * 1.05,
+    };
+    canvas.revealRect({
+      x: box.x,
+      y: template.pageHeight - box.top,
+      width: box.width,
+      height: box.height,
+    });
+  };
+
   const templatePath = `/org/program/${program.id}/templates/${template.id}`;
 
   return (
@@ -428,6 +485,7 @@ function TemplateCanvas({
             setSelected(null);
             setQrSelected(false);
             setTool("select");
+            setHoveredLayerId(null);
             setMode(value);
           }}
           className="bg-background"
@@ -571,6 +629,7 @@ function TemplateCanvas({
                     id={block.id}
                     label="Text block"
                     selected={isSelected}
+                    highlighted={block.id === hoveredLayerId}
                     onResizeWidth={{
                       // A block without maxWidth starts at its current width
                       onStart: () => {
@@ -630,6 +689,7 @@ function TemplateCanvas({
                   id="qrcode"
                   label="QR code"
                   selected={qrSelected}
+                  highlighted={hoveredLayerId === "qrcode"}
                   onSelect={() => {
                     setSelected(null);
                     setQrSelected(true);
@@ -676,6 +736,15 @@ function TemplateCanvas({
           />
         )}
       </CanvasViewport>
+
+      {mode === "edit" && (
+        <CanvasLayers
+          layers={layers}
+          selectedId={qrSelected ? "qrcode" : (selected?.id ?? null)}
+          onSelect={selectLayer}
+          onHover={setHoveredLayerId}
+        />
+      )}
 
       <CanvasToolbar
         tool={tool}
