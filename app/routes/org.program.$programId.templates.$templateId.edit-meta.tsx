@@ -49,7 +49,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       id: Number(params.templateId),
       programId: Number(params.programId),
     },
-    select: { isArchived: true, locale: true },
+    select: { isArchived: true, locale: true, updatedAt: true },
   });
   if (!existing) {
     throw new Response(null, { status: 404, statusText: "Not Found" });
@@ -70,6 +70,11 @@ export async function action({ request, params }: Route.ActionArgs) {
         name: templateName,
         locale: templateLocale,
         isArchived,
+        // Only the locale affects the rendered certificate. Keep updatedAt for
+        // name / archive changes, so certificates aren't flagged as outdated.
+        ...(templateLocale === existing.locale && {
+          updatedAt: existing.updatedAt,
+        }),
       },
     })
     .catch((error) => {
