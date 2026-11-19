@@ -8,14 +8,29 @@ import { AlignCenter, AlignLeft, AlignRight, Move } from "lucide-react";
 
 import { HexColorPicker } from "react-colorful";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+
 import { Input } from "~/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
+import {
+  fontTargetRange,
+  fontsInRange,
+  setFontInRange,
+  type TextRange,
+} from "~/lib/text-segments";
 import { generateRandomId, hexToRgbArray, rgbToHex } from "~/lib/utils";
 import type { Measurer } from "~/components/canvas-render";
+import type { Typeface } from "~/generated/prisma/client";
 
 // Interactive element on the page; draws a Figma-like bounding box on hover
 // and while selected. Position and size are fractions (0-1) of the page.
@@ -68,7 +83,16 @@ export function CanvasElement({
         if (e.target === e.currentTarget) onFocus?.();
       }}
       onBlur={(e) => {
-        if (e.target === e.currentTarget) onBlur?.();
+        // Not while the focus moves into the info box or its popups (color
+        // picker, select), which are portals
+        const next = e.relatedTarget as Element | null;
+        if (
+          next &&
+          (e.currentTarget.contains(next) || next.closest("[data-info-popup]"))
+        ) {
+          return;
+        }
+        onBlur?.();
       }}
       data-no-pan
       onClick={(e) => {
@@ -259,24 +283,6 @@ function InfoBox({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ColorInfo({
-  color,
-  title,
-}: {
-  color: [number, number, number];
-  title: string;
-}) {
-  return (
-    <span className="flex items-center gap-1.5 font-mono" title={title}>
-      <span
-        className="size-3.5 rounded-sm border border-primary-foreground/40"
-        style={{ backgroundColor: `#${rgbToHex(color)}` }}
-      />
-      {rgbToHex(color)}
-    </span>
-  );
-}
-
 // Number input of the info box. Arrow up/down change the value by 1, with
 // Shift by 10. An optional value is empty (shown as "auto") when not set;
 // arrow keys then start from fallback.
@@ -310,7 +316,7 @@ function NumberField({
         aria-label={title}
         value={draft ?? (value === undefined ? "" : String(value))}
         placeholder={optional ? "auto" : undefined}
-        className="w-9 rounded-sm border border-primary-foreground/30 bg-transparent px-0.5 py-0.5 text-right text-xs tabular-nums outline-none placeholder:text-primary-foreground/60 focus-visible:border-primary-foreground"
+        className="w-9 rounded-xs border border-primary-foreground/30 bg-transparent px-0.5 py-0.5 text-right text-xs tabular-nums outline-none placeholder:text-primary-foreground/60 focus-visible:border-primary-foreground"
         onChange={(e) => {
           setDraft(e.target.value);
           const text = e.target.value.trim();
@@ -366,6 +372,7 @@ function ColorField({
           to the canvas: data-no-pan keeps them from panning it */}
       <PopoverContent
         data-no-pan
+        data-info-popup
         className="flex w-auto flex-col gap-2 rounded-2xl"
       >
         <HexColorPicker
@@ -400,17 +407,72 @@ const ALIGNMENTS = [
 // Edit toolbar of the selected text block
 export function BlockInfo({
   block,
+  typefaces,
+  selection,
   currentWidth,
   onChange,
 }: {
   block: PrismaJson.TextBlock;
+  typefaces: Pick<Typeface, "id" | "name">[];
+  // The selection (or cursor) in the text editor, as character offsets
+  selection: TextRange | null;
   // The width of the block as shown, where it has no max width
   currentWidth: number;
   onChange: (changes: Partial<PrismaJson.TextBlock>) => void;
 }) {
   const align = block.align ?? "left";
+  // The font applies to the selected text, or the word at the cursor. If that
+  // has several fonts, none is shown as selected.
+  const range = selection && fontTargetRange(block.lines, selection);
+  const fonts = new Set(
+    range
+      ? fontsInRange(block.lines, range)
+      : block.lines.map((line) => line.font),
+  );
+  const font = fonts.size === 1 ? [...fonts][0] : "";
   return (
     <InfoBox>
+      <Select
+        value={font}
+        onValueChange={(name) =>
+          onChange({
+            lines: range
+              ? setFontInRange(block.lines, range, name)
+              : block.lines.map((line) => ({ ...line, font: name })),
+          })
+        }
+      >
+        <SelectTrigger
+          size="compact"
+          aria-label="Typeface"
+          title="Typeface"
+          className="w-32 rounded-xs border-primary-foreground/30 py-0 data-[size=compact]:h-[22px] bg-transparent text-primary-foreground shadow-none data-[placeholder]:text-primary-foreground/60 dark:bg-transparent dark:hover:bg-transparent [&_svg:not([class*='text-'])]:text-primary-foreground"
+        >
+          <SelectValue placeholder={fonts.size > 1 ? "Mixed" : "Typeface"} />
+        </SelectTrigger>
+        {/* A portal, but its events bubble through the React tree to the
+            canvas: data-no-pan keeps them from panning it */}
+        <SelectContent
+          data-no-pan
+          data-info-popup
+          // The focus goes back to the text, with the same selection
+          onCloseAutoFocus={(e) => {
+            const editor = document.querySelector<HTMLElement>(
+              `[data-editor="${CSS.escape(block.id)}"]`,
+            );
+            if (!editor) return;
+            e.preventDefault();
+            editor.focus();
+            if (selection) selectEditorRange(editor, selection);
+          }}
+        >
+          {typefaces.map((typeface) => (
+            <SelectItem key={typeface.id} value={typeface.name}>
+              {typeface.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <NumberField
         label="X"
         title="X position (in points)"
@@ -465,7 +527,7 @@ export function BlockInfo({
             title={`Align ${value}`}
             aria-label={`Align ${value}`}
             aria-pressed={align === value}
-            className={`rounded-sm p-0.5 outline-none focus-visible:ring-1 focus-visible:ring-primary-foreground ${align === value ? "bg-primary-foreground/25" : "opacity-60 hover:opacity-100"}`}
+            className={`rounded-xs p-0.5 outline-none focus-visible:ring-1 focus-visible:ring-primary-foreground ${align === value ? "bg-primary-foreground/25" : "opacity-60 hover:opacity-100"}`}
             onClick={() => onChange({ align: value })}
           >
             <Icon className="size-3.5" />
@@ -476,14 +538,45 @@ export function BlockInfo({
   );
 }
 
-export function QRCodeInfo({ qrcode }: { qrcode: PrismaJson.QRCode }) {
+// Edit toolbar of the selected QR code
+export function QRCodeInfo({
+  qrcode,
+  onChange,
+}: {
+  qrcode: PrismaJson.QRCode;
+  onChange: (changes: Partial<PrismaJson.QRCode>) => void;
+}) {
   return (
     <InfoBox>
-      <span title="X position (in points)">X {qrcode.x}</span>
-      <span title="Y position (in points) from bottom">Y {qrcode.y}</span>
-      <span title="Width">W {qrcode.width}</span>
-      <ColorInfo color={qrcode.color} title="Fill color" />
-      <ColorInfo color={qrcode.background} title="Background color" />
+      <NumberField
+        label="X"
+        title="X position (in points)"
+        value={qrcode.x}
+        onChange={(x) => x !== undefined && onChange({ x })}
+      />
+      <NumberField
+        label="Y"
+        title="Y position (in points) from bottom"
+        value={qrcode.y}
+        onChange={(y) => y !== undefined && onChange({ y })}
+      />
+      <NumberField
+        label="W"
+        title="Width"
+        value={qrcode.width}
+        min={1}
+        onChange={(width) => width !== undefined && onChange({ width })}
+      />
+      <ColorField
+        color={qrcode.color}
+        title="Fill color"
+        onChange={(color) => onChange({ color })}
+      />
+      <ColorField
+        color={qrcode.background}
+        title="Background color"
+        onChange={(background) => onChange({ background })}
+      />
     </InfoBox>
   );
 }
@@ -497,6 +590,45 @@ export function focusBox(id: string) {
   requestAnimationFrame(() => findBox(id)?.focus());
 }
 
+// Character offset of a point of the editor's DOM in its text
+function textOffset(editor: HTMLElement, node: Node, offset: number) {
+  const range = document.createRange();
+  range.selectNodeContents(editor);
+  range.setEnd(node, offset);
+  return range.toString().length;
+}
+
+// The DOM point at a character offset (the end of the earlier text node at the
+// boundary of two, so typing there continues in the font of the word before)
+function domPoint(editor: HTMLElement, offset: number) {
+  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+  let position = 0;
+  let last: Text | null = null;
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node as Text;
+    if (offset <= position + text.length) {
+      return { node: text, offset: offset - position };
+    }
+    position += text.length;
+    last = text;
+  }
+  return last
+    ? { node: last, offset: last.length }
+    : { node: editor, offset: 0 };
+}
+
+export function selectEditorRange(editor: HTMLElement, range: TextRange) {
+  const selection = window.getSelection();
+  if (!selection) return;
+  const start = domPoint(editor, range.start);
+  const end = domPoint(editor, range.end);
+  const domRange = document.createRange();
+  domRange.setStart(start.node, start.offset);
+  domRange.setEnd(end.node, end.offset);
+  selection.removeAllRanges();
+  selection.addRange(domRange);
+}
+
 // Inline editor for the text of a block, shown in place of the rendered text.
 // Only the text can be changed; every text segment keeps its font. Line breaks
 // are not supported by the PDF rendering, so Enter finishes editing.
@@ -507,7 +639,9 @@ export function InlineTextEditor({
   pageHeight,
   measurer,
   defaultFont,
+  restoreSelection,
   onChange,
+  onSelectionChange,
   onClose,
   onTab,
 }: {
@@ -517,7 +651,12 @@ export function InlineTextEditor({
   pageHeight: number;
   measurer: Measurer;
   defaultFont: string;
+  // Selection to set when the editor is mounted again after a change of the
+  // segments, instead of the one from the click
+  restoreSelection: TextRange | null;
   onChange: (lines: PrismaJson.TextSegment[]) => void;
+  // The selection or cursor (as character offsets) whenever it changes
+  onSelectionChange: (selection: TextRange) => void;
   onClose: () => void;
   onTab: () => void;
 }) {
@@ -531,12 +670,17 @@ export function InlineTextEditor({
       : [{ id: generateRandomId(), font: defaultFont, text: "" }],
   );
   const [startPoint] = useState(point);
+  const [startSelection] = useState(restoreSelection);
 
   // Focus, with the cursor where the user clicked
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
     element.focus();
+    if (startSelection) {
+      selectEditorRange(element, startSelection);
+      return;
+    }
     const selection = window.getSelection();
     if (!selection) return;
     const range = document.createRange();
@@ -552,7 +696,31 @@ export function InlineTextEditor({
     }
     selection.removeAllRanges();
     selection.addRange(range);
-  }, [startPoint]);
+  }, [startPoint, startSelection]);
+
+  // Reports the selection while it is in the editor
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const report = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+      const range = selection.getRangeAt(0);
+      if (
+        !element.contains(range.startContainer) ||
+        !element.contains(range.endContainer)
+      ) {
+        return;
+      }
+      onSelectionChange({
+        start: textOffset(element, range.startContainer, range.startOffset),
+        end: textOffset(element, range.endContainer, range.endOffset),
+      });
+    };
+    document.addEventListener("selectionchange", report);
+    report();
+    return () => document.removeEventListener("selectionchange", report);
+  }, [onSelectionChange]);
 
   const readLines = (element: HTMLElement) => {
     const texts = initialLines.map(() => "");

@@ -53,6 +53,7 @@ import {
   type CanvasTool,
 } from "~/components/canvas-viewport";
 import { Button } from "~/components/ui/button";
+import { mergeSegments, type TextRange } from "~/lib/text-segments";
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import {
   Select,
@@ -215,15 +216,31 @@ function TemplateCanvas({
   const tabFromEditor = useRef(false);
   const widthAtStart = useRef(0);
   const positionAtStart = useRef({ x: 0, y: 0 });
+  // The selection in the text editor (character offsets), for the font of the
+  // word at the cursor. A change of the segments mounts the editor again
+  // (editorVersion), which then restores the selection.
+  const [editorSelection, setEditorSelection] = useState<
+    (TextRange & { id: string }) | null
+  >(null);
+  const [editorVersion, setEditorVersion] = useState(0);
+  const [restoreSelection, setRestoreSelection] = useState<TextRange | null>(
+    null,
+  );
   const [qrcode, setQrcode] = useState(savedQrcode);
-  const layoutToSave = layout.filter(
-    (block) =>
-      !addedIds.has(block.id) ||
-      block.id === selected?.id ||
-      block.lines.some((line) => line.text.trim() !== ""),
+  // Saved with neighbouring segments of the same font merged
+  const withMergedSegments = (blocks: PrismaJson.TextBlock[]) =>
+    blocks.map((block) => ({ ...block, lines: mergeSegments(block.lines) }));
+  const layoutToSave = withMergedSegments(
+    layout.filter(
+      (block) =>
+        !addedIds.has(block.id) ||
+        block.id === selected?.id ||
+        block.lines.some((line) => line.text.trim() !== ""),
+    ),
   );
   const isDirty =
-    stableStringify(layoutToSave) !== stableStringify(template.layout) ||
+    stableStringify(layoutToSave) !==
+      stableStringify(withMergedSegments(template.layout)) ||
     stableStringify(qrcode) !== stableStringify(savedQrcode);
 
   // Dragging the canvas deselects, except with the text tool
@@ -585,8 +602,19 @@ function TemplateCanvas({
               )}
               {selectedBlock && selected && (
                 <InlineTextEditor
-                  key={selectedBlock.id}
+                  key={`${selectedBlock.id}-${editorVersion}`}
                   block={selectedBlock}
+                  restoreSelection={restoreSelection}
+                  onSelectionChange={(range) => {
+                    setRestoreSelection(null);
+                    setEditorSelection((current) =>
+                      current?.id === selectedBlock.id &&
+                      current.start === range.start &&
+                      current.end === range.end
+                        ? current
+                        : { id: selectedBlock.id, ...range },
+                    );
+                  }}
                   point={selected.point}
                   pageWidth={template.pageWidth}
                   pageHeight={template.pageHeight}
@@ -658,7 +686,14 @@ function TemplateCanvas({
                   width={qrcode.width / template.pageWidth}
                   height={qrcode.width / template.pageHeight}
                 >
-                  {qrSelected && <QRCodeInfo qrcode={qrcode} />}
+                  {qrSelected && (
+                    <QRCodeInfo
+                      qrcode={qrcode}
+                      onChange={(changes) =>
+                        setQrcode((current) => ({ ...current, ...changes }))
+                      }
+                    />
+                  )}
                 </CanvasElement>
               )}
               {placedBlocks.map(({ block, box }) => {
@@ -735,14 +770,25 @@ function TemplateCanvas({
                     {isSelected && (
                       <BlockInfo
                         block={block}
+                        typefaces={typefaces}
+                        selection={
+                          editorSelection?.id === block.id
+                            ? editorSelection
+                            : null
+                        }
                         currentWidth={shown.x + shown.width - block.x}
-                        onChange={(changes) =>
+                        onChange={(changes) => {
+                          if (changes.lines) {
+                            // Segments changed: the editor is mounted again
+                            setRestoreSelection(editorSelection);
+                            setEditorVersion((version) => version + 1);
+                          }
                           setLayout((current) =>
                             current.map((b) =>
                               b.id === block.id ? { ...b, ...changes } : b,
                             ),
-                          )
-                        }
+                          );
+                        }}
                       />
                     )}
                   </CanvasElement>
