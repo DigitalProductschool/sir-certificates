@@ -68,6 +68,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const templates = await prisma.template.findMany({
     where: {
+      isArchived: false,
       program: {
         is: {
           id: {
@@ -77,6 +78,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       },
     },
   });
+
+  templates.sort((a, b) => a.name.localeCompare(b.name));
 
   return { batch, templates };
 }
@@ -298,14 +301,14 @@ export default function ImportBatchPage({
           {templates.length === 0 && (
             <TableRow>
               <TableCell colSpan={5} className="text-destructive">
-                No certificate templates configured yet. Please{" "}
+                No active certificate templates available. Please{" "}
                 <Link
                   to={`/org/program/${params.programId}/templates`}
                   className="underline"
                 >
                   add a template
                 </Link>{" "}
-                first.
+                (or unarchive an existing one) first.
               </TableCell>
             </TableRow>
           )}

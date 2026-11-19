@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { Switch } from "~/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -41,8 +42,23 @@ export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
 
   const templateName = (formData.get("name") as string) || "(Template Name)";
-  const templateLocale =
-    (formData.get("locale") as string) || defaultLocale.code;
+  const isArchived = formData.get("isArchived") === "on";
+
+  const existing = await prisma.template.findUnique({
+    where: {
+      id: Number(params.templateId),
+      programId: Number(params.programId),
+    },
+    select: { isArchived: true, locale: true },
+  });
+  if (!existing) {
+    throw new Response(null, { status: 404, statusText: "Not Found" });
+  }
+
+  // Archived templates only allow changing the name and un-archiving
+  const templateLocale = existing.isArchived
+    ? existing.locale
+    : (formData.get("locale") as string) || defaultLocale.code;
 
   const template = await prisma.template
     .update({
@@ -53,6 +69,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       data: {
         name: templateName,
         locale: templateLocale,
+        isArchived,
       },
     })
     .catch((error) => {
@@ -124,14 +141,16 @@ export default function EditTemplateDialog({
             the certificates afterwards.
           </DialogDescription>
         </DialogHeader>
-        <Form method="POST" ref={formRef}
-          className="grid gap-4 py-4"
-        >
+        <Form method="POST" ref={formRef} className="grid gap-4 py-4">
           <Label htmlFor="name">Name</Label>
           <Input id="name" name="name" defaultValue={template.name} />
 
           <Label htmlFor="locale">Date format</Label>
-          <Select name="locale" defaultValue={template.locale}>
+          <Select
+            name="locale"
+            defaultValue={template.locale}
+            disabled={template.isArchived}
+          >
             <SelectTrigger id="locale">
               <SelectValue placeholder="Select a date format" />
             </SelectTrigger>
@@ -143,6 +162,21 @@ export default function EditTemplateDialog({
               ))}
             </SelectContent>
           </Select>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="isArchived">Archived</Label>
+              <span className="text-xs text-muted-foreground">
+                Prevent accidental changes to existing certificates and block
+                new certificates from this template.
+              </span>
+            </div>
+            <Switch
+              id="isArchived"
+              name="isArchived"
+              defaultChecked={template.isArchived}
+            />
+          </div>
         </Form>
         <DialogFooter>
           <Form

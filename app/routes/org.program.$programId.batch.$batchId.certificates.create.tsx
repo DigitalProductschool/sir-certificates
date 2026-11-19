@@ -33,6 +33,7 @@ import {
 } from "~/components/ui/select";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
+import { assertTemplateNotArchived } from "~/lib/template.server";
 import {
   generateCertificate,
   generatePreviewOfCertificate,
@@ -61,6 +62,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const inputs = submission.value;
+  await assertTemplateNotArchived(Number(inputs.templateId));
   let dbError: string | null = null;
 
   const certificate = await prisma.certificate
@@ -127,6 +129,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const templates = await prisma.template.findMany({
     where: {
+      isArchived: false,
       program: {
         is: {
           id: {

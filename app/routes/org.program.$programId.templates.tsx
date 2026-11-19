@@ -10,7 +10,10 @@ import { Button } from "~/components/ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
@@ -37,9 +40,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     },
     include: {
       templates: {
-        orderBy: {
-          name: "asc",
-        },
+        orderBy: [{ isArchived: "asc" }, { name: "asc" }],
       },
     },
   });
@@ -61,6 +62,10 @@ export default function ProgramTemplatesPage({
 }: Route.ComponentProps) {
   const { program } = loaderData;
   const navigate = useNavigate();
+
+  const archivedTemplates = program.templates.filter(
+    (template: Template) => template.isArchived,
+  );
 
   const firstTemplate =
     program.templates.length > 0 ? program.templates[0] : undefined;
@@ -96,11 +101,29 @@ export default function ProgramTemplatesPage({
               <SelectValue placeholder="Select a template" />
             </SelectTrigger>
             <SelectContent>
-              {program.templates.map((template: Template) => (
-                <SelectItem key={template.id} value={template.id.toString()}>
-                  {template.name}
-                </SelectItem>
-              ))}
+              {program.templates
+                .filter((template: Template) => !template.isArchived)
+                .map((template: Template) => (
+                  <SelectItem key={template.id} value={template.id.toString()}>
+                    {template.name}
+                  </SelectItem>
+                ))}
+              {archivedTemplates.length > 0 && (
+                <>
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectLabel>Archive</SelectLabel>
+                    {archivedTemplates.map((template: Template) => (
+                      <SelectItem
+                        key={template.id}
+                        value={template.id.toString()}
+                      >
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </>
+              )}
             </SelectContent>
           </Select>
         )}
