@@ -23,7 +23,10 @@ import {
   readBackgroundUpload,
   saveTemplateBackground,
 } from "~/lib/pdf.server";
-import { resetTemplateBackground } from "~/lib/template.server";
+import {
+  assertTemplateNotArchived,
+  resetTemplateBackground,
+} from "~/lib/template.server";
 
 import {
   ArrowUpRight,
@@ -62,6 +65,9 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   const templateId = Number(params.templateId);
   const programId = Number(params.programId);
+
+  // Archived templates are read-only here (the name is edited in edit-meta)
+  await assertTemplateNotArchived(templateId);
 
   // Background PDF upload (multipart)
   if (request.headers.get("Content-Type")?.includes("multipart/form-data")) {
@@ -334,13 +340,18 @@ function TemplateEditor({
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" onClick={clipboardPaste}>
+              <Button
+                variant="ghost"
+                onClick={clipboardPaste}
+                disabled={template.isArchived}
+              >
                 {pasteSuccess ? <ClipboardCheck /> : <ClipboardPaste />}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top">Paste Layout</TooltipContent>
           </Tooltip>
           <div className="grow" />
+          {!template.isArchived && (
           <Form key={template.id} method="POST">
             <input type="hidden" name="layout" value={JSON.stringify(layout)} />
             <input type="hidden" name="qrcode" value={JSON.stringify(qrcode)} />
@@ -352,7 +363,31 @@ function TemplateEditor({
               Save and Preview
             </Button>
           </Form>
+          )}
         </div>
+
+        {template.isArchived && (
+          <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300">
+            This template is archived. To make changes, either{" "}
+            <Link
+              to={`/org/program/${template.programId}/templates/${template.id}/edit-meta`}
+              className="underline underline-offset-2 hover:text-amber-950 dark:hover:text-amber-100"
+            >
+              unarchive
+            </Link>{" "}
+            or{" "}
+            <Link
+              to={`/org/program/${template.programId}/templates/${template.id}/duplicate`}
+              className="underline underline-offset-2 hover:text-amber-950 dark:hover:text-amber-100"
+            >
+              duplicate
+            </Link>{" "}
+            it first.
+          </p>
+        )}
+
+        {/* A disabled fieldset disables all form controls of the editors below */}
+        <fieldset disabled={template.isArchived} className="contents">
 
         <LayoutBackgroundEditor
           key={`background${template.id}`}
@@ -377,6 +412,7 @@ function TemplateEditor({
             setLayout(updatedLayout)
           }
         />
+        </fieldset>
       </div>
       <div className="flex flex-col gap-2 self-start items-stretch justify-self-center">
         <Label className="flex h-10 justify-center items-center">

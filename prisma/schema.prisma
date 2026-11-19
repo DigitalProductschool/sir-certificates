@@ -201,6 +201,10 @@ model Template {
 
   locale        String    @default("en-US")
 
+  // Archived templates are hidden from certificate template selects and are
+  // read-only in the template editor (except for the name).
+  isArchived    Boolean   @default(false)
+
   // Page size in whole points. backgroundBytes is the byte size of the uploaded
   // background PDF; null means a blank page generated on the fly.
   // The defaults must match defaultPageSize in app/lib/page-sizes.ts (A4 portrait).

@@ -37,6 +37,7 @@ import {
 } from "~/components/ui/tooltip";
 
 import { requireAdminWithProgram } from "~/lib/auth.server";
+import { assertTemplateNotArchived } from "~/lib/template.server";
 import {
   generateCertificate,
   generatePreviewOfCertificate,
@@ -64,6 +65,15 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const inputs = submission.value;
+
+  // Archived templates can only stay assigned, not be newly selected
+  const current = await prisma.certificate.findUnique({
+    where: { id: Number(params.certId) },
+    select: { templateId: true },
+  });
+  if (current?.templateId !== Number(inputs.templateId)) {
+    await assertTemplateNotArchived(Number(inputs.templateId));
+  }
   let dbError: string | null = null;
 
   const certificate = await prisma.certificate
@@ -154,6 +164,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const templates = await prisma.template.findMany({
     where: {
+      // The certificate's current template stays selectable even if archived
+      OR: [{ isArchived: false }, { id: certificate.templateId }],
       program: {
         is: {
           id: {

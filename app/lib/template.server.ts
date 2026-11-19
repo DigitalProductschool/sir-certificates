@@ -35,6 +35,21 @@ export async function deleteTemplatePDF(templateId: number) {
 	});
 }
 
+// Archived templates are read-only (except for their name) and cannot be newly
+// assigned to certificates. Throws a 403 response if the template is archived.
+export async function assertTemplateNotArchived(templateId: number) {
+	const template = await prisma.template.findUnique({
+		where: { id: templateId },
+		select: { isArchived: true },
+	});
+	if (template?.isArchived) {
+		throw new Response(null, {
+			status: 403,
+			statusText: "Template is archived",
+		});
+	}
+}
+
 // Removes the uploaded background PDF and falls back to a blank A4 portrait page
 export async function resetTemplateBackground(
 	templateId: number,
