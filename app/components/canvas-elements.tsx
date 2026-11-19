@@ -6,7 +6,15 @@ import { useEffect, useRef, useState } from "react";
 import { FontSizeIcon, LineHeightIcon } from "@radix-ui/react-icons";
 import { AlignCenter, AlignLeft, AlignRight, Move } from "lucide-react";
 
-import { generateRandomId, rgbToHex } from "~/lib/utils";
+import { HexColorPicker } from "react-colorful";
+
+import { Input } from "~/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
+import { generateRandomId, hexToRgbArray, rgbToHex } from "~/lib/utils";
 import type { Measurer } from "~/components/canvas-render";
 
 // Interactive element on the page; draws a Figma-like bounding box on hover
@@ -70,6 +78,8 @@ export function CanvasElement({
         }
       }}
       onKeyDown={(e) => {
+        // Not for keys typed in the controls of the info box
+        if (e.target !== e.currentTarget) return;
         if (e.key !== "Enter" && e.key !== " ") return;
         // Otherwise the key press would continue in the editor that opens
         e.preventDefault();
@@ -211,20 +221,28 @@ function MoveHandle({
   );
 }
 
-// Shell of the read-only property boxes shown above a selected element.
+// Shell of the property boxes shown above a selected element.
 // Styled like the tooltip component, but drawn in the page (not a portal) so it
 // follows panning and zooming; --ui-scale keeps its on-screen size constant.
-// It takes pointer events, so the canvas is not dragged from it (and it can get
-// interactive controls later).
+// It takes pointer events, so the canvas is not dragged from it.
 function InfoBox({ children }: { children: React.ReactNode }) {
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the handler only keeps the focus where it is
     <div
       role="status"
       data-no-pan
-      // Keeps the focus (and the cursor in the text editor) when clicking here;
-      // to be revisited once the info box gets interactive controls
-      onMouseDown={(e) => e.preventDefault()}
+      // Keeps the focus (and the cursor in the text editor) when clicking on
+      // the box itself, but not on its controls. Events from portals (the
+      // color picker) also bubble here; they are left alone.
+      onMouseDown={(e) => {
+        const target = e.target as Node;
+        if (
+          e.currentTarget.contains(target) &&
+          !(target as Element).closest?.("input, button")
+        ) {
+          e.preventDefault();
+        }
+      }}
       className="pointer-events-auto absolute left-1/2 flex w-max cursor-default select-none items-center gap-3 whitespace-nowrap rounded-md bg-primary px-3 py-1.5 text-xs tabular-nums text-primary-foreground"
       style={{
         bottom: "calc(100% + 12px * var(--ui-scale))",
@@ -249,7 +267,7 @@ function ColorInfo({
   title: string;
 }) {
   return (
-    <span className="flex items-center gap-1.5" title={title}>
+    <span className="flex items-center gap-1.5 font-mono" title={title}>
       <span
         className="size-3.5 rounded-sm border border-primary-foreground/40"
         style={{ backgroundColor: `#${rgbToHex(color)}` }}
@@ -259,28 +277,201 @@ function ColorInfo({
   );
 }
 
-export function BlockInfo({ block }: { block: PrismaJson.TextBlock }) {
+// Number input of the info box. Arrow up/down change the value by 1, with
+// Shift by 10. An optional value is empty (shown as "auto") when not set;
+// arrow keys then start from fallback.
+function NumberField({
+  label,
+  title,
+  value,
+  fallback,
+  min,
+  optional = false,
+  onChange,
+}: {
+  label: React.ReactNode;
+  title: string;
+  value: number | undefined;
+  fallback?: number;
+  min?: number;
+  optional?: boolean;
+  onChange: (value: number | undefined) => void;
+}) {
+  // What is typed, while the field has the focus (it may be empty or partial)
+  const [draft, setDraft] = useState<string | null>(null);
+  const apply = (next: number) =>
+    onChange(min === undefined ? next : Math.max(min, next));
+  return (
+    <label className="flex items-center gap-1" title={title}>
+      {label}
+      <input
+        type="text"
+        inputMode="numeric"
+        aria-label={title}
+        value={draft ?? (value === undefined ? "" : String(value))}
+        placeholder={optional ? "auto" : undefined}
+        className="w-9 rounded-sm border border-primary-foreground/30 bg-transparent px-0.5 py-0.5 text-right text-xs tabular-nums outline-none placeholder:text-primary-foreground/60 focus-visible:border-primary-foreground"
+        onChange={(e) => {
+          setDraft(e.target.value);
+          const text = e.target.value.trim();
+          if (text === "") {
+            if (optional) onChange(undefined);
+            return;
+          }
+          const number = Number(text);
+          if (Number.isFinite(number)) apply(number);
+        }}
+        onBlur={() => setDraft(null)}
+        onKeyDown={(e) => {
+          if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+          e.preventDefault();
+          const step = (e.shiftKey ? 10 : 1) * (e.key === "ArrowUp" ? 1 : -1);
+          apply((value ?? fallback ?? 0) + step);
+          setDraft(null);
+        }}
+      />
+    </label>
+  );
+}
+
+function ColorField({
+  color,
+  title,
+  onChange,
+}: {
+  color: [number, number, number];
+  title: string;
+  onChange: (color: [number, number, number]) => void;
+}) {
+  const hex = rgbToHex(color);
+  // What is typed in the hex field; applied once it is a valid color
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <Popover onOpenChange={() => setDraft(null)}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={title}
+          aria-label={title}
+          className="flex items-center gap-1.5 rounded-sm font-mono outline-none focus-visible:ring-1 focus-visible:ring-primary-foreground"
+        >
+          <span
+            className="size-3.5 rounded-sm border border-primary-foreground/40"
+            style={{ backgroundColor: `#${hex}` }}
+          />
+          {hex}
+        </button>
+      </PopoverTrigger>
+      {/* The popover is a portal, but its events bubble through the React tree
+          to the canvas: data-no-pan keeps them from panning it */}
+      <PopoverContent
+        data-no-pan
+        className="flex w-auto flex-col gap-2 rounded-2xl"
+      >
+        <HexColorPicker
+          color={hex}
+          onChange={(newColor) => {
+            setDraft(null);
+            onChange(hexToRgbArray(newColor));
+          }}
+        />
+        <Input
+          aria-label={`${title} (hex)`}
+          value={draft ?? hex}
+          onChange={(e) => {
+            const text = e.target.value.replace(/^#/, "");
+            setDraft(text);
+            if (/^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(text)) {
+              onChange(hexToRgbArray(text));
+            }
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+const ALIGNMENTS = [
+  { value: "left", Icon: AlignLeft },
+  { value: "center", Icon: AlignCenter },
+  { value: "right", Icon: AlignRight },
+] as const;
+
+// Edit toolbar of the selected text block
+export function BlockInfo({
+  block,
+  currentWidth,
+  onChange,
+}: {
+  block: PrismaJson.TextBlock;
+  // The width of the block as shown, where it has no max width
+  currentWidth: number;
+  onChange: (changes: Partial<PrismaJson.TextBlock>) => void;
+}) {
   const align = block.align ?? "left";
-  const AlignIcon =
-    align === "center"
-      ? AlignCenter
-      : align === "right"
-        ? AlignRight
-        : AlignLeft;
-  const none = <span className="opacity-60">auto</span>;
   return (
     <InfoBox>
-      <span title="X position (in points)">X {block.x}</span>
-      <span title="Y position (in points) from bottom">Y {block.y}</span>
-      <span title="Max width (optional)">W {block.maxWidth ?? none}</span>
-      <ColorInfo color={block.color ?? [0, 0, 0]} title="Text color" />
-      <span className="flex items-center gap-1" title="Font size">
-        <FontSizeIcon /> {block.size}
-      </span>
-      <span className="flex items-center gap-1" title="Line height (optional)">
-        <LineHeightIcon /> {block.lineHeight ?? none}
-      </span>
-      <AlignIcon className="size-3.5" aria-label={`Aligned ${align}`} />
+      <NumberField
+        label="X"
+        title="X position (in points)"
+        value={block.x}
+        onChange={(x) => x !== undefined && onChange({ x })}
+      />
+      <NumberField
+        label="Y"
+        title="Y position (in points) from bottom"
+        value={block.y}
+        onChange={(y) => y !== undefined && onChange({ y })}
+      />
+      <NumberField
+        label="W"
+        title="Max width (optional)"
+        value={block.maxWidth}
+        fallback={Math.round(currentWidth)}
+        min={block.size}
+        optional
+        onChange={(maxWidth) => onChange({ maxWidth })}
+      />
+      <ColorField
+        color={block.color ?? [0, 0, 0]}
+        title="Text color"
+        onChange={(color) => onChange({ color })}
+      />
+      <NumberField
+        label={<FontSizeIcon />}
+        title="Font size"
+        value={block.size}
+        min={1}
+        onChange={(size) => size !== undefined && onChange({ size })}
+      />
+      <NumberField
+        label={<LineHeightIcon />}
+        title="Line height (optional)"
+        value={block.lineHeight}
+        fallback={Math.round(block.size * 1.4)}
+        min={1}
+        optional
+        onChange={(lineHeight) => onChange({ lineHeight })}
+      />
+      <div
+        className="flex items-center gap-0.5"
+        role="group"
+        aria-label="Text alignment"
+      >
+        {ALIGNMENTS.map(({ value, Icon }) => (
+          <button
+            key={value}
+            type="button"
+            title={`Align ${value}`}
+            aria-label={`Align ${value}`}
+            aria-pressed={align === value}
+            className={`rounded-sm p-0.5 outline-none focus-visible:ring-1 focus-visible:ring-primary-foreground ${align === value ? "bg-primary-foreground/25" : "opacity-60 hover:opacity-100"}`}
+            onClick={() => onChange({ align: value })}
+          >
+            <Icon className="size-3.5" />
+          </button>
+        ))}
+      </div>
     </InfoBox>
   );
 }

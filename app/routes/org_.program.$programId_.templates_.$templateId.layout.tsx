@@ -732,7 +732,19 @@ function TemplateCanvas({
                     width={shown.width / template.pageWidth}
                     height={shown.height / template.pageHeight}
                   >
-                    {isSelected && <BlockInfo block={block} />}
+                    {isSelected && (
+                      <BlockInfo
+                        block={block}
+                        currentWidth={shown.x + shown.width - block.x}
+                        onChange={(changes) =>
+                          setLayout((current) =>
+                            current.map((b) =>
+                              b.id === block.id ? { ...b, ...changes } : b,
+                            ),
+                          )
+                        }
+                      />
+                    )}
                   </CanvasElement>
                 );
               })}
