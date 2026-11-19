@@ -14,6 +14,15 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
+// A transparent 1x1 image, preloaded: browsers fall back to their own ghost
+// for a drag image that is empty or not loaded yet
+const emptyDragImage =
+  typeof window === "undefined"
+    ? null
+    : Object.assign(new window.Image(1, 1), {
+        src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+      });
+
 export type CanvasLayer = {
   id: string;
   kind: "qrcode" | "text";
@@ -161,10 +170,8 @@ export function CanvasLayers({
               e.dataTransfer.effectAllowed = "move";
               e.dataTransfer.setData("text/plain", layer.id);
               // No drag ghost next to the cursor, the blue line is enough
-              const blank = document.createElement("div");
-              document.body.appendChild(blank);
-              e.dataTransfer.setDragImage(blank, 0, 0);
-              setTimeout(() => blank.remove(), 0);
+              if (emptyDragImage)
+                e.dataTransfer.setDragImage(emptyDragImage, 0, 0);
               setDraggingId(layer.id);
             }}
             onDragEnd={endDrag}
