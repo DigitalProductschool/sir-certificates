@@ -358,18 +358,31 @@ function TemplateCanvas({
     return [{ block, lines, box }];
   });
 
-  // Layers, top-most first: the QR code is drawn over the texts, and later
-  // texts over earlier ones
+  // Layers, bottom-most first (listed below the background): the QR code is
+  // drawn first, then the texts in the order of the layout, later ones over
+  // earlier ones
   const layers: CanvasLayer[] = [
     ...(qrcode.show
       ? [{ id: "qrcode", kind: "qrcode" as const, label: "QR code" }]
       : []),
-    ...[...layout].reverse().map((block) => ({
+    ...layout.map((block) => ({
       id: block.id,
       kind: "text" as const,
       label: textLayerLabel(block),
     })),
   ];
+
+  // Moves a text block before the block at toIndex of the layout (the end of
+  // the layout if toIndex is its length)
+  const reorderLayer = (id: string, toIndex: number) => {
+    setLayout((current) => {
+      const from = current.findIndex((b) => b.id === id);
+      if (from === -1) return current;
+      const next = current.filter((b) => b.id !== id);
+      next.splice(toIndex > from ? toIndex - 1 : toIndex, 0, current[from]);
+      return next;
+    });
+  };
 
   // Selects the element of a layer like a click on it does, and moves the
   // canvas to it if it is offscreen
@@ -545,6 +558,13 @@ function TemplateCanvas({
                 transform: `scale(${CSS_PX_PER_POINT})`,
               }}
             >
+              {qrcode.show && (
+                <QRCodeLayer
+                  qrcode={qrcode}
+                  url={qrUrl}
+                  pageHeight={template.pageHeight}
+                />
+              )}
               {placedBlocks.map(({ block, lines }) =>
                 block.id === selected?.id
                   ? null
@@ -594,13 +614,6 @@ function TemplateCanvas({
                   }
                 />
               )}
-              {qrcode.show && (
-                <QRCodeLayer
-                  qrcode={qrcode}
-                  url={qrUrl}
-                  pageHeight={template.pageHeight}
-                />
-              )}
             </div>
 
             {/* Interactive elements. Positions are percentages of the page,
@@ -609,6 +622,45 @@ function TemplateCanvas({
             <div
               className={`contents ${tool === "text" ? "pointer-events-none" : ""}`}
             >
+              {qrcode.show && (
+                <CanvasElement
+                  id="qrcode"
+                  label="QR code"
+                  selected={qrSelected}
+                  highlighted={hoveredLayerId === "qrcode"}
+                  onSelect={() => {
+                    setSelected(null);
+                    setQrSelected(true);
+                  }}
+                  onFocus={() => {
+                    // Like text blocks, it opens when the focus comes from the editor
+                    if (tabFromEditor.current && !qrSelected) {
+                      setSelected(null);
+                      setQrSelected(true);
+                    }
+                  }}
+                  onBlur={() => setQrSelected(false)}
+                  onMoveElement={{
+                    onStart: () => {
+                      positionAtStart.current = { x: qrcode.x, y: qrcode.y };
+                    },
+                    onMove: (dx, dy) =>
+                      setQrcode((current) => ({
+                        ...current,
+                        ...movedPosition(dx, dy),
+                      })),
+                  }}
+                  left={qrcode.x / template.pageWidth}
+                  top={
+                    (template.pageHeight - qrcode.y - qrcode.width) /
+                    template.pageHeight
+                  }
+                  width={qrcode.width / template.pageWidth}
+                  height={qrcode.width / template.pageHeight}
+                >
+                  {qrSelected && <QRCodeInfo qrcode={qrcode} />}
+                </CanvasElement>
+              )}
               {placedBlocks.map(({ block, box }) => {
                 const isSelected = block.id === selected?.id;
                 // A block without text is still shown while it is edited
@@ -684,45 +736,6 @@ function TemplateCanvas({
                   </CanvasElement>
                 );
               })}
-              {qrcode.show && (
-                <CanvasElement
-                  id="qrcode"
-                  label="QR code"
-                  selected={qrSelected}
-                  highlighted={hoveredLayerId === "qrcode"}
-                  onSelect={() => {
-                    setSelected(null);
-                    setQrSelected(true);
-                  }}
-                  onFocus={() => {
-                    // Like text blocks, it opens when the focus comes from the editor
-                    if (tabFromEditor.current && !qrSelected) {
-                      setSelected(null);
-                      setQrSelected(true);
-                    }
-                  }}
-                  onBlur={() => setQrSelected(false)}
-                  onMoveElement={{
-                    onStart: () => {
-                      positionAtStart.current = { x: qrcode.x, y: qrcode.y };
-                    },
-                    onMove: (dx, dy) =>
-                      setQrcode((current) => ({
-                        ...current,
-                        ...movedPosition(dx, dy),
-                      })),
-                  }}
-                  left={qrcode.x / template.pageWidth}
-                  top={
-                    (template.pageHeight - qrcode.y - qrcode.width) /
-                    template.pageHeight
-                  }
-                  width={qrcode.width / template.pageWidth}
-                  height={qrcode.width / template.pageHeight}
-                >
-                  {qrSelected && <QRCodeInfo qrcode={qrcode} />}
-                </CanvasElement>
-              )}
             </div>
           </>
         )}
@@ -743,6 +756,7 @@ function TemplateCanvas({
           selectedId={qrSelected ? "qrcode" : (selected?.id ?? null)}
           onSelect={selectLayer}
           onHover={setHoveredLayerId}
+          onReorder={reorderLayer}
         />
       )}
 

@@ -120,6 +120,25 @@ export async function renderCertificatePDF(
   // Get a page reference to apply modifications
   const page = pdf.getPages()[0];
 
+  // Add QR code only if the certificate has been published or user is forcing inclusion,
+  // and QR code is configured in template
+  if (
+    (certificate.publishedAt !== null || forceQR) &&
+    template.qrcode &&
+    template.qrcode.show === true
+  ) {
+    drawQRCode(
+      page,
+      `${domain}/view/${certificate.uuid}`,
+      template.qrcode.x,
+      template.qrcode.y,
+      template.qrcode.width,
+      template.qrcode.background,
+      template.qrcode.color,
+      template.qrcode.ec,
+    );
+  }
+
   const texts = template.layout;
   texts.forEach((text: PrismaJson.TextBlock) => {
     const lines = text.lines.map((line: PrismaJson.TextSegment) => {
@@ -142,25 +161,6 @@ export async function renderCertificatePDF(
       align: text.align,
     });
   });
-
-  // Add QR code only if the certificate has been published or user is forcing inclusion,
-  // and QR code is configured in template
-  if (
-    (certificate.publishedAt !== null || forceQR) &&
-    template.qrcode &&
-    template.qrcode.show === true
-  ) {
-    drawQRCode(
-      page,
-      `${domain}/view/${certificate.uuid}`,
-      template.qrcode.x,
-      template.qrcode.y,
-      template.qrcode.width,
-      template.qrcode.background,
-      template.qrcode.color,
-      template.qrcode.ec,
-    );
-  }
 
   return Buffer.from(await pdf.save());
 }
@@ -258,6 +258,20 @@ async function buildTemplateSample(template: Template, withBackground = true) {
 
   const { mockBatch, mockCertificate } = getTemplateSampleData(template);
 
+  // Add QR Code
+  if (template.qrcode && template.qrcode.show === true) {
+    drawQRCode(
+      page,
+      `${domain}/org/program/${template.programId}/${template.id}`,
+      template.qrcode.x,
+      template.qrcode.y,
+      template.qrcode.width,
+      template.qrcode.background,
+      template.qrcode.color,
+      template.qrcode.ec,
+    );
+  }
+
   const texts = template.layout;
   texts.forEach((text: PrismaJson.TextBlock) => {
     const lines = text.lines.map((line: PrismaJson.TextSegment) => {
@@ -284,20 +298,6 @@ async function buildTemplateSample(template: Template, withBackground = true) {
       align: text.align,
     });
   });
-
-  // Add QR Code
-  if (template.qrcode && template.qrcode.show === true) {
-    drawQRCode(
-      page,
-      `${domain}/org/program/${template.programId}/${template.id}`,
-      template.qrcode.x,
-      template.qrcode.y,
-      template.qrcode.width,
-      template.qrcode.background,
-      template.qrcode.color,
-      template.qrcode.ec,
-    );
-  }
 
   // Wrap up and return as buffer
   return Buffer.from(await pdf.save());
